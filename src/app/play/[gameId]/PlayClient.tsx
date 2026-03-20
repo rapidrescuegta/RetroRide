@@ -30,6 +30,7 @@ import CheckersGame from '@/games/checkers/CheckersGame'
 import BrickBreakerGame from '@/games/brick-breaker/BrickBreakerGame'
 import CrossyRoadGame from '@/games/crossy-road/CrossyRoadGame'
 import DoodleJumpGame from '@/games/doodle-jump/DoodleJumpGame'
+import ChessGame from '@/games/chess/ChessGame'
 
 const GAME_COMPONENTS: Record<string, React.ComponentType<{ onGameOver: (score: number) => void }>> = {
   'snake': SnakeGame,
@@ -56,6 +57,7 @@ const GAME_COMPONENTS: Record<string, React.ComponentType<{ onGameOver: (score: 
   'brick-breaker': BrickBreakerGame,
   'crossy-road': CrossyRoadGame,
   'doodle-jump': DoodleJumpGame,
+  'chess': ChessGame,
 }
 
 export default function PlayClient({ gameId }: { gameId: string }) {

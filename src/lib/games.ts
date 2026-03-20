@@ -229,6 +229,15 @@ export const GAMES: GameInfo[] = [
     description: 'Bounce higher and higher!',
     controls: 'Tilt or arrow keys',
   },
+  {
+    id: 'chess',
+    name: 'Chess',
+    icon: '♟️',
+    color: '#c084fc',
+    difficulty: 'adults',
+    description: 'Classic strategy game!',
+    controls: 'Tap piece, then tap destination',
+  },
 ]
 
 export function getGameById(id: string): GameInfo | undefined {
