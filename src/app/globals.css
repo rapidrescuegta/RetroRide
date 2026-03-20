@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #0a0a1a;
+  --bg-secondary: #12122a;
+  --bg-card: #1a1a3e;
+  --bg-card-hover: #242460;
+  --accent-purple: #8b5cf6;
+  --accent-pink: #ec4899;
+  --accent-cyan: #06b6d4;
+  --accent-green: #10b981;
+  --accent-yellow: #f59e0b;
+  --accent-orange: #f97316;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --neon-glow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Pixel font for retro headings */
+@font-face {
+  font-family: 'PressStart';
+  src: url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+}
+
+/* Prevent pull-to-refresh on mobile */
+html, body {
+  overscroll-behavior: none;
+}
+
+/* Hide scrollbar but allow scroll */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Game canvas responsive */
+canvas {
+  display: block;
+  image-rendering: pixelated;
+  touch-action: none;
+}
+
+/* Neon text effect */
+.neon-text {
+  text-shadow: 0 0 10px rgba(139, 92, 246, 0.5),
+               0 0 20px rgba(139, 92, 246, 0.3),
+               0 0 40px rgba(139, 92, 246, 0.1);
+}
+
+/* Card glow on hover */
+.game-card {
+  transition: all 0.3s ease;
+}
+.game-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.2);
+}
+.game-card:active {
+  transform: scale(0.97);
+}
+
+/* Scanline overlay for retro feel */
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  pointer-events: none;
+}
+
+/* Smooth page transitions */
+.page-enter {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.4); }
+}
+
+/* Touch-friendly buttons */
+.touch-btn {
+  min-height: 48px;
+  min-width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
