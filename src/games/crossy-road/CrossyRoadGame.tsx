@@ -194,10 +194,12 @@ export default function CrossyRoadGame({ onGameOver }: CrossyRoadGameProps) {
     let nx = g.playerX;
     let ny = g.playerY;
 
+    // Sideways hops are 30% of a cell; forward/back is a full cell
+    const sideStep = 0.3;
     if (dir === 'UP') ny += 1;
     else if (dir === 'DOWN') ny -= 1;
-    else if (dir === 'LEFT') nx -= 1;
-    else if (dir === 'RIGHT') nx += 1;
+    else if (dir === 'LEFT') nx -= sideStep;
+    else if (dir === 'RIGHT') nx += sideStep;
 
     if (nx < 0 || nx >= g.cols) return;
     // Don't allow going more than ~4 rows below camera

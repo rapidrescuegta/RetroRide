@@ -115,8 +115,11 @@ export default function FroggerGame({ onGameOver }: FroggerGameProps) {
     const s = stateRef.current;
     if (!s || s.gameOver || s.deathTimer > 0) return;
 
-    const newX = s.frogX + dx * CELL;
-    const newY = s.frogY + dy * CELL;
+    // Sideways movement is 30% of a cell; forward/back is a full cell
+    const stepX = dx !== 0 ? Math.round(CELL * 0.3) : 0;
+    const stepY = dy !== 0 ? CELL : 0;
+    const newX = s.frogX + dx * stepX;
+    const newY = s.frogY + dy * stepY;
 
     if (newX < 0 || newX >= WIDTH || newY < 0 || newY >= HEIGHT) return;
 
