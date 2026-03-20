@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Family {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  createdAt DateTime @default(now())
+  members   Member[]
+}
+
+model Member {
+  id        String   @id @default(cuid())
+  name      String
+  avatar    String   @default("😀")
+  familyId  String
+  family    Family   @relation(fields: [familyId], references: [id])
+  createdAt DateTime @default(now())
+  scores    Score[]
+
+  @@unique([familyId, name])
+}
+
+model Score {
+  id        String   @id @default(cuid())
+  gameId    String
+  score     Int
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([gameId, score(sort: Desc)])
+  @@index([memberId])
+}

@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { FamilyProvider } from '@/lib/family-context'
 
 export const metadata: Metadata = {
   title: 'RetroRide — Classic Arcade Games',
-  description: 'Play 20+ classic arcade games offline. Perfect for road trips and flights!',
+  description: '25+ classic arcade games with family leaderboards. Perfect for road trips and flights!',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -34,7 +35,9 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className="antialiased">
-        {children}
+        <FamilyProvider>
+          {children}
+        </FamilyProvider>
       </body>
     </html>
   )

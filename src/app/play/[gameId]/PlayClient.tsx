@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
 import { getGameById } from '@/lib/games'
 import { saveScore, getHighScore } from '@/lib/scores'
+import { useFamily } from '@/lib/family-context'
 
 // Game imports
 import SnakeGame from '@/games/snake/SnakeGame'
@@ -63,6 +64,7 @@ const GAME_COMPONENTS: Record<string, React.ComponentType<{ onGameOver: (score: 
 export default function PlayClient({ gameId }: { gameId: string }) {
   const router = useRouter()
   const game = getGameById(gameId)
+  const familyCtx = useFamily()
 
   const [gameState, setGameState] = useState<'playing' | 'over'>('playing')
   const [score, setScore] = useState(0)
@@ -78,6 +80,10 @@ export default function PlayClient({ gameId }: { gameId: string }) {
 
   const handleGameOver = useCallback((finalScore: number) => {
     setScore(finalScore)
+    // Submit to family leaderboard
+    if (familyCtx?.isLoggedIn && game) {
+      familyCtx.submitScore(game.id, finalScore)
+    }
     setGameState('over')
     if (game) {
       saveScore(game.id, finalScore)

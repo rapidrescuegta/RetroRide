@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { GAMES, type Difficulty, type GameInfo } from '@/lib/games'
 import { getHighScore, getTotalGamesPlayed } from '@/lib/scores'
+import { useFamily } from '@/lib/family-context'
 import Link from 'next/link'
 
 const FILTERS: { label: string; value: Difficulty | 'all' }[] = [
@@ -67,6 +68,58 @@ function GameCard({ game }: { game: GameInfo }) {
   )
 }
 
+function FamilyBar() {
+  const ctx = useFamily()
+  if (!ctx) return null
+
+  if (!ctx.isLoggedIn) {
+    return (
+      <div className="mx-4 mb-4 p-3 rounded-xl bg-purple-900/20 border border-purple-500/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-purple-300">Family Challenge Mode</p>
+            <p className="text-xs text-slate-400">Compete with your family for high scores!</p>
+          </div>
+          <Link
+            href="/family"
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold rounded-lg transition-all"
+          >
+            Join
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mx-4 mb-4 p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">{ctx.member?.avatar}</span>
+          <div>
+            <p className="text-sm font-semibold text-white">{ctx.member?.name}</p>
+            <p className="text-xs text-slate-400">{ctx.family?.name}</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Link
+            href="/leaderboard"
+            className="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 text-xs font-semibold rounded-lg transition-all border border-amber-600/30"
+          >
+            👑 Leaderboard
+          </Link>
+          <Link
+            href="/family"
+            className="px-3 py-1.5 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 text-xs rounded-lg transition-all"
+          >
+            Family
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Home() {
   const [filter, setFilter] = useState<Difficulty | 'all'>('all')
   const [totalPlayed, setTotalPlayed] = useState(0)
@@ -101,6 +154,9 @@ export default function Home() {
           )}
         </div>
       </header>
+
+      {/* Family bar */}
+      <FamilyBar />
 
       {/* Filter tabs */}
       <div className="flex gap-2 px-4 mb-6 overflow-x-auto">
