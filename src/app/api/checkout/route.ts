@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!)
+}
 
 const PRICES: Record<string, { priceId: string; mode: 'payment' | 'subscription'; days?: number }> = {
-  weekend: { priceId: process.env.STRIPE_PRICE_WEEKEND!, mode: 'payment', days: 3 },
-  weekly: { priceId: process.env.STRIPE_PRICE_WEEKLY!, mode: 'payment', days: 7 },
-  monthly: { priceId: process.env.STRIPE_PRICE_MONTHLY!, mode: 'subscription' },
-  annual: { priceId: process.env.STRIPE_PRICE_ANNUAL!, mode: 'subscription' },
+  weekend: { priceId: process.env.STRIPE_PRICE_WEEKEND || '', mode: 'payment', days: 3 },
+  weekly: { priceId: process.env.STRIPE_PRICE_WEEKLY || '', mode: 'payment', days: 7 },
+  monthly: { priceId: process.env.STRIPE_PRICE_MONTHLY || '', mode: 'subscription' },
+  annual: { priceId: process.env.STRIPE_PRICE_ANNUAL || '', mode: 'subscription' },
 }
 
 export async function POST(req: NextRequest) {
@@ -32,7 +34,7 @@ export async function POST(req: NextRequest) {
     // Create or retrieve Stripe customer
     let customerId = family.stripeCustomerId
     if (!customerId) {
-      const customer = await stripe.customers.create({
+      const customer = await getStripe().customers.create({
         name: family.name,
         metadata: { familyId: family.id },
       })
@@ -46,7 +48,7 @@ export async function POST(req: NextRequest) {
     const origin = req.headers.get('origin') || process.env.NEXTAUTH_URL || 'http://localhost:3000'
 
     // Create Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       customer: customerId,
       line_items: [{ price: priceConfig.priceId, quantity: 1 }],
       mode: priceConfig.mode,
