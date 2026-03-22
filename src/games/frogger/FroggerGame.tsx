@@ -4,6 +4,7 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 
 interface FroggerGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 const CELL = 40;
@@ -28,7 +29,11 @@ type SplashParticle = {
   x: number; y: number; vx: number; vy: number; life: number; maxLife: number;
 };
 
-export default function FroggerGame({ onGameOver }: FroggerGameProps) {
+export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
+  // Level-based settings
+  const speedMultiplier = level === 'easy' ? 0.6 : level === 'hard' ? 1.5 : 1.0;
+  const logWidthMultiplier = level === 'easy' ? 1.3 : level === 'hard' ? 0.7 : 1.0;
+  const initialLives = level === 'easy' ? 5 : level === 'hard' ? 2 : 3;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<{
     frogX: number;
@@ -49,7 +54,7 @@ export default function FroggerGame({ onGameOver }: FroggerGameProps) {
     waveOffset: number;
   } | null>(null);
   const [displayScore, setDisplayScore] = useState(0);
-  const [displayLives, setDisplayLives] = useState(3);
+  const [displayLives, setDisplayLives] = useState(initialLives);
   const [canvasSize, setCanvasSize] = useState({ w: WIDTH, h: HEIGHT });
   const touchStart = useRef<{ x: number; y: number } | null>(null);
 
@@ -57,7 +62,7 @@ export default function FroggerGame({ onGameOver }: FroggerGameProps) {
     const lanes: Lane[] = [];
 
     // Road lanes (rows 1-5, from bottom)
-    const roadSpeeds = [1.2, -1.5, 1.0, -1.8, 1.3];
+    const roadSpeeds = [1.2, -1.5, 1.0, -1.8, 1.3].map(s => s * speedMultiplier);
     const roadWidths = [[2, 2, 2], [3, 3], [2, 2, 2, 2], [3, 3, 3], [2, 2, 2]];
     for (let i = 0; i < 5; i++) {
       const row = 11 - i; // rows 11,10,9,8,7
@@ -69,8 +74,10 @@ export default function FroggerGame({ onGameOver }: FroggerGameProps) {
     }
 
     // River lanes (rows 1-5 from top)
-    const riverSpeeds = [-0.8, 1.2, -1.0, 1.5, -0.7];
-    const riverWidths = [[3, 3], [2, 2, 2], [4, 4], [2, 2, 2], [3, 3, 3]];
+    const riverSpeeds = [-0.8, 1.2, -1.0, 1.5, -0.7].map(s => s * speedMultiplier);
+    const riverWidths = [[3, 3], [2, 2, 2], [4, 4], [2, 2, 2], [3, 3, 3]].map(
+      row => row.map(w => Math.round(w * logWidthMultiplier))
+    );
     for (let i = 0; i < 5; i++) {
       const row = 5 - i; // rows 5,4,3,2,1
       const items = riverWidths[i].map((w, j) => ({
@@ -88,7 +95,7 @@ export default function FroggerGame({ onGameOver }: FroggerGameProps) {
     return {
       frogX: Math.floor(COLS / 2) * CELL,
       frogY: (ROWS - 1) * CELL,
-      lives: 3,
+      lives: initialLives,
       score: 0,
       maxRow: ROWS - 1,
       lanes,
@@ -103,7 +110,7 @@ export default function FroggerGame({ onGameOver }: FroggerGameProps) {
       splashParticles: [] as SplashParticle[],
       waveOffset: 0,
     };
-  }, []);
+  }, [speedMultiplier, logWidthMultiplier, initialLives]);
 
   const resetFrog = (state: NonNullable<typeof stateRef.current>) => {
     state.frogX = Math.floor(COLS / 2) * CELL;

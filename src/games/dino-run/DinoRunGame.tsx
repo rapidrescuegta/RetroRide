@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 
 interface Props {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 const CANVAS_W = 600;
@@ -13,10 +14,8 @@ const DINO_W = 40;
 const DINO_H = 44;
 const CACTUS_W = 20;
 const CACTUS_H = 40;
-const GRAVITY = 0.6;
-const JUMP_FORCE = -11;
-const INITIAL_SPEED = 4;
-const MAX_SPEED = 12;
+
+// Difficulty-dependent constants are set in the component
 
 // Dust particle type
 type DustParticle = { x: number; y: number; vx: number; vy: number; life: number; maxLife: number; size: number };
@@ -24,7 +23,15 @@ type DustParticle = { x: number; y: number; vx: number; vy: number; life: number
 // Parallax mountain layer
 type Mountain = { x: number; width: number; height: number; layer: number };
 
-export default function DinoRunGame({ onGameOver }: Props) {
+export default function DinoRunGame({ onGameOver, level }: Props) {
+  // Difficulty settings
+  const GRAVITY = level === 'easy' ? 0.45 : level === 'hard' ? 0.7 : 0.6;
+  const JUMP_FORCE = level === 'easy' ? -10 : level === 'hard' ? -12 : -11;
+  const INITIAL_SPEED = level === 'easy' ? 3 : level === 'hard' ? 5.5 : 4;
+  const MAX_SPEED = level === 'easy' ? 9 : level === 'hard' ? 14 : 12;
+  const MIN_CACTUS_GAP = level === 'easy' ? 80 : level === 'hard' ? 35 : 50;
+  const MAX_CACTUS_GAP = level === 'easy' ? 100 : level === 'hard' ? 45 : 60;
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [started, setStarted] = useState(false);
   const [displayScore, setDisplayScore] = useState(0);
@@ -55,7 +62,7 @@ export default function DinoRunGame({ onGameOver }: Props) {
       g.dinoVY = JUMP_FORCE;
       g.isJumping = true;
     }
-  }, []);
+  }, [JUMP_FORCE]);
 
   const startGame = useCallback(() => {
     const g = gameRef.current;
@@ -69,11 +76,11 @@ export default function DinoRunGame({ onGameOver }: Props) {
     g.running = true;
     g.gameOverNotified = false;
     g.groundOffset = 0;
-    g.nextCactusIn = 80;
+    g.nextCactusIn = MIN_CACTUS_GAP + Math.floor(Math.random() * MAX_CACTUS_GAP);
     g.dustParticles = [];
     setStarted(true);
     setDisplayScore(0);
-  }, []);
+  }, [INITIAL_SPEED, MIN_CACTUS_GAP, MAX_CACTUS_GAP]);
 
   // Input handlers
   useEffect(() => {
@@ -469,7 +476,7 @@ export default function DinoRunGame({ onGameOver }: Props) {
         const h = 28 + Math.random() * 20;
         const w = 14 + Math.random() * 14;
         g.cacti.push({ x: CANVAS_W + 10, w, h });
-        g.nextCactusIn = 50 + Math.floor(Math.random() * 60);
+        g.nextCactusIn = MIN_CACTUS_GAP + Math.floor(Math.random() * MAX_CACTUS_GAP);
       }
 
       // Move cacti

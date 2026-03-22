@@ -4,7 +4,14 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface Props {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
+
+const LEVEL_RANDOM_CHANCE = {
+  easy: 0.6,
+  medium: 0.3,
+  hard: 0,
+} as const;
 
 type Cell = 'X' | 'O' | null;
 type Board = Cell[];
@@ -58,12 +65,11 @@ function minimax(board: Board, isMax: boolean): number {
   }
 }
 
-function getAiMove(board: Board): number {
-  // 30% chance of making a random (suboptimal) move
+function getAiMove(board: Board, randomChance: number): number {
   const empties = board.map((c, i) => (c === null ? i : -1)).filter((i) => i !== -1);
   if (empties.length === 0) return -1;
 
-  if (Math.random() < 0.3) {
+  if (randomChance > 0 && Math.random() < randomChance) {
     return empties[Math.floor(Math.random() * empties.length)];
   }
 
@@ -81,7 +87,8 @@ function getAiMove(board: Board): number {
   return bestMove;
 }
 
-export default function TicTacToeGame({ onGameOver }: Props) {
+export default function TicTacToeGame({ onGameOver, level }: Props) {
+  const randomChance = LEVEL_RANDOM_CHANCE[level];
   const [board, setBoard] = useState<Board>(Array(9).fill(null));
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const [result, setResult] = useState<string | null>(null);
@@ -125,7 +132,7 @@ export default function TicTacToeGame({ onGameOver }: Props) {
   useEffect(() => {
     if (isPlayerTurn || result) return;
     const timer = setTimeout(() => {
-      const move = getAiMove([...board]);
+      const move = getAiMove([...board], randomChance);
       if (move === -1) return;
       const newBoard = [...board];
       newBoard[move] = 'O';

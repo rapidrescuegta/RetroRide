@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 
 interface CheckersGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 type Piece = null | 'red' | 'black' | 'red-king' | 'black-king';
@@ -186,9 +187,14 @@ function minimax(board: Board, depth: number, isMaximizing: boolean, alpha: numb
   }
 }
 
-function aiMove(board: Board): { from: [number, number]; to: [number, number]; jump?: [number, number] } | null {
+function aiMove(board: Board, depth: number, blunderChance: number): { from: [number, number]; to: [number, number]; jump?: [number, number] } | null {
   const moves = getAllMoves(board, false); // black = AI
   if (moves.length === 0) return null;
+
+  // On easy mode, sometimes make a random (suboptimal) move
+  if (blunderChance > 0 && Math.random() < blunderChance) {
+    return moves[Math.floor(Math.random() * moves.length)];
+  }
 
   let bestMove = moves[0];
   let bestScore = -Infinity;
@@ -206,7 +212,7 @@ function aiMove(board: Board): { from: [number, number]; to: [number, number]; j
         moreJumps = getJumps(finalBoard, jr, jc);
       }
     }
-    const score = minimax(finalBoard, 2, false, -Infinity, Infinity);
+    const score = minimax(finalBoard, depth, false, -Infinity, Infinity);
     if (score > bestScore) {
       bestScore = score;
       bestMove = move;
@@ -215,7 +221,14 @@ function aiMove(board: Board): { from: [number, number]; to: [number, number]; j
   return bestMove;
 }
 
-export default function CheckersGame({ onGameOver }: CheckersGameProps) {
+export default function CheckersGame({ onGameOver, level }: CheckersGameProps) {
+  // Difficulty settings
+  const difficultyConfig = {
+    easy:   { aiDepth: 1, blunderChance: 0.35 },
+    medium: { aiDepth: 2, blunderChance: 0 },
+    hard:   { aiDepth: 4, blunderChance: 0 },
+  }[level];
+
   const [board, setBoard] = useState<Board>(createBoard);
   const [selected, setSelected] = useState<[number, number] | null>(null);
   const [validMoves, setValidMoves] = useState<[number, number][]>([]);
@@ -270,7 +283,7 @@ export default function CheckersGame({ onGameOver }: CheckersGameProps) {
     if (isPlayerTurn || gameEnded) return;
 
     const timer = setTimeout(() => {
-      const move = aiMove(board);
+      const move = aiMove(board, difficultyConfig.aiDepth, difficultyConfig.blunderChance);
       if (!move) {
         checkGameOver(board, false);
         return;

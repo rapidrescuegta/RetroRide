@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { GAMES, type Difficulty, type GameInfo } from '@/lib/games'
 import { getHighScore, getTotalGamesPlayed } from '@/lib/scores'
 import { useFamily } from '@/lib/family-context'
+import FamilyHub from '@/components/FamilyHub'
 import Link from 'next/link'
 
 const FILTERS: { label: string; value: Difficulty | 'all' }[] = [
@@ -121,8 +122,10 @@ function FamilyBar() {
 }
 
 export default function Home() {
+  const familyCtx = useFamily()
   const [filter, setFilter] = useState<Difficulty | 'all'>('all')
   const [totalPlayed, setTotalPlayed] = useState(0)
+  const [showChat, setShowChat] = useState(false)
 
   useEffect(() => {
     setTotalPlayed(getTotalGamesPlayed())
@@ -157,6 +160,24 @@ export default function Home() {
 
       {/* Family bar */}
       <FamilyBar />
+
+      {/* Family Hub (chat + presence) */}
+      {familyCtx?.isLoggedIn && (
+        <div className="px-4 mb-4">
+          <button
+            onClick={() => setShowChat(!showChat)}
+            className="w-full px-4 py-2 rounded-xl bg-slate-800/50 border border-slate-700/30 text-sm text-slate-300 hover:bg-slate-700/50 transition-all flex items-center justify-between"
+          >
+            <span>💬 Family Chat & Challenges</span>
+            <span className="text-xs text-slate-500">{showChat ? '▲ Hide' : '▼ Show'}</span>
+          </button>
+          {showChat && (
+            <div className="mt-2 rounded-xl overflow-hidden border border-slate-700/30" style={{ maxHeight: '400px' }}>
+              <FamilyHub />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Filter tabs */}
       <div className="flex gap-2 px-4 mb-6 overflow-x-auto">

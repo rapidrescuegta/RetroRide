@@ -4,16 +4,12 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 
 interface BreakoutGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
-const BRICK_ROWS = 6;
 const BRICK_COLS = 10;
 const BRICK_GAP = 3;
 const PADDLE_HEIGHT_RATIO = 0.02;
-const PADDLE_WIDTH_RATIO = 0.15;
-const BALL_RADIUS_RATIO = 0.01;
-const BALL_SPEED_RATIO = 0.005;
-const INITIAL_LIVES = 3;
 
 const ROW_COLORS = [
   '#ff2255', // red
@@ -26,7 +22,14 @@ const ROW_COLORS = [
 
 type Brick = { x: number; y: number; w: number; h: number; color: string; alive: boolean; row: number };
 
-export default function BreakoutGame({ onGameOver }: BreakoutGameProps) {
+export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
+  // Difficulty settings
+  const BRICK_ROWS = level === 'easy' ? 4 : level === 'hard' ? 8 : 6;
+  const PADDLE_WIDTH_RATIO = level === 'easy' ? 0.22 : level === 'hard' ? 0.10 : 0.15;
+  const BALL_RADIUS_RATIO = 0.01;
+  const BALL_SPEED_RATIO = level === 'easy' ? 0.004 : level === 'hard' ? 0.007 : 0.005;
+  const INITIAL_LIVES = level === 'easy' ? 5 : level === 'hard' ? 2 : 3;
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<{
     paddleX: number;
@@ -85,7 +88,7 @@ export default function BreakoutGame({ onGameOver }: BreakoutGameProps) {
       }
     }
     return bricks;
-  }, []);
+  }, [BRICK_ROWS]);
 
   const resetBall = useCallback((s: NonNullable<typeof stateRef.current>) => {
     s.ballX = s.paddleX;
@@ -130,7 +133,7 @@ export default function BreakoutGame({ onGameOver }: BreakoutGameProps) {
       particles: [],
     };
     stateRef.current = s;
-  }, [getSize, createBricks]);
+  }, [getSize, createBricks, PADDLE_WIDTH_RATIO, BALL_RADIUS_RATIO, BALL_SPEED_RATIO, INITIAL_LIVES]);
 
   const spawnParticles = useCallback((x: number, y: number, color: string, count: number) => {
     const s = stateRef.current;

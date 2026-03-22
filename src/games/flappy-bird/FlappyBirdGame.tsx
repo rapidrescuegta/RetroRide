@@ -4,15 +4,12 @@ import { useRef, useEffect, useCallback } from 'react';
 
 interface FlappyBirdGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 const W = 400;
 const H = 600;
-const GRAVITY = 0.45;
-const FLAP_FORCE = -7.5;
 const PIPE_W = 52;
-const PIPE_GAP = 150;
-const PIPE_SPEED = 2.5;
 const BIRD_SIZE = 20;
 const GROUND_H = 60;
 
@@ -20,7 +17,13 @@ interface Pipe { x: number; gapY: number; scored: boolean; }
 interface Particle { x: number; y: number; vx: number; vy: number; life: number; color: string; size: number; rotation: number; rotSpeed: number; }
 interface Cloud { x: number; y: number; w: number; opacity: number; speed: number; }
 
-export default function FlappyBirdGame({ onGameOver }: FlappyBirdGameProps) {
+export default function FlappyBirdGame({ onGameOver, level }: FlappyBirdGameProps) {
+  // Difficulty settings
+  const GRAVITY = level === 'easy' ? 0.35 : level === 'hard' ? 0.55 : 0.45;
+  const FLAP_FORCE = level === 'easy' ? -7 : level === 'hard' ? -8.5 : -7.5;
+  const PIPE_GAP = level === 'easy' ? 180 : level === 'hard' ? 90 : 150;
+  const PIPE_SPEED = level === 'easy' ? 2 : level === 'hard' ? 3.5 : 2.5;
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef({
     birdY: H / 2,
@@ -61,7 +64,7 @@ export default function FlappyBirdGame({ onGameOver }: FlappyBirdGameProps) {
         rotSpeed: (Math.random() - 0.5) * 0.2,
       });
     }
-  }, []);
+  }, [FLAP_FORCE]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

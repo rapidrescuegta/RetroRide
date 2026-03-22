@@ -4,6 +4,7 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 
 interface DoodleJumpGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 interface Platform {
@@ -82,7 +83,14 @@ function generateStars(count: number, yRange: number, canvasW: number): Star[] {
   return stars;
 }
 
-export default function DoodleJumpGame({ onGameOver }: DoodleJumpGameProps) {
+export default function DoodleJumpGame({ onGameOver, level }: DoodleJumpGameProps) {
+  // Difficulty settings
+  const difficultyConfig = {
+    easy:   { spacingMin: 30, spacingMax: 60, breakChanceBase: 0.05, breakChanceDiff: 0.1, moveChanceBase: 0.05, moveChanceDiff: 0.1, moveSpeedBase: 30, moveSpeedDiff: 20 },
+    medium: { spacingMin: 40, spacingMax: 80, breakChanceBase: 0.1, breakChanceDiff: 0.2, moveChanceBase: 0.1, moveChanceDiff: 0.25, moveSpeedBase: 40, moveSpeedDiff: 30 },
+    hard:   { spacingMin: 50, spacingMax: 100, breakChanceBase: 0.15, breakChanceDiff: 0.3, moveChanceBase: 0.2, moveChanceDiff: 0.35, moveSpeedBase: 50, moveSpeedDiff: 50 },
+  }[level];
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<GameState | null>(null);
   const animFrameRef = useRef<number>(0);
@@ -102,7 +110,7 @@ export default function DoodleJumpGame({ onGameOver }: DoodleJumpGameProps) {
     let y = fromY;
 
     while (y < toY) {
-      const spacing = PLATFORM_SPACING_MIN + Math.random() * (PLATFORM_SPACING_MAX - PLATFORM_SPACING_MIN);
+      const spacing = difficultyConfig.spacingMin + Math.random() * (difficultyConfig.spacingMax - difficultyConfig.spacingMin);
       y += spacing;
 
       // Difficulty increases with height
@@ -110,9 +118,9 @@ export default function DoodleJumpGame({ onGameOver }: DoodleJumpGameProps) {
 
       const rand = Math.random();
       let type: Platform['type'] = 'normal';
-      if (rand < 0.1 + difficulty * 0.2) {
+      if (rand < difficultyConfig.breakChanceBase + difficulty * difficultyConfig.breakChanceDiff) {
         type = 'breaking';
-      } else if (rand < 0.2 + difficulty * 0.25) {
+      } else if (rand < difficultyConfig.moveChanceBase + difficulty * difficultyConfig.moveChanceDiff) {
         type = 'moving';
       }
 
@@ -121,7 +129,7 @@ export default function DoodleJumpGame({ onGameOver }: DoodleJumpGameProps) {
 
       if (type === 'moving') {
         platform.movingDir = Math.random() < 0.5 ? 1 : -1;
-        platform.movingSpeed = 40 + Math.random() * 60 + difficulty * 30;
+        platform.movingSpeed = difficultyConfig.moveSpeedBase + Math.random() * 60 + difficulty * difficultyConfig.moveSpeedDiff;
       }
 
       platforms.push(platform);
@@ -142,7 +150,7 @@ export default function DoodleJumpGame({ onGameOver }: DoodleJumpGameProps) {
     }
 
     return platforms;
-  }, []);
+  }, [difficultyConfig]);
 
   const initGame = useCallback(() => {
     const { width, height } = getCanvasSize();

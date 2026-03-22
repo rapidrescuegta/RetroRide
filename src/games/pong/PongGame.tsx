@@ -4,17 +4,22 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 
 interface PongGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
-const WINNING_SCORE = 7;
+const LEVEL_CONFIG = {
+  easy:   { winningScore: 5, ballSpeedRatio: 0.004, aiSpeedRatio: 0.0025, aiJitter: 20 },
+  medium: { winningScore: 7, ballSpeedRatio: 0.006, aiSpeedRatio: 0.004,  aiJitter: 10 },
+  hard:   { winningScore: 10, ballSpeedRatio: 0.008, aiSpeedRatio: 0.006, aiJitter: 3 },
+} as const;
+
 const PADDLE_WIDTH_RATIO = 0.02;
 const PADDLE_HEIGHT_RATIO = 0.18;
 const BALL_RADIUS_RATIO = 0.012;
 const PADDLE_MARGIN_RATIO = 0.03;
-const BALL_SPEED_RATIO = 0.006;
-const AI_SPEED_RATIO = 0.004;
 
-export default function PongGame({ onGameOver }: PongGameProps) {
+export default function PongGame({ onGameOver, level }: PongGameProps) {
+  const { winningScore: WINNING_SCORE, ballSpeedRatio: BALL_SPEED_RATIO, aiSpeedRatio: AI_SPEED_RATIO, aiJitter: AI_JITTER } = LEVEL_CONFIG[level];
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<{
     playerY: number;
@@ -343,7 +348,7 @@ export default function PongGame({ onGameOver }: PongGameProps) {
     }
 
     // AI movement - tracks ball with slight imperfection
-    const aiTarget = s.ballY + (Math.random() - 0.5) * 10;
+    const aiTarget = s.ballY + (Math.random() - 0.5) * AI_JITTER;
     const aiDiff = aiTarget - s.aiY;
     if (Math.abs(aiDiff) > 3) {
       s.aiY += Math.sign(aiDiff) * Math.min(Math.abs(aiDiff), s.aiSpeed);

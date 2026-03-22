@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 
 interface MinesweeperGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 type CellState = {
@@ -13,13 +14,9 @@ type CellState = {
   adjacentMines: number;
 };
 
-const ROWS = 9;
-const COLS = 9;
-const MINES = 10;
-
-function createEmptyGrid(): CellState[][] {
-  return Array.from({ length: ROWS }, () =>
-    Array.from({ length: COLS }, () => ({
+function createEmptyGrid(rows: number, cols: number): CellState[][] {
+  return Array.from({ length: rows }, () =>
+    Array.from({ length: cols }, () => ({
       isMine: false,
       isRevealed: false,
       isFlagged: false,
@@ -28,7 +25,7 @@ function createEmptyGrid(): CellState[][] {
   );
 }
 
-function placeMines(grid: CellState[][], safeRow: number, safeCol: number): CellState[][] {
+function placeMines(grid: CellState[][], safeRow: number, safeCol: number, rows: number, cols: number, mines: number): CellState[][] {
   const newGrid = grid.map(row => row.map(cell => ({ ...cell })));
   let placed = 0;
 
@@ -36,9 +33,9 @@ function placeMines(grid: CellState[][], safeRow: number, safeCol: number): Cell
   const isSafe = (r: number, c: number) =>
     Math.abs(r - safeRow) <= 1 && Math.abs(c - safeCol) <= 1;
 
-  while (placed < MINES) {
-    const r = Math.floor(Math.random() * ROWS);
-    const c = Math.floor(Math.random() * COLS);
+  while (placed < mines) {
+    const r = Math.floor(Math.random() * rows);
+    const c = Math.floor(Math.random() * cols);
     if (!newGrid[r][c].isMine && !isSafe(r, c)) {
       newGrid[r][c].isMine = true;
       placed++;
@@ -46,15 +43,15 @@ function placeMines(grid: CellState[][], safeRow: number, safeCol: number): Cell
   }
 
   // Calculate adjacent counts
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
       if (newGrid[r][c].isMine) continue;
       let count = 0;
       for (let dr = -1; dr <= 1; dr++) {
         for (let dc = -1; dc <= 1; dc++) {
           const nr = r + dr;
           const nc = c + dc;
-          if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && newGrid[nr][nc].isMine) {
+          if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && newGrid[nr][nc].isMine) {
             count++;
           }
         }
@@ -66,13 +63,13 @@ function placeMines(grid: CellState[][], safeRow: number, safeCol: number): Cell
   return newGrid;
 }
 
-function floodReveal(grid: CellState[][], row: number, col: number): CellState[][] {
+function floodReveal(grid: CellState[][], row: number, col: number, rows: number, cols: number): CellState[][] {
   const newGrid = grid.map(r => r.map(c => ({ ...c })));
   const stack: [number, number][] = [[row, col]];
 
   while (stack.length > 0) {
     const [r, c] = stack.pop()!;
-    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) continue;
+    if (r < 0 || r >= rows || c < 0 || c >= cols) continue;
     if (newGrid[r][c].isRevealed || newGrid[r][c].isFlagged || newGrid[r][c].isMine) continue;
 
     newGrid[r][c].isRevealed = true;
@@ -101,8 +98,11 @@ const NUMBER_COLORS: Record<number, string> = {
   8: 'text-gray-300',
 };
 
-export default function MinesweeperGame({ onGameOver }: MinesweeperGameProps) {
-  const [grid, setGrid] = useState<CellState[][]>(createEmptyGrid);
+export default function MinesweeperGame({ onGameOver, level }: MinesweeperGameProps) {
+  const ROWS = level === 'easy' ? 6 : level === 'hard' ? 12 : 9;
+  const COLS = level === 'easy' ? 6 : level === 'hard' ? 12 : 9;
+  const MINES = level === 'easy' ? 5 : level === 'hard' ? 25 : 10;
+  const [grid, setGrid] = useState<CellState[][]>(() => createEmptyGrid(ROWS, COLS));
   const [started, setStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
@@ -137,7 +137,7 @@ export default function MinesweeperGame({ onGameOver }: MinesweeperGameProps) {
 
     // First click: place mines
     if (!started) {
-      currentGrid = placeMines(currentGrid, row, col);
+      currentGrid = placeMines(currentGrid, row, col, ROWS, COLS, MINES);
       setStarted(true);
     }
 
@@ -159,7 +159,7 @@ export default function MinesweeperGame({ onGameOver }: MinesweeperGameProps) {
       return;
     }
 
-    const newGrid = floodReveal(currentGrid, row, col);
+    const newGrid = floodReveal(currentGrid, row, col, ROWS, COLS);
     setGrid(newGrid);
 
     if (checkWin(newGrid)) {

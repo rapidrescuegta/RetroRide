@@ -4,21 +4,26 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface WhackAMoleGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
-const GAME_DURATION = 30;
+const LEVEL_CONFIG = {
+  easy:   { gameDuration: 45, initialMoleDuration: 2000, minMoleDuration: 900, spawnInterval: 1000, hasDecoys: false },
+  medium: { gameDuration: 30, initialMoleDuration: 1200, minMoleDuration: 500, spawnInterval: 800,  hasDecoys: false },
+  hard:   { gameDuration: 20, initialMoleDuration: 600,  minMoleDuration: 300, spawnInterval: 600,  hasDecoys: true },
+} as const;
+
 const GRID_SIZE = 9;
 const SCORE_PER_WHACK = 10;
-const INITIAL_MOLE_DURATION = 1200;
-const MIN_MOLE_DURATION = 500;
-const MOLE_SPAWN_INTERVAL = 800;
+const DECOY_PENALTY = -5;
 
-type HoleState = 'empty' | 'mole' | 'whacked';
+type HoleState = 'empty' | 'mole' | 'whacked' | 'decoy' | 'decoy-whacked';
 
-export default function WhackAMoleGame({ onGameOver }: WhackAMoleGameProps) {
+export default function WhackAMoleGame({ onGameOver, level }: WhackAMoleGameProps) {
+  const { gameDuration: GAME_DURATION, initialMoleDuration: INITIAL_MOLE_DURATION, minMoleDuration: MIN_MOLE_DURATION, spawnInterval: MOLE_SPAWN_INTERVAL, hasDecoys } = LEVEL_CONFIG[level];
   const [holes, setHoles] = useState<HoleState[]>(Array(GRID_SIZE).fill('empty'));
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
+  const [timeLeft, setTimeLeft] = useState<number>(GAME_DURATION);
   const [started, setStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const scoreRef = useRef(0);
@@ -54,11 +59,13 @@ export default function WhackAMoleGame({ onGameOver }: WhackAMoleGameProps) {
     const idx = emptyHoles[Math.floor(Math.random() * emptyHoles.length)];
     const duration = getMoleDuration();
 
-    holesRef.current[idx] = 'mole';
+    // On hard mode, 25% chance to spawn a decoy (red mole)
+    const isDecoy = hasDecoys && Math.random() < 0.25;
+    holesRef.current[idx] = isDecoy ? 'decoy' : 'mole';
     setHoles([...holesRef.current]);
 
     const timer = setTimeout(() => {
-      if (holesRef.current[idx] === 'mole') {
+      if (holesRef.current[idx] === 'mole' || holesRef.current[idx] === 'decoy') {
         holesRef.current[idx] = 'empty';
         setHoles([...holesRef.current]);
       }
@@ -107,7 +114,8 @@ export default function WhackAMoleGame({ onGameOver }: WhackAMoleGameProps) {
   }, [endGame, spawnMole]);
 
   const whackMole = useCallback((idx: number) => {
-    if (holesRef.current[idx] !== 'mole' || gameOver) return;
+    const holeState = holesRef.current[idx];
+    if ((holeState !== 'mole' && holeState !== 'decoy') || gameOver) return;
 
     // Clear the hide timer
     const timer = moleTimersRef.current.get(idx);
@@ -116,10 +124,17 @@ export default function WhackAMoleGame({ onGameOver }: WhackAMoleGameProps) {
       moleTimersRef.current.delete(idx);
     }
 
-    holesRef.current[idx] = 'whacked';
-    setHoles([...holesRef.current]);
-    scoreRef.current += SCORE_PER_WHACK;
-    setScore(scoreRef.current);
+    if (holeState === 'decoy') {
+      holesRef.current[idx] = 'decoy-whacked';
+      setHoles([...holesRef.current]);
+      scoreRef.current = Math.max(0, scoreRef.current + DECOY_PENALTY);
+      setScore(scoreRef.current);
+    } else {
+      holesRef.current[idx] = 'whacked';
+      setHoles([...holesRef.current]);
+      scoreRef.current += SCORE_PER_WHACK;
+      setScore(scoreRef.current);
+    }
 
     // Show whacked state briefly then clear
     setTimeout(() => {
@@ -147,7 +162,7 @@ export default function WhackAMoleGame({ onGameOver }: WhackAMoleGameProps) {
           </div>
         )}
         <p className="text-gray-400 text-center max-w-xs">
-          Tap the moles as they pop up! You have 30 seconds.
+          Tap the moles as they pop up! You have {GAME_DURATION} seconds.
         </p>
         <button
           onClick={startGame}
@@ -198,7 +213,7 @@ export default function WhackAMoleGame({ onGameOver }: WhackAMoleGameProps) {
               cursor-pointer active:scale-90
               overflow-hidden
             `}
-            aria-label={state === 'mole' ? 'Whack this mole!' : 'Empty hole'}
+            aria-label={state === 'mole' ? 'Whack this mole!' : state === 'decoy' ? 'Decoy mole!' : 'Empty hole'}
           >
             {/* Hole inner shadow */}
             <div className="absolute inset-2 rounded-full bg-gradient-to-b from-amber-950 to-black/60" />
@@ -210,10 +225,24 @@ export default function WhackAMoleGame({ onGameOver }: WhackAMoleGameProps) {
               </div>
             )}
 
+            {/* Decoy mole (red) */}
+            {state === 'decoy' && (
+              <div className="relative z-10 text-4xl sm:text-5xl wam-bounce-in select-none" style={{ filter: 'hue-rotate(320deg) saturate(2)' }}>
+                🐹
+              </div>
+            )}
+
             {/* Whacked */}
             {state === 'whacked' && (
               <div className="relative z-10 text-4xl sm:text-5xl select-none wam-ping-once">
                 💥
+              </div>
+            )}
+
+            {/* Decoy whacked */}
+            {state === 'decoy-whacked' && (
+              <div className="relative z-10 text-4xl sm:text-5xl select-none wam-ping-once">
+                ❌
               </div>
             )}
           </button>

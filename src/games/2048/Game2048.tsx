@@ -4,11 +4,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface Game2048Props {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 type Board = number[][];
-
-const SIZE = 4;
 
 const TILE_COLORS: Record<number, { bg: string; text: string }> = {
   0:    { bg: 'bg-gray-800/50', text: 'text-transparent' },
@@ -29,29 +28,31 @@ function getColors(val: number) {
   return TILE_COLORS[val] || { bg: 'bg-purple-600', text: 'text-white' };
 }
 
-function createEmpty(): Board {
-  return Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
+function createEmpty(size: number): Board {
+  return Array.from({ length: size }, () => Array(size).fill(0));
 }
 
 function cloneBoard(b: Board): Board {
   return b.map(row => [...row]);
 }
 
-function addRandom(board: Board): Board {
+function addRandom(board: Board, fourChance: number = 0.1): Board {
+  const size = board.length;
   const empty: [number, number][] = [];
-  for (let r = 0; r < SIZE; r++) {
-    for (let c = 0; c < SIZE; c++) {
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
       if (board[r][c] === 0) empty.push([r, c]);
     }
   }
   if (empty.length === 0) return board;
   const [r, c] = empty[Math.floor(Math.random() * empty.length)];
   const newBoard = cloneBoard(board);
-  newBoard[r][c] = Math.random() < 0.9 ? 2 : 4;
+  newBoard[r][c] = Math.random() < (1 - fourChance) ? 2 : 4;
   return newBoard;
 }
 
 function slideRow(row: number[]): { newRow: number[]; scored: number } {
+  const size = row.length;
   // Remove zeros
   let filtered = row.filter(v => v !== 0);
   let scored = 0;
@@ -65,19 +66,21 @@ function slideRow(row: number[]): { newRow: number[]; scored: number } {
   }
   filtered = filtered.filter(v => v !== 0);
   // Pad
-  while (filtered.length < SIZE) filtered.push(0);
+  while (filtered.length < size) filtered.push(0);
   return { newRow: filtered, scored };
 }
 
 function rotateBoard(board: Board): Board {
-  const n = createEmpty();
-  for (let r = 0; r < SIZE; r++)
-    for (let c = 0; c < SIZE; c++)
-      n[c][SIZE - 1 - r] = board[r][c];
+  const size = board.length;
+  const n = createEmpty(size);
+  for (let r = 0; r < size; r++)
+    for (let c = 0; c < size; c++)
+      n[c][size - 1 - r] = board[r][c];
   return n;
 }
 
 function move(board: Board, direction: 'left' | 'right' | 'up' | 'down'): { board: Board; scored: number; moved: boolean } {
+  const size = board.length;
   let b = cloneBoard(board);
   let rotations = 0;
   if (direction === 'right') rotations = 2;
@@ -87,8 +90,8 @@ function move(board: Board, direction: 'left' | 'right' | 'up' | 'down'): { boar
   for (let i = 0; i < rotations; i++) b = rotateBoard(b);
 
   let totalScored = 0;
-  const newBoard = createEmpty();
-  for (let r = 0; r < SIZE; r++) {
+  const newBoard = createEmpty(size);
+  for (let r = 0; r < size; r++) {
     const { newRow, scored } = slideRow(b[r]);
     newBoard[r] = newRow;
     totalScored += scored;
@@ -103,25 +106,38 @@ function move(board: Board, direction: 'left' | 'right' | 'up' | 'down'): { boar
 }
 
 function canMove(board: Board): boolean {
-  for (let r = 0; r < SIZE; r++) {
-    for (let c = 0; c < SIZE; c++) {
+  const size = board.length;
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
       if (board[r][c] === 0) return true;
-      if (c < SIZE - 1 && board[r][c] === board[r][c + 1]) return true;
-      if (r < SIZE - 1 && board[r][c] === board[r + 1][c]) return true;
+      if (c < size - 1 && board[r][c] === board[r][c + 1]) return true;
+      if (r < size - 1 && board[r][c] === board[r + 1][c]) return true;
     }
   }
   return false;
 }
 
-function initBoard(): Board {
-  let b = createEmpty();
-  b = addRandom(b);
-  b = addRandom(b);
-  return b;
-}
+export default function Game2048({ onGameOver, level }: Game2048Props) {
+  // Difficulty settings
+  const gridSize = level === 'easy' ? 5 : 4;
+  const initialTiles = level === 'easy' ? 3 : 2;
+  const fourSpawnChance = level === 'hard' ? 0.25 : 0.1;
+  const startWithFour = level === 'hard'; // one starting tile might be a 4
 
-export default function Game2048({ onGameOver }: Game2048Props) {
-  const [board, setBoard] = useState<Board>(initBoard);
+  const initBoard = useCallback((): Board => {
+    let b = createEmpty(gridSize);
+    for (let i = 0; i < initialTiles; i++) {
+      if (startWithFour && i === 1) {
+        // Second tile might be a 4 on hard
+        b = addRandom(b, 0.5);
+      } else {
+        b = addRandom(b, 0);
+      }
+    }
+    return b;
+  }, [gridSize, initialTiles, startWithFour]);
+
+  const [board, setBoard] = useState<Board>(() => initBoard());
   const [score, setScore] = useState(0);
   const [bestTile, setBestTile] = useState(2);
   const [gameOver, setGameOver] = useState(false);
@@ -141,14 +157,15 @@ export default function Game2048({ onGameOver }: Game2048Props) {
         return prev;
       }
 
-      const withNew = addRandom(newBoard);
+      const withNew = addRandom(newBoard, fourSpawnChance);
       scoreRef.current += scored;
       setScore(scoreRef.current);
 
       // Find best tile
       let max = 0;
-      for (let r = 0; r < SIZE; r++)
-        for (let c = 0; c < SIZE; c++)
+      const size = withNew.length;
+      for (let r = 0; r < size; r++)
+        for (let c = 0; c < size; c++)
           if (withNew[r][c] > max) max = withNew[r][c];
       setBestTile(max);
 
@@ -160,7 +177,7 @@ export default function Game2048({ onGameOver }: Game2048Props) {
       processingRef.current = false;
       return withNew;
     });
-  }, [onGameOver]);
+  }, [onGameOver, fourSpawnChance]);
 
   // Keyboard
   useEffect(() => {
@@ -205,7 +222,7 @@ export default function Game2048({ onGameOver }: Game2048Props) {
     touchStartRef.current = null;
   };
 
-  const startGame = () => {
+  const startGame = useCallback(() => {
     const b = initBoard();
     setBoard(b);
     setScore(0);
@@ -213,7 +230,7 @@ export default function Game2048({ onGameOver }: Game2048Props) {
     setBestTile(2);
     setGameOver(false);
     setStarted(true);
-  };
+  }, [initBoard]);
 
   const tileSize = (val: number) => {
     if (val >= 1024) return 'text-lg sm:text-xl';
@@ -259,14 +276,18 @@ export default function Game2048({ onGameOver }: Game2048Props) {
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="grid grid-cols-4 gap-2 sm:gap-3">
+        <div
+          className="grid gap-2 sm:gap-3"
+          style={{ gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))` }}
+        >
           {board.flat().map((val, i) => {
             const colors = getColors(val);
+            const cellSize = gridSize === 5 ? 'w-14 h-14 sm:w-16 sm:h-16' : 'w-16 h-16 sm:w-20 sm:h-20';
             return (
               <div
                 key={i}
                 className={`
-                  w-16 h-16 sm:w-20 sm:h-20 rounded-lg flex items-center justify-center
+                  ${cellSize} rounded-lg flex items-center justify-center
                   font-bold ${tileSize(val)} transition-all duration-100
                   ${colors.bg} ${colors.text}
                   ${val > 0 ? 'shadow-md' : ''}

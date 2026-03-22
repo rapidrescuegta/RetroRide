@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 
 interface WordleGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 // 50 answer words - common, well-known 5-letter words
-const ANSWERS = [
+const ANSWERS_5 = [
   'APPLE','BEACH','BRAIN','BREAD','BRUSH','CANDY','CHAIR','CHEAP','CHESS','CHIEF',
   'CHILD','CLEAN','CLIMB','CLOUD','COACH','CORAL','CRANE','CREAM','DANCE','DREAM',
   'EARTH','FEAST','FLAME','FLASH','FLOAT','FRAME','FRESH','FROST','GHOST','GIANT',
@@ -16,8 +17,8 @@ const ANSWERS = [
 ];
 
 // 200+ valid guess words (includes answers + more)
-const VALID_GUESSES = new Set([
-  ...ANSWERS,
+const VALID_GUESSES_5 = new Set([
+  ...ANSWERS_5,
   'ABOUT','ABOVE','ABUSE','ACUTE','ADMIT','ADOPT','ADULT','AFTER','AGAIN','AGENT',
   'AGREE','AHEAD','ALARM','ALBUM','ALERT','ALIEN','ALIGN','ALIVE','ALLOW','ALONE',
   'ALTER','AMONG','ANGEL','ANGER','ANGLE','ANGRY','APART','ARENA','ARGUE','ARISE',
@@ -47,6 +48,37 @@ const VALID_GUESSES = new Set([
   'LOCAL','LODGE','LOGIC','LOOSE','LOVER','LOWER','LOYAL','LUCKY','LUNCH','MAKER',
 ]);
 
+// 50 answer words - common 4-letter words (for easy mode)
+const ANSWERS_4 = [
+  'BACK','BALL','BAND','BANK','BASE','BATH','BEAR','BEAT','BELL','BEST',
+  'BIRD','BLUE','BOAT','BODY','BOLD','BONE','BOOK','BORN','BOWL','BURN',
+  'CAGE','CAKE','CALL','CALM','CAMP','CARD','CART','CASE','CASH','CAVE',
+  'CHIP','CITY','CLAP','CLAY','CLIP','CLUB','COAL','COAT','CODE','COIN',
+  'COLD','COOK','COOL','CORD','CORE','CORN','COST','CREW','CROP','CURE',
+];
+
+// 150+ valid 4-letter guess words (includes answers + more)
+const VALID_GUESSES_4 = new Set([
+  ...ANSWERS_4,
+  'ABLE','ACID','AGED','ALSO','ARCH','AREA','ARMY','AWAY','BABY','BARE',
+  'BARN','BEAM','BEEN','BEER','BEND','BIKE','BILL','BIND','BITE','BLOW',
+  'BLUR','BOOM','BOOT','BOSS','BOTH','BULK','BUMP','BURY','BUSY','CALM',
+  'CAME','CAMP','CAPS','CARE','CAST','CHAR','CHEF','CHIN','CHOP','CITE',
+  'CLAN','CLAW','COME','COPE','COPY','COZY','CUBE','CURL','DARE','DARK',
+  'DASH','DATA','DAWN','DEAD','DEAF','DEAL','DEAR','DEBT','DECK','DEED',
+  'DEEM','DEEP','DEER','DINE','DIRT','DISH','DOCK','DOME','DONE','DOOM',
+  'DOOR','DOSE','DOWN','DRAG','DRAW','DROP','DRUM','DUAL','DULL','DUMB',
+  'DUMP','DUST','DUTY','EACH','EARN','EASE','EAST','EASY','EDGE','EDIT',
+  'ELSE','EMIT','EPIC','EVEN','EVER','EVIL','EXAM','FACE','FACT','FADE',
+  'FAIL','FAIR','FAKE','FALL','FAME','FARM','FAST','FATE','FEAR','FEED',
+  'FEEL','FILE','FILL','FILM','FIND','FINE','FIRE','FIRM','FISH','FLAG',
+  'FLAT','FLED','FLEW','FLIP','FLOW','FOAM','FOLD','FOLK','FOND','FOOD',
+  'FOOL','FOOT','FORK','FORM','FORT','FOUL','FOUR','FREE','FROM','FUEL',
+  'FULL','FUND','FURY','FUSE','GAIN','GAME','GANG','GATE','GAVE','GEAR',
+]);
+
+// Hard mode confirmed letters tracking is handled at runtime
+
 type LetterStatus = 'correct' | 'present' | 'absent' | 'empty' | 'tbd';
 
 interface TileState {
@@ -55,7 +87,12 @@ interface TileState {
   isRevealing: boolean;
 }
 
-export default function WordleGame({ onGameOver }: WordleGameProps) {
+export default function WordleGame({ onGameOver, level }: WordleGameProps) {
+  const WORD_LENGTH = level === 'easy' ? 4 : 5;
+  const MAX_GUESSES = level === 'easy' ? 7 : level === 'hard' ? 5 : 6;
+  const ANSWERS = WORD_LENGTH === 4 ? ANSWERS_4 : ANSWERS_5;
+  const VALID_GUESSES = WORD_LENGTH === 4 ? VALID_GUESSES_4 : VALID_GUESSES_5;
+
   const [answer] = useState(() => ANSWERS[Math.floor(Math.random() * ANSWERS.length)]);
   const [guesses, setGuesses] = useState<TileState[][]>([]);
   const [currentGuess, setCurrentGuess] = useState('');
@@ -65,6 +102,7 @@ export default function WordleGame({ onGameOver }: WordleGameProps) {
   const [message, setMessage] = useState('');
   const [revealingRow, setRevealingRow] = useState(-1);
   const [keyboardStatus, setKeyboardStatus] = useState<Record<string, LetterStatus>>({});
+  const [confirmedLetters, setConfirmedLetters] = useState<{ letter: string; position: number; status: 'correct' | 'present' }[]>([]);
 
   const showMessage = useCallback((msg: string, duration = 1500) => {
     setMessage(msg);
@@ -74,10 +112,10 @@ export default function WordleGame({ onGameOver }: WordleGameProps) {
   const evaluateGuess = useCallback((guess: string): TileState[] => {
     const result: TileState[] = guess.split('').map(l => ({ letter: l, status: 'absent' as LetterStatus, isRevealing: false }));
     const answerArr = answer.split('');
-    const used = new Array(5).fill(false);
+    const used = new Array(WORD_LENGTH).fill(false);
 
     // First pass: correct positions
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < WORD_LENGTH; i++) {
       if (guess[i] === answerArr[i]) {
         result[i].status = 'correct';
         used[i] = true;
@@ -85,9 +123,9 @@ export default function WordleGame({ onGameOver }: WordleGameProps) {
     }
 
     // Second pass: present but wrong position
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < WORD_LENGTH; i++) {
       if (result[i].status === 'correct') continue;
-      for (let j = 0; j < 5; j++) {
+      for (let j = 0; j < WORD_LENGTH; j++) {
         if (!used[j] && guess[i] === answerArr[j]) {
           result[i].status = 'present';
           used[j] = true;
@@ -97,10 +135,10 @@ export default function WordleGame({ onGameOver }: WordleGameProps) {
     }
 
     return result;
-  }, [answer]);
+  }, [answer, WORD_LENGTH]);
 
   const submitGuess = useCallback(() => {
-    if (currentGuess.length !== 5) {
+    if (currentGuess.length !== WORD_LENGTH) {
       setShake(true);
       showMessage('Not enough letters');
       setTimeout(() => setShake(false), 600);
@@ -114,9 +152,44 @@ export default function WordleGame({ onGameOver }: WordleGameProps) {
       return;
     }
 
+    // Hard mode: must use confirmed letters in subsequent guesses
+    if (level === 'hard' && confirmedLetters.length > 0) {
+      for (const cl of confirmedLetters) {
+        if (cl.status === 'correct' && currentGuess[cl.position] !== cl.letter) {
+          setShake(true);
+          showMessage(`${cl.letter} must be in position ${cl.position + 1}`);
+          setTimeout(() => setShake(false), 600);
+          return;
+        }
+        if (cl.status === 'present' && !currentGuess.includes(cl.letter)) {
+          setShake(true);
+          showMessage(`Guess must contain ${cl.letter}`);
+          setTimeout(() => setShake(false), 600);
+          return;
+        }
+      }
+    }
+
     const evaluated = evaluateGuess(currentGuess);
     const newGuesses = [...guesses, evaluated];
     const rowIdx = newGuesses.length - 1;
+
+    // Track confirmed letters for hard mode
+    if (level === 'hard') {
+      const newConfirmed = [...confirmedLetters];
+      evaluated.forEach((tile, i) => {
+        if (tile.status === 'correct') {
+          if (!newConfirmed.some(c => c.position === i && c.status === 'correct')) {
+            newConfirmed.push({ letter: tile.letter, position: i, status: 'correct' });
+          }
+        } else if (tile.status === 'present') {
+          if (!newConfirmed.some(c => c.letter === tile.letter && c.status === 'present')) {
+            newConfirmed.push({ letter: tile.letter, position: i, status: 'present' });
+          }
+        }
+      });
+      setConfirmedLetters(newConfirmed);
+    }
 
     // Start reveal animation
     setRevealingRow(rowIdx);
@@ -140,12 +213,12 @@ export default function WordleGame({ onGameOver }: WordleGameProps) {
       setKeyboardStatus(newKbStatus);
 
       const isWin = currentGuess === answer;
-      const isLoss = newGuesses.length >= 6 && !isWin;
+      const isLoss = newGuesses.length >= MAX_GUESSES && !isWin;
 
       if (isWin) {
         setWon(true);
         setGameOver(true);
-        const score = (7 - newGuesses.length) * 20;
+        const score = (MAX_GUESSES + 1 - newGuesses.length) * 20;
         showMessage(`Brilliant! +${score} pts`, 3000);
         setTimeout(() => onGameOver(score), 2500);
       } else if (isLoss) {
@@ -153,9 +226,9 @@ export default function WordleGame({ onGameOver }: WordleGameProps) {
         showMessage(`The word was ${answer}`, 4000);
         setTimeout(() => onGameOver(0), 3000);
       }
-    }, 5 * 300 + 100); // Wait for all tiles to flip
+    }, WORD_LENGTH * 300 + 100); // Wait for all tiles to flip
 
-  }, [currentGuess, guesses, answer, evaluateGuess, keyboardStatus, onGameOver, showMessage]);
+  }, [currentGuess, guesses, answer, evaluateGuess, keyboardStatus, onGameOver, showMessage, WORD_LENGTH, MAX_GUESSES, VALID_GUESSES, level, confirmedLetters]);
 
   const handleKey = useCallback((key: string) => {
     if (gameOver || revealingRow >= 0) return;
@@ -164,7 +237,7 @@ export default function WordleGame({ onGameOver }: WordleGameProps) {
       submitGuess();
     } else if (key === 'BACK') {
       setCurrentGuess(prev => prev.slice(0, -1));
-    } else if (/^[A-Z]$/.test(key) && currentGuess.length < 5) {
+    } else if (/^[A-Z]$/.test(key) && currentGuess.length < WORD_LENGTH) {
       setCurrentGuess(prev => prev + key);
     }
   }, [gameOver, revealingRow, currentGuess, submitGuess]);
@@ -222,12 +295,12 @@ export default function WordleGame({ onGameOver }: WordleGameProps) {
 
   const renderGrid = () => {
     const rows = [];
-    for (let r = 0; r < 6; r++) {
+    for (let r = 0; r < MAX_GUESSES; r++) {
       const tiles = [];
       const isCurrentRow = r === guesses.length;
       const isRevealRow = r === revealingRow || (r < guesses.length && r !== revealingRow);
 
-      for (let c = 0; c < 5; c++) {
+      for (let c = 0; c < WORD_LENGTH; c++) {
         let letter = '';
         let status: LetterStatus = 'empty';
         let isRevealing = false;

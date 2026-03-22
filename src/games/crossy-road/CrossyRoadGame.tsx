@@ -4,6 +4,7 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 
 interface CrossyRoadGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 type Direction = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';
@@ -68,7 +69,18 @@ function randomChoice<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function generateLane(row: number, cols: number, cellSize: number): Lane {
+interface DifficultyParams {
+  carSpeedMult: number;
+  gapMult: number;
+  logCountBonus: number;
+  grassChance: number;
+  roadChance: number;
+  carCountMod: number;
+}
+
+function generateLane(row: number, cols: number, cellSize: number, diff?: DifficultyParams): Lane {
+  const d = diff || { carSpeedMult: 1, gapMult: 1, logCountBonus: 0, grassChance: 0.35, roadChance: 0.7, carCountMod: 0 };
+
   if (row <= 0) {
     return { type: 'grass', obstacles: [], speed: 0, row };
   }
@@ -82,15 +94,15 @@ function generateLane(row: number, cols: number, cellSize: number): Lane {
     return { type: 'grass', obstacles: [], speed: 0, row };
   }
 
-  if (rand < 0.35) {
+  if (rand < d.grassChance) {
     // Grass - safe
     return { type: 'grass', obstacles: [], speed: 0, row };
-  } else if (rand < 0.7) {
+  } else if (rand < d.roadChance) {
     // Road with cars
     const dir = Math.random() < 0.5 ? 1 : -1;
-    const baseSpeed = (40 + Math.random() * 60 + difficulty * 40) * dir;
-    const carCount = 2 + Math.floor(Math.random() * 2 + difficulty);
-    const carWidth = cellSize * (1.5 + Math.random() * 1.5);
+    const baseSpeed = (40 + Math.random() * 60 + difficulty * 40) * d.carSpeedMult * dir;
+    const carCount = Math.max(1, 2 + Math.floor(Math.random() * 2 + difficulty) + d.carCountMod);
+    const carWidth = cellSize * (1.5 + Math.random() * 1.5) * d.gapMult;
     const totalWidth = cols * cellSize;
     const obstacles: { x: number; width: number; color: string }[] = [];
     const spacing = totalWidth / carCount;
@@ -107,8 +119,8 @@ function generateLane(row: number, cols: number, cellSize: number): Lane {
   } else {
     // Water with logs
     const dir = Math.random() < 0.5 ? 1 : -1;
-    const baseSpeed = (25 + Math.random() * 35 + difficulty * 20) * dir;
-    const logCount = 2 + Math.floor(Math.random() * 2);
+    const baseSpeed = (25 + Math.random() * 35 + difficulty * 20) * d.carSpeedMult * dir;
+    const logCount = Math.max(1, 2 + Math.floor(Math.random() * 2) + d.logCountBonus);
     const logWidth = cellSize * (2 + Math.random() * 2);
     const totalWidth = cols * cellSize;
     const obstacles: { x: number; width: number; color: string }[] = [];
@@ -126,7 +138,14 @@ function generateLane(row: number, cols: number, cellSize: number): Lane {
   }
 }
 
-export default function CrossyRoadGame({ onGameOver }: CrossyRoadGameProps) {
+export default function CrossyRoadGame({ onGameOver, level }: CrossyRoadGameProps) {
+  // Difficulty settings
+  const difficultyConfig = {
+    easy:   { carSpeedMult: 0.6, gapMult: 0.7, logCountBonus: 1, grassChance: 0.5, roadChance: 0.75, carCountMod: -1 },
+    medium: { carSpeedMult: 1.0, gapMult: 1.0, logCountBonus: 0, grassChance: 0.35, roadChance: 0.7, carCountMod: 0 },
+    hard:   { carSpeedMult: 1.4, gapMult: 1.3, logCountBonus: -1, grassChance: 0.2, roadChance: 0.65, carCountMod: 1 },
+  }[level];
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<GameState | null>(null);
   const animFrameRef = useRef<number>(0);
@@ -151,7 +170,7 @@ export default function CrossyRoadGame({ onGameOver }: CrossyRoadGameProps) {
 
     const lanes: Lane[] = [];
     for (let r = -2; r <= VISIBLE_ROWS + 5; r++) {
-      lanes.push(generateLane(r, COLS, cellSize));
+      lanes.push(generateLane(r, COLS, cellSize, difficultyConfig));
     }
 
     gameRef.current = {
@@ -318,7 +337,7 @@ export default function CrossyRoadGame({ onGameOver }: CrossyRoadGameProps) {
         // Generate new lanes if needed
         while (g.highestGeneratedRow < g.playerY + VISIBLE_ROWS + 5) {
           g.highestGeneratedRow++;
-          g.lanes.push(generateLane(g.highestGeneratedRow, COLS, g.cellSize));
+          g.lanes.push(generateLane(g.highestGeneratedRow, COLS, g.cellSize, difficultyConfig));
         }
         // Prune old lanes
         while (g.lanes.length > 0 && g.lanes[0].row < g.cameraY - 10) {

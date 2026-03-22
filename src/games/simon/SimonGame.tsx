@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface Props {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 const COLORS = [
@@ -13,7 +14,12 @@ const COLORS = [
   { name: 'yellow', bg: 'bg-yellow-600', active: 'bg-yellow-300', ring: 'ring-yellow-300' },
 ];
 
-export default function SimonGame({ onGameOver }: Props) {
+export default function SimonGame({ onGameOver, level }: Props) {
+  // Difficulty settings
+  const playbackInterval = level === 'easy' ? 1000 : level === 'hard' ? 400 : 700;
+  const playbackDuration = level === 'easy' ? 800 : level === 'hard' ? 300 : 500;
+  const startSequenceLength = level === 'hard' ? 2 : 1;
+
   const [sequence, setSequence] = useState<number[]>([]);
   const [playerIndex, setPlayerIndex] = useState(0);
   const [activeButton, setActiveButton] = useState<number | null>(null);
@@ -24,13 +30,16 @@ export default function SimonGame({ onGameOver }: Props) {
 
   // Start the game
   const startGame = useCallback(() => {
-    const first = Math.floor(Math.random() * 4);
-    setSequence([first]);
+    const initial: number[] = [];
+    for (let i = 0; i < startSequenceLength; i++) {
+      initial.push(Math.floor(Math.random() * 4));
+    }
+    setSequence(initial);
     setRound(1);
     setPlayerIndex(0);
     setPhase('showing');
     gameOverCalled.current = false;
-  }, []);
+  }, [startSequenceLength]);
 
   // Show sequence to player
   useEffect(() => {
@@ -43,7 +52,7 @@ export default function SimonGame({ onGameOver }: Props) {
       const interval = setInterval(() => {
         if (i < sequence.length) {
           setActiveButton(sequence[i]);
-          const offTimer = setTimeout(() => setActiveButton(null), 500);
+          const offTimer = setTimeout(() => setActiveButton(null), playbackDuration);
           timers.push(offTimer);
           i++;
         } else {
@@ -51,7 +60,7 @@ export default function SimonGame({ onGameOver }: Props) {
           setPhase('input');
           setPlayerIndex(0);
         }
-      }, 700);
+      }, playbackInterval);
       timers.push(interval as unknown as NodeJS.Timeout);
     }, 400);
     timers.push(startDelay);

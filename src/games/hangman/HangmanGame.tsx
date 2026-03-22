@@ -4,9 +4,14 @@ import { useState, useCallback, useEffect } from 'react';
 
 interface HangmanGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
-const MAX_WRONG = 6;
+const LEVEL_CONFIG = {
+  easy:   { maxWrong: 8, minLen: 3, maxLen: 4 },
+  medium: { maxWrong: 6, minLen: 5, maxLen: 6 },
+  hard:   { maxWrong: 5, minLen: 7, maxLen: 99 },
+} as const;
 
 const WORD_CATEGORIES: { topic: string; emoji: string; words: string[] }[] = [
   { topic: 'Animal', emoji: '🐾', words: ['cat', 'dog', 'fish', 'bird', 'bear', 'lion', 'tiger', 'whale', 'eagle', 'shark', 'horse', 'mouse', 'snake', 'frog', 'duck', 'deer', 'wolf', 'zebra', 'panda', 'koala', 'rabbit', 'turtle', 'dolphin', 'penguin', 'monkey'] },
@@ -82,7 +87,8 @@ function HangmanSVG({ wrongCount }: { wrongCount: number }) {
   );
 }
 
-export default function HangmanGame({ onGameOver }: HangmanGameProps) {
+export default function HangmanGame({ onGameOver, level }: HangmanGameProps) {
+  const { maxWrong: MAX_WRONG, minLen, maxLen } = LEVEL_CONFIG[level];
   const [word, setWord] = useState('');
   const [topic, setTopic] = useState('');
   const [topicEmoji, setTopicEmoji] = useState('');
@@ -97,10 +103,16 @@ export default function HangmanGame({ onGameOver }: HangmanGameProps) {
   const isWordComplete = word.split('').every(l => guessed.has(l));
 
   const pickWord = useCallback(() => {
-    const category = WORD_CATEGORIES[Math.floor(Math.random() * WORD_CATEGORIES.length)];
+    // Filter categories to only those with words matching the level's length range
+    const filtered = WORD_CATEGORIES.map(cat => ({
+      ...cat,
+      words: cat.words.filter(w => w.length >= minLen && w.length <= maxLen),
+    })).filter(cat => cat.words.length > 0);
+    const pool = filtered.length > 0 ? filtered : WORD_CATEGORIES;
+    const category = pool[Math.floor(Math.random() * pool.length)];
     const w = category.words[Math.floor(Math.random() * category.words.length)];
     return { word: w, topic: category.topic, emoji: category.emoji };
-  }, []);
+  }, [minLen, maxLen]);
 
   const startGame = useCallback(() => {
     const pick = pickWord();
@@ -158,7 +170,7 @@ export default function HangmanGame({ onGameOver }: HangmanGameProps) {
         <div className="text-6xl">🔤</div>
         <h2 className="text-2xl font-bold text-white">Hangman</h2>
         <p className="text-gray-400 text-center max-w-xs">
-          Guess the word before the hangman is complete! You get 6 wrong guesses.
+          Guess the word before the hangman is complete! You get {MAX_WRONG} wrong guesses.
         </p>
         <button
           onClick={startGame}

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
-import { getGameById } from '@/lib/games'
+import { getGameById, LEVEL_LABELS, type GameLevel } from '@/lib/games'
 import { saveScore, getHighScore } from '@/lib/scores'
 import { useFamily } from '@/lib/family-context'
 
@@ -33,50 +33,69 @@ import CrossyRoadGame from '@/games/crossy-road/CrossyRoadGame'
 import DoodleJumpGame from '@/games/doodle-jump/DoodleJumpGame'
 import ChessGame from '@/games/chess/ChessGame'
 
-const GAME_COMPONENTS: Record<string, React.ComponentType<{ onGameOver: (score: number) => void }>> = {
-  'snake': SnakeGame,
-  'pong': PongGame,
-  'tetris': TetrisGame,
-  'breakout': BreakoutGame,
-  'memory-match': MemoryMatchGame,
-  'tic-tac-toe': TicTacToeGame,
-  'simon': SimonGame,
-  'flappy-bird': FlappyBirdGame,
-  'dino-run': DinoRunGame,
-  'whack-a-mole': WhackAMoleGame,
-  '2048': Game2048,
-  'space-invaders': SpaceInvadersGame,
-  'connect-four': ConnectFourGame,
-  'hangman': HangmanGame,
-  'wordle': WordleGame,
-  'minesweeper': MinesweeperGame,
-  'frogger': FroggerGame,
-  'asteroids': AsteroidsGame,
-  'pac-man': PacManGame,
-  'galaga': GalagaGame,
-  'checkers': CheckersGame,
-  'brick-breaker': BrickBreakerGame,
-  'crossy-road': CrossyRoadGame,
-  'doodle-jump': DoodleJumpGame,
-  'chess': ChessGame,
+type GameProps = { onGameOver: (score: number) => void; level: GameLevel }
+
+const GAME_COMPONENTS: Record<string, React.ComponentType<GameProps>> = {
+  'snake': SnakeGame as React.ComponentType<GameProps>,
+  'pong': PongGame as React.ComponentType<GameProps>,
+  'tetris': TetrisGame as React.ComponentType<GameProps>,
+  'breakout': BreakoutGame as React.ComponentType<GameProps>,
+  'memory-match': MemoryMatchGame as React.ComponentType<GameProps>,
+  'tic-tac-toe': TicTacToeGame as React.ComponentType<GameProps>,
+  'simon': SimonGame as React.ComponentType<GameProps>,
+  'flappy-bird': FlappyBirdGame as React.ComponentType<GameProps>,
+  'dino-run': DinoRunGame as React.ComponentType<GameProps>,
+  'whack-a-mole': WhackAMoleGame as React.ComponentType<GameProps>,
+  '2048': Game2048 as React.ComponentType<GameProps>,
+  'space-invaders': SpaceInvadersGame as React.ComponentType<GameProps>,
+  'connect-four': ConnectFourGame as React.ComponentType<GameProps>,
+  'hangman': HangmanGame as React.ComponentType<GameProps>,
+  'wordle': WordleGame as React.ComponentType<GameProps>,
+  'minesweeper': MinesweeperGame as React.ComponentType<GameProps>,
+  'frogger': FroggerGame as React.ComponentType<GameProps>,
+  'asteroids': AsteroidsGame as React.ComponentType<GameProps>,
+  'pac-man': PacManGame as React.ComponentType<GameProps>,
+  'galaga': GalagaGame as React.ComponentType<GameProps>,
+  'checkers': CheckersGame as React.ComponentType<GameProps>,
+  'brick-breaker': BrickBreakerGame as React.ComponentType<GameProps>,
+  'crossy-road': CrossyRoadGame as React.ComponentType<GameProps>,
+  'doodle-jump': DoodleJumpGame as React.ComponentType<GameProps>,
+  'chess': ChessGame as React.ComponentType<GameProps>,
 }
+
+const LEVEL_STORAGE_KEY = 'retroride-last-level'
 
 export default function PlayClient({ gameId }: { gameId: string }) {
   const router = useRouter()
   const game = getGameById(gameId)
   const familyCtx = useFamily()
 
-  const [gameState, setGameState] = useState<'playing' | 'over'>('playing')
+  const [gameState, setGameState] = useState<'pick-level' | 'playing' | 'over'>('pick-level')
+  const [level, setLevel] = useState<GameLevel>('medium')
   const [score, setScore] = useState(0)
   const [highScore, setHighScore] = useState(0)
   const [isNewHigh, setIsNewHigh] = useState(false)
   const [showOverlay, setShowOverlay] = useState(false)
+
+  // Restore last used level
+  useEffect(() => {
+    const saved = localStorage.getItem(LEVEL_STORAGE_KEY)
+    if (saved === 'easy' || saved === 'medium' || saved === 'hard') {
+      setLevel(saved)
+    }
+  }, [])
 
   useEffect(() => {
     if (game) {
       setHighScore(getHighScore(game.id))
     }
   }, [game])
+
+  const startGame = (selectedLevel: GameLevel) => {
+    setLevel(selectedLevel)
+    localStorage.setItem(LEVEL_STORAGE_KEY, selectedLevel)
+    setGameState('playing')
+  }
 
   const handleGameOver = useCallback((finalScore: number) => {
     setScore(finalScore)
@@ -93,9 +112,8 @@ export default function PlayClient({ gameId }: { gameId: string }) {
         setHighScore(finalScore)
       }
     }
-    // Delay showing the overlay so the player can see the game's own result
     setTimeout(() => setShowOverlay(true), 1800)
-  }, [game])
+  }, [game, familyCtx])
 
   const handleRestart = () => {
     setGameState('playing')
@@ -123,6 +141,78 @@ export default function PlayClient({ gameId }: { gameId: string }) {
 
   const GameComponent = GAME_COMPONENTS[gameId]
 
+  // Level picker screen
+  if (gameState === 'pick-level') {
+    return (
+      <div className="min-h-screen flex flex-col page-enter">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-4 py-3 bg-slate-900/80 backdrop-blur-sm border-b border-slate-800/50">
+          <button
+            onClick={() => router.push('/')}
+            className="touch-btn text-slate-400 hover:text-white transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <div className="text-center">
+            <span className="text-lg mr-1">{game.icon}</span>
+            <span className="font-semibold text-sm" style={{ color: game.color }}>
+              {game.name}
+            </span>
+          </div>
+          <div className="w-[48px]" />
+        </div>
+
+        {/* Level selection */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center px-6 max-w-sm w-full">
+            <p className="text-5xl mb-4">{game.icon}</p>
+            <h2 className="text-xl font-bold text-white mb-2">{game.name}</h2>
+            <p className="text-slate-400 text-sm mb-8">Choose your difficulty</p>
+
+            <div className="flex flex-col gap-3">
+              {(['easy', 'medium', 'hard'] as GameLevel[]).map(lvl => {
+                const info = LEVEL_LABELS[lvl]
+                const isSelected = lvl === level
+                return (
+                  <button
+                    key={lvl}
+                    onClick={() => startGame(lvl)}
+                    className={`w-full px-6 py-4 rounded-xl font-semibold text-left transition-all active:scale-[0.97] flex items-center justify-between ${
+                      isSelected
+                        ? 'ring-2 ring-offset-2 ring-offset-slate-900'
+                        : ''
+                    }`}
+                    style={{
+                      background: `${info.color}15`,
+                      border: `1px solid ${info.color}40`,
+                      ...(isSelected ? { ringColor: info.color } : {}),
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">{info.stars}</span>
+                      <span className="text-white text-base">{info.label}</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={info.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 18l6-6-6-6" />
+                    </svg>
+                  </button>
+                )
+              })}
+            </div>
+
+            {highScore > 0 && (
+              <p className="text-xs text-slate-500 mt-6">
+                Your best: <span className="text-amber-400 font-semibold">{highScore.toLocaleString()}</span>
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex flex-col page-enter">
       {/* Top bar */}
@@ -141,6 +231,9 @@ export default function PlayClient({ gameId }: { gameId: string }) {
           <span className="font-semibold text-sm" style={{ color: game.color }}>
             {game.name}
           </span>
+          <span className="ml-2 text-xs" style={{ color: LEVEL_LABELS[level].color }}>
+            {LEVEL_LABELS[level].stars}
+          </span>
         </div>
 
         <div className="text-xs text-slate-500 min-w-[60px] text-right">
@@ -151,7 +244,7 @@ export default function PlayClient({ gameId }: { gameId: string }) {
       {/* Game area */}
       <div className="flex-1 flex items-center justify-center relative">
         {gameState === 'playing' && GameComponent && (
-          <GameComponent onGameOver={handleGameOver} />
+          <GameComponent key={level} onGameOver={handleGameOver} level={level} />
         )}
 
         {gameState === 'playing' && !GameComponent && (
@@ -196,6 +289,12 @@ export default function PlayClient({ gameId }: { gameId: string }) {
                   style={{ background: game.color }}
                 >
                   Play Again
+                </button>
+                <button
+                  onClick={() => setGameState('pick-level')}
+                  className="w-full px-6 py-3 bg-slate-800 rounded-xl text-slate-300 text-sm hover:bg-slate-700 transition-all"
+                >
+                  Change Difficulty
                 </button>
                 <button
                   onClick={() => router.push('/')}

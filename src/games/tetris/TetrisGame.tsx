@@ -4,9 +4,9 @@ import { useRef, useEffect, useCallback } from 'react';
 
 interface TetrisGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
-const COLS = 10;
 const ROWS = 20;
 const BLOCK = 24;
 const COLORS = [
@@ -72,8 +72,8 @@ interface Particle {
   size: number;
 }
 
-function createBoard(): Board {
-  return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+function createBoard(cols: number): Board {
+  return Array.from({ length: ROWS }, () => Array(cols).fill(null));
 }
 
 function rotatePiece(blocks: number[][]): number[][] {
@@ -83,7 +83,13 @@ function rotatePiece(blocks: number[][]): number[][] {
   return blocks.map(([x, y]) => [size - y, x]);
 }
 
-export default function TetrisGame({ onGameOver }: TetrisGameProps) {
+export default function TetrisGame({ onGameOver, level }: TetrisGameProps) {
+  // Level-based settings
+  const COLS = level === 'easy' ? 12 : 10;
+  const initialDropInterval = level === 'easy' ? 1200 : level === 'hard' ? 500 : 800;
+  const speedIncrement = level === 'easy' ? 40 : level === 'hard' ? 100 : 75;
+  const minDropInterval = level === 'easy' ? 150 : level === 'hard' ? 80 : 100;
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<{
     board: Board;
@@ -102,12 +108,12 @@ export default function TetrisGame({ onGameOver }: TetrisGameProps) {
     particles: Particle[];
     lineClearFlash: number;
   }>({
-    board: createBoard(),
+    board: createBoard(COLS),
     current: null,
     next: randomPiece(),
     score: 0,
     lines: 0,
-    dropInterval: 800,
+    dropInterval: initialDropInterval,
     lastDrop: 0,
     gameOver: false,
     gameOverNotified: false,
@@ -200,7 +206,7 @@ export default function TetrisGame({ onGameOver }: TetrisGameProps) {
       const points = [0, 100, 200, 400, 800];
       s.score += points[cleared] || 800;
       s.lines += cleared;
-      s.dropInterval = Math.max(100, 800 - Math.floor(s.lines / 10) * 75);
+      s.dropInterval = Math.max(minDropInterval, initialDropInterval - Math.floor(s.lines / 10) * speedIncrement);
     }
   }
 
@@ -253,12 +259,12 @@ export default function TetrisGame({ onGameOver }: TetrisGameProps) {
 
     const s = stateRef.current;
     // Reset state for fresh mount
-    s.board = createBoard();
+    s.board = createBoard(COLS);
     s.current = null;
     s.next = randomPiece();
     s.score = 0;
     s.lines = 0;
-    s.dropInterval = 800;
+    s.dropInterval = initialDropInterval;
     s.lastDrop = 0;
     s.gameOver = false;
     s.started = false;
@@ -669,7 +675,7 @@ export default function TetrisGame({ onGameOver }: TetrisGameProps) {
       canvas.removeEventListener('touchstart', handleTouchStart);
       canvas.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [onGameOver, moveLeft, moveRight, softDrop, rotate]);
+  }, [onGameOver, moveLeft, moveRight, softDrop, rotate, COLS, initialDropInterval, minDropInterval, speedIncrement]);
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>

@@ -14,10 +14,18 @@ interface FamilyInfo {
   code: string
 }
 
+interface OnlineMember {
+  id: string
+  name: string
+  avatar: string
+}
+
 interface FamilyContextType {
   family: FamilyInfo | null
   member: FamilyMember | null
   members: FamilyMember[]
+  onlineMembers: OnlineMember[]
+  setOnlineMembers: (members: OnlineMember[]) => void
   isLoggedIn: boolean
   createFamily: (familyName: string, memberName: string, avatar: string) => Promise<void>
   joinFamily: (code: string, memberName: string, avatar: string) => Promise<string | null>
@@ -63,6 +71,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   const [family, setFamily] = useState<FamilyInfo | null>(null)
   const [member, setMember] = useState<FamilyMember | null>(null)
   const [members, setMembers] = useState<FamilyMember[]>([])
+  const [onlineMembers, setOnlineMembers] = useState<OnlineMember[]>([])
 
   useEffect(() => {
     const session = loadSession()
@@ -144,7 +153,8 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
   return (
     <FamilyContext.Provider value={{
-      family, member, members, isLoggedIn: !!family && !!member,
+      family, member, members, onlineMembers, setOnlineMembers,
+      isLoggedIn: !!family && !!member,
       createFamily, joinFamily, switchMember, logout, refreshMembers, submitScore,
     }}>
       {children}

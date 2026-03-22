@@ -4,9 +4,16 @@ import { useState, useEffect, useCallback } from 'react';
 
 interface Props {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
-const EMOJIS = ['🐶', '🐱', '🐭', '🐰', '🦊', '🐸', '🐵', '🦁'];
+const ALL_EMOJIS = ['🐶', '🐱', '🐭', '🐰', '🦊', '🐸', '🐵', '🦁', '🐯', '🐼'];
+
+const LEVEL_CONFIG = {
+  easy:   { pairs: 3, cols: 3 },
+  medium: { pairs: 8, cols: 4 },
+  hard:   { pairs: 10, cols: 5 },
+} as const;
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -17,7 +24,9 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-export default function MemoryMatchGame({ onGameOver }: Props) {
+export default function MemoryMatchGame({ onGameOver, level }: Props) {
+  const { pairs, cols } = LEVEL_CONFIG[level];
+  const EMOJIS = ALL_EMOJIS.slice(0, pairs);
   const [cards, setCards] = useState<string[]>([]);
   const [flipped, setFlipped] = useState<number[]>([]);
   const [matched, setMatched] = useState<Set<number>>(new Set());
@@ -82,7 +91,7 @@ export default function MemoryMatchGame({ onGameOver }: Props) {
         </span>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 sm:gap-3">
+      <div className={`grid gap-2 sm:gap-3`} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
         {cards.map((emoji, i) => {
           const revealed = isRevealed(i);
           const isMatched = matched.has(i);

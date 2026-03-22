@@ -4,6 +4,7 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 
 interface AsteroidsGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 const BASE_W = 600;
@@ -98,7 +99,11 @@ function dist(a: Vec2, b: Vec2) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-export default function AsteroidsGame({ onGameOver }: AsteroidsGameProps) {
+export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps) {
+  // Level-based settings
+  const startingAsteroids = level === 'easy' ? 2 : level === 'hard' ? 6 : 4;
+  const asteroidSpeedMultiplier = level === 'easy' ? 0.6 : level === 'hard' ? 1.5 : 1.0;
+  const initialLives = level === 'easy' ? 5 : level === 'hard' ? 2 : 3;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const keysRef = useRef<Set<string>>(new Set());
   const stateRef = useRef<{
@@ -120,16 +125,21 @@ export default function AsteroidsGame({ onGameOver }: AsteroidsGameProps) {
     nebulaTime: number;
   } | null>(null);
   const [displayScore, setDisplayScore] = useState(0);
-  const [displayLives, setDisplayLives] = useState(3);
+  const [displayLives, setDisplayLives] = useState(initialLives);
   const [canvasSize, setCanvasSize] = useState({ w: BASE_W, h: BASE_H });
   const touchRef = useRef<{ left: boolean; right: boolean; thrust: boolean; shoot: boolean }>({
     left: false, right: false, thrust: false, shoot: false,
   });
 
   const spawnWave = useCallback((wave: number): Asteroid[] => {
-    const count = 3 + wave;
-    return Array.from({ length: count }, () => spawnAsteroid('large'));
-  }, []);
+    const count = startingAsteroids + wave;
+    return Array.from({ length: count }, () => {
+      const a = spawnAsteroid('large');
+      a.vel.x *= asteroidSpeedMultiplier;
+      a.vel.y *= asteroidSpeedMultiplier;
+      return a;
+    });
+  }, [startingAsteroids, asteroidSpeedMultiplier]);
 
   // Resize
   useEffect(() => {
@@ -198,7 +208,7 @@ export default function AsteroidsGame({ onGameOver }: AsteroidsGameProps) {
       asteroids: spawnWave(0),
       particles: [],
       score: 0,
-      lives: 3,
+      lives: initialLives,
       wave: 0,
       gameOver: false,
       animFrame: 0,

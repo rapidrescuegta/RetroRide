@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 
 interface GalagaGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 interface Star {
@@ -45,7 +46,14 @@ const H = 560;
 const PLAYER_W = 28;
 const PLAYER_H = 24;
 
-export default function GalagaGame({ onGameOver }: GalagaGameProps) {
+export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
+  // Difficulty settings
+  const difficultyConfig = {
+    easy:   { startLives: 5, rowMod: -1, colMod: -2, diveChanceBase: 0.002, diveChancePerWave: 0.001, diveSpeedBase: 1.5, diveSpeedPerWave: 0.15, enemyShootChance: 0.01, formationShootInterval: 80 },
+    medium: { startLives: 3, rowMod: 0, colMod: 0, diveChanceBase: 0.005, diveChancePerWave: 0.003, diveSpeedBase: 2, diveSpeedPerWave: 0.3, enemyShootChance: 0.03, formationShootInterval: 40 },
+    hard:   { startLives: 2, rowMod: 1, colMod: 1, diveChanceBase: 0.008, diveChancePerWave: 0.005, diveSpeedBase: 2.5, diveSpeedPerWave: 0.45, enemyShootChance: 0.05, formationShootInterval: 25 },
+  }[level];
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<{
     playerX: number;
@@ -88,8 +96,8 @@ export default function GalagaGame({ onGameOver }: GalagaGameProps) {
 
   const spawnWave = (waveNum: number): Enemy[] => {
     const enemies: Enemy[] = [];
-    const rows = Math.min(3 + Math.floor(waveNum / 2), 5);
-    const cols = Math.min(6 + Math.floor(waveNum / 3), 9);
+    const rows = Math.min(3 + Math.floor(waveNum / 2) + difficultyConfig.rowMod, 5);
+    const cols = Math.min(6 + Math.floor(waveNum / 3) + difficultyConfig.colMod, 9);
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
@@ -102,7 +110,7 @@ export default function GalagaGame({ onGameOver }: GalagaGameProps) {
         const y = 40 + r * 36;
         enemies.push({
           x, y, type, alive: true, diving: false,
-          diveAngle: 0, diveSpeed: 2 + waveNum * 0.3,
+          diveAngle: 0, diveSpeed: difficultyConfig.diveSpeedBase + waveNum * difficultyConfig.diveSpeedPerWave,
           origX: x, origY: y, animFrame: 0, hp,
         });
       }
@@ -113,7 +121,7 @@ export default function GalagaGame({ onGameOver }: GalagaGameProps) {
   const initGame = useCallback(() => {
     stateRef.current = {
       playerX: W / 2,
-      lives: 3,
+      lives: difficultyConfig.startLives,
       score: 0,
       wave: 1,
       bullets: [],
@@ -129,7 +137,7 @@ export default function GalagaGame({ onGameOver }: GalagaGameProps) {
       started: false,
     };
     setScore(0);
-    setLives(3);
+    setLives(difficultyConfig.startLives);
     setWave(1);
     setGameOver(false);
     setGameOverCalled(false);
@@ -498,7 +506,7 @@ export default function GalagaGame({ onGameOver }: GalagaGameProps) {
 
           // Random dive
           const aliveEnemies = gs.enemies.filter(e => e.alive && !e.diving);
-          const diveChance = 0.005 + gs.wave * 0.003;
+          const diveChance = difficultyConfig.diveChanceBase + gs.wave * difficultyConfig.diveChancePerWave;
           aliveEnemies.forEach(e => {
             if (Math.random() < diveChance) {
               e.diving = true;
@@ -513,7 +521,7 @@ export default function GalagaGame({ onGameOver }: GalagaGameProps) {
               e.y += Math.sin(e.diveAngle) * e.diveSpeed;
 
               // Enemy shoots while diving
-              if (Math.random() < 0.03) {
+              if (Math.random() < difficultyConfig.enemyShootChance) {
                 gs.bullets.push({ x: e.x, y: e.y + 10, isEnemy: true });
               }
 
@@ -526,7 +534,7 @@ export default function GalagaGame({ onGameOver }: GalagaGameProps) {
           });
 
           // Random shots from formation
-          if (gs.frameCount % 40 === 0) {
+          if (gs.frameCount % difficultyConfig.formationShootInterval === 0) {
             const shooters = gs.enemies.filter(e => e.alive && !e.diving);
             if (shooters.length > 0) {
               const shooter = shooters[Math.floor(Math.random() * shooters.length)];

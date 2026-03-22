@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 
 interface ChessGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 // Types
@@ -525,21 +526,26 @@ function minimax(
   }
 }
 
-function findBestMove(state: GameState): Move | null {
+function findBestMove(state: GameState, depth: number = 2, randomChance: number = 0.15): Move | null {
   const moves = getLegalMoves(state, state.turn);
   if (moves.length === 0) return null;
+
+  // Random move chance (for easier difficulty)
+  if (randomChance > 0 && Math.random() < randomChance) {
+    return moves[Math.floor(Math.random() * moves.length)];
+  }
 
   const isMaximizing = state.turn === 'w';
   let bestMove = moves[0];
   let bestVal = isMaximizing ? -Infinity : Infinity;
 
-  // Use depth 3 for fewer pieces, depth 2 normally
+  // Use provided depth, but boost by 1 for endgame
   const totalPieces = state.board.flat().filter(Boolean).length;
-  const depth = totalPieces <= 12 ? 3 : 2;
+  const searchDepth = totalPieces <= 12 ? depth + 1 : depth;
 
   for (const move of moves) {
     const ns = applyMove(state, move);
-    const val = minimax(ns, depth - 1, -Infinity, Infinity, isMaximizing ? false : true);
+    const val = minimax(ns, searchDepth - 1, -Infinity, Infinity, isMaximizing ? false : true);
 
     if (isMaximizing ? val > bestVal : val < bestVal) {
       bestVal = val;
@@ -554,7 +560,10 @@ function findBestMove(state: GameState): Move | null {
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1'];
 
-export default function ChessGame({ onGameOver }: ChessGameProps) {
+export default function ChessGame({ onGameOver, level }: ChessGameProps) {
+  // Level-based AI settings
+  const aiDepth = level === 'easy' ? 1 : level === 'hard' ? 3 : 2;
+  const randomMoveChance = level === 'easy' ? 0.4 : level === 'hard' ? 0 : 0.15;
   const [gameState, setGameState] = useState<GameState>(() => ({
     board: createInitialBoard(),
     turn: 'w',
@@ -602,7 +611,7 @@ export default function ChessGame({ onGameOver }: ChessGameProps) {
     setAiThinking(true);
 
     const timer = setTimeout(() => {
-      const move = findBestMove(gameState);
+      const move = findBestMove(gameState, aiDepth, randomMoveChance);
       if (move) {
         const ns = applyMove(gameState, move);
         if (move.captured) {

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 
 interface ConnectFourGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 const ROWS = 6;
@@ -97,13 +98,89 @@ function countThreats(board: Board, player: Cell): number {
   return threats;
 }
 
-function aiMove(board: Board): number {
+function minimax(board: Board, depth: number, isMaximizing: boolean, alpha: number, beta: number): number {
+  if (checkWin(board, 2)) return 1000 + depth;
+  if (checkWin(board, 1)) return -1000 - depth;
+  if (isBoardFull(board) || depth === 0) {
+    return countThreats(board, 2) * 10 - countThreats(board, 1) * 10;
+  }
+
+  if (isMaximizing) {
+    let maxEval = -Infinity;
+    for (let c = 0; c < COLS; c++) {
+      const r = getAvailableRow(board, c);
+      if (r === -1) continue;
+      const b = cloneBoard(board);
+      b[r][c] = 2;
+      const score = minimax(b, depth - 1, false, alpha, beta);
+      maxEval = Math.max(maxEval, score);
+      alpha = Math.max(alpha, score);
+      if (beta <= alpha) break;
+    }
+    return maxEval;
+  } else {
+    let minEval = Infinity;
+    for (let c = 0; c < COLS; c++) {
+      const r = getAvailableRow(board, c);
+      if (r === -1) continue;
+      const b = cloneBoard(board);
+      b[r][c] = 1;
+      const score = minimax(b, depth - 1, true, alpha, beta);
+      minEval = Math.min(minEval, score);
+      beta = Math.min(beta, score);
+      if (beta <= alpha) break;
+    }
+    return minEval;
+  }
+}
+
+function aiMove(board: Board, level: 'easy' | 'medium' | 'hard'): number {
   const available: number[] = [];
   for (let c = 0; c < COLS; c++) {
     if (getAvailableRow(board, c) !== -1) available.push(c);
   }
   if (available.length === 0) return -1;
 
+  // Easy: mostly random, only blocks obvious wins
+  if (level === 'easy') {
+    // Block immediate player win
+    for (const c of available) {
+      const b = cloneBoard(board);
+      const r = getAvailableRow(b, c);
+      b[r][c] = 1;
+      if (checkWin(b, 1)) return c;
+    }
+    // Take immediate AI win
+    for (const c of available) {
+      const b = cloneBoard(board);
+      const r = getAvailableRow(b, c);
+      b[r][c] = 2;
+      if (checkWin(b, 2)) return c;
+    }
+    // Otherwise random
+    return available[Math.floor(Math.random() * available.length)];
+  }
+
+  // Hard: minimax with depth 4
+  if (level === 'hard') {
+    let bestScore = -Infinity;
+    let bestCols: number[] = [];
+    for (const c of available) {
+      const b = cloneBoard(board);
+      const r = getAvailableRow(b, c);
+      b[r][c] = 2;
+      const score = minimax(b, 4, false, -Infinity, Infinity) + (3 - Math.abs(c - 3)) * 0.5;
+      if (score > bestScore) {
+        bestScore = score;
+        bestCols = [c];
+      } else if (score === bestScore) {
+        bestCols.push(c);
+      }
+    }
+    return bestCols[Math.floor(Math.random() * bestCols.length)];
+  }
+
+  // Medium: original heuristic logic
   // 1. Check if AI can win
   for (const c of available) {
     const b = cloneBoard(board);
@@ -154,7 +231,7 @@ function aiMove(board: Board): number {
   return bestCols[Math.floor(Math.random() * bestCols.length)];
 }
 
-export default function ConnectFourGame({ onGameOver }: ConnectFourGameProps) {
+export default function ConnectFourGame({ onGameOver, level }: ConnectFourGameProps) {
   const [board, setBoard] = useState<Board>(createBoard);
   const [currentPlayer, setCurrentPlayer] = useState<1 | 2>(1);
   const [gameOver, setGameOver] = useState(false);
@@ -209,7 +286,7 @@ export default function ConnectFourGame({ onGameOver }: ConnectFourGameProps) {
     if (currentPlayer === 2 && !gameOver && started && !aiThinking.current) {
       aiThinking.current = true;
       const timer = setTimeout(() => {
-        const col = aiMove(board);
+        const col = aiMove(board, level);
         if (col !== -1) dropPiece(col, 2);
         aiThinking.current = false;
       }, 500);

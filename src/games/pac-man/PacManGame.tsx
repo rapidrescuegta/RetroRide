@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 
 interface PacManGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 // Maze layout: 0=empty, 1=wall, 2=dot, 3=power pellet, 4=empty path
@@ -49,7 +50,14 @@ interface Ghost {
   eaten: boolean;
 }
 
-export default function PacManGame({ onGameOver }: PacManGameProps) {
+export default function PacManGame({ onGameOver, level }: PacManGameProps) {
+  // Difficulty settings
+  const difficultyConfig = {
+    easy:   { ghostCount: 2, ghostMoveInterval: 250, powerDuration: 480, startLives: 5 },
+    medium: { ghostCount: 4, ghostMoveInterval: 200, powerDuration: 300, startLives: 3 },
+    hard:   { ghostCount: 4, ghostMoveInterval: 160, powerDuration: 180, startLives: 2 },
+  }[level];
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameStateRef = useRef<{
     maze: number[][];
@@ -90,12 +98,13 @@ export default function PacManGame({ onGameOver }: PacManGameProps) {
       }
     }
 
-    const ghosts: Ghost[] = [
+    const allGhosts: Ghost[] = [
       { x: 8, y: 9, color: '#FF0000', dir: 'left', scared: false, mode: 'chase', patrolAxis: 'x', homeX: 1, homeY: 1, eaten: false },
       { x: 9, y: 9, color: '#FFB8FF', dir: 'up', scared: false, mode: 'random', patrolAxis: 'y', homeX: 17, homeY: 1, eaten: false },
       { x: 10, y: 9, color: '#00FFFF', dir: 'right', scared: false, mode: 'patrol', patrolAxis: 'x', homeX: 1, homeY: 19, eaten: false },
       { x: 9, y: 8, color: '#FFB852', dir: 'down', scared: false, mode: 'random', patrolAxis: 'y', homeX: 17, homeY: 19, eaten: false },
     ];
+    const ghosts = allGhosts.slice(0, difficultyConfig.ghostCount);
 
     gameStateRef.current = {
       maze,
@@ -107,7 +116,7 @@ export default function PacManGame({ onGameOver }: PacManGameProps) {
       mouthDir: 1,
       ghosts,
       score: 0,
-      lives: 3,
+      lives: difficultyConfig.startLives,
       powerTimer: 0,
       gameOver: false,
       levelComplete: false,
@@ -120,7 +129,7 @@ export default function PacManGame({ onGameOver }: PacManGameProps) {
       readyTimer: 90,
     };
     setScore(0);
-    setLives(3);
+    setLives(difficultyConfig.startLives);
     setGameOver(false);
     setGameOverCalled(false);
   }, []);
@@ -158,10 +167,19 @@ export default function PacManGame({ onGameOver }: PacManGameProps) {
     gs.pacY = 15;
     gs.pacDir = 'none';
     gs.nextDir = 'none';
-    gs.ghosts[0].x = 8; gs.ghosts[0].y = 9; gs.ghosts[0].dir = 'left';
-    gs.ghosts[1].x = 9; gs.ghosts[1].y = 9; gs.ghosts[1].dir = 'up';
-    gs.ghosts[2].x = 10; gs.ghosts[2].y = 9; gs.ghosts[2].dir = 'right';
-    gs.ghosts[3].x = 9; gs.ghosts[3].y = 8; gs.ghosts[3].dir = 'down';
+    const ghostStartPositions = [
+      { x: 8, y: 9, dir: 'left' as Direction },
+      { x: 9, y: 9, dir: 'up' as Direction },
+      { x: 10, y: 9, dir: 'right' as Direction },
+      { x: 9, y: 8, dir: 'down' as Direction },
+    ];
+    gs.ghosts.forEach((g, i) => {
+      if (i < ghostStartPositions.length) {
+        g.x = ghostStartPositions[i].x;
+        g.y = ghostStartPositions[i].y;
+        g.dir = ghostStartPositions[i].dir;
+      }
+    });
     gs.ghosts.forEach(g => { g.scared = false; g.eaten = false; });
     gs.powerTimer = 0;
     gs.readyTimer = 60;
@@ -545,7 +563,7 @@ export default function PacManGame({ onGameOver }: PacManGameProps) {
 
     let lastTime = 0;
     const MOVE_INTERVAL = 150; // ms between pac-man moves
-    const GHOST_MOVE_INTERVAL = 200;
+    const GHOST_MOVE_INTERVAL = difficultyConfig.ghostMoveInterval;
 
     const gameLoop = (timestamp: number) => {
       const gs = gameStateRef.current;
@@ -638,7 +656,7 @@ export default function PacManGame({ onGameOver }: PacManGameProps) {
             gs.maze[ny][nx] = 4;
             gs.score += 50;
             gs.dotsEaten++;
-            gs.powerTimer = 300; // ~5 seconds
+            gs.powerTimer = difficultyConfig.powerDuration;
             gs.ghosts.forEach(g => { if (!g.eaten) g.scared = true; });
           }
 

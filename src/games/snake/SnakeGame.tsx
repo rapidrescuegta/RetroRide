@@ -4,16 +4,20 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 
 interface SnakeGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
-const GRID_SIZE = 20;
-const INITIAL_SPEED = 120;
-const MIN_SPEED = 60;
+const LEVEL_CONFIG = {
+  easy:   { gridSize: 12, initialSpeed: 200, minSpeed: 100 },
+  medium: { gridSize: 16, initialSpeed: 120, minSpeed: 60 },
+  hard:   { gridSize: 20, initialSpeed: 70,  minSpeed: 35 },
+} as const;
 
 type Direction = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';
 type Point = { x: number; y: number };
 
-export default function SnakeGame({ onGameOver }: SnakeGameProps) {
+export default function SnakeGame({ onGameOver, level }: SnakeGameProps) {
+  const { gridSize: GRID_SIZE, initialSpeed: INITIAL_SPEED, minSpeed: MIN_SPEED } = LEVEL_CONFIG[level];
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameStateRef = useRef<{
     snake: Point[];

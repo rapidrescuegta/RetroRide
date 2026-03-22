@@ -16,13 +16,15 @@ model Family {
 }
 
 model Member {
-  id        String   @id @default(cuid())
-  name      String
-  avatar    String   @default("😀")
-  familyId  String
-  family    Family   @relation(fields: [familyId], references: [id])
-  createdAt DateTime @default(now())
-  scores    Score[]
+  id           String        @id @default(cuid())
+  name         String
+  avatar       String        @default("😀")
+  familyId     String
+  family       Family        @relation(fields: [familyId], references: [id])
+  createdAt    DateTime      @default(now())
+  scores       Score[]
+  presence     Presence?
+  chatMessages ChatMessage[]
 
   @@unique([familyId, name])
 }
@@ -37,4 +39,24 @@ model Score {
 
   @@index([gameId, score(sort: Desc)])
   @@index([memberId])
+}
+
+model Presence {
+  id       String   @id @default(cuid())
+  memberId String   @unique
+  member   Member   @relation(fields: [memberId], references: [id])
+  lastSeen DateTime @default(now())
+  isOnline Boolean  @default(true)
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  familyId  String
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id])
+  text      String
+  type      String   @default("message")
+  createdAt DateTime @default(now())
+
+  @@index([familyId, createdAt(sort: Desc)])
 }

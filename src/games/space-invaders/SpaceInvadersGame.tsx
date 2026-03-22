@@ -4,6 +4,7 @@ import { useRef, useEffect, useCallback } from 'react';
 
 interface SpaceInvadersGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 const W = 400;
@@ -14,11 +15,17 @@ interface Alien { x: number; y: number; row: number; alive: boolean; }
 interface Particle { x: number; y: number; vx: number; vy: number; life: number; color: string; size: number; }
 interface Star { x: number; y: number; size: number; brightness: number; twinkleSpeed: number; phase: number; }
 
-export default function SpaceInvadersGame({ onGameOver }: SpaceInvadersGameProps) {
+export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGameProps) {
+  // Level-based settings
+  const alienRows = level === 'easy' ? 3 : 5;
+  const initialAlienSpeed = level === 'easy' ? 0.25 : level === 'hard' ? 0.7 : 0.4;
+  const enemyShootChance = level === 'easy' ? 0.005 : level === 'hard' ? 0.03 : 0.015;
+  const initialLives = level === 'easy' ? 5 : level === 'hard' ? 2 : 3;
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef({
     playerX: W / 2,
-    lives: 3,
+    lives: initialLives,
     score: 0,
     bullets: [] as Bullet[],
     enemyBullets: [] as Bullet[],
@@ -39,7 +46,7 @@ export default function SpaceInvadersGame({ onGameOver }: SpaceInvadersGameProps
 
   function initAliens(s: typeof stateRef.current) {
     s.aliens = [];
-    for (let row = 0; row < 5; row++) {
+    for (let row = 0; row < alienRows; row++) {
       for (let col = 0; col < 10; col++) {
         s.aliens.push({
           x: 40 + col * 34,
@@ -103,7 +110,7 @@ export default function SpaceInvadersGame({ onGameOver }: SpaceInvadersGameProps
     s.bullets = [];
     s.enemyBullets = [];
     s.alienDir = 1;
-    s.alienSpeed = 0.4;
+    s.alienSpeed = initialAlienSpeed;
     s.alienMoveTimer = 0;
     s.gameOver = false;
     s.gameOverTime = 0;
@@ -113,6 +120,7 @@ export default function SpaceInvadersGame({ onGameOver }: SpaceInvadersGameProps
     s.touchX = -1;
     s.particles = [];
     s.time = 0;
+    s.lives = initialLives;
     initAliens(s);
     initStars(s);
 
@@ -631,7 +639,7 @@ export default function SpaceInvadersGame({ onGameOver }: SpaceInvadersGameProps
               spawnExplosion(s, a.x, a.y, colors[Math.min(Math.floor(a.row / 2), 2)]);
               // Speed up as aliens decrease
               const alive = s.aliens.filter(a => a.alive).length;
-              s.alienSpeed = 0.4 + (50 - alive) * 0.02;
+              s.alienSpeed = initialAlienSpeed + (50 - alive) * 0.02;
               return false;
             }
           }
@@ -639,7 +647,7 @@ export default function SpaceInvadersGame({ onGameOver }: SpaceInvadersGameProps
         });
 
         // Enemy shooting
-        if (Math.random() < 0.015) {
+        if (Math.random() < enemyShootChance) {
           const aliveAliens = s.aliens.filter(a => a.alive);
           if (aliveAliens.length > 0) {
             const shooter = aliveAliens[Math.floor(Math.random() * aliveAliens.length)];
@@ -671,7 +679,7 @@ export default function SpaceInvadersGame({ onGameOver }: SpaceInvadersGameProps
         // All aliens dead - next wave
         if (s.aliens.every(a => !a.alive)) {
           initAliens(s);
-          s.alienSpeed = 0.4;
+          s.alienSpeed = initialAlienSpeed;
         }
       }
 
@@ -728,7 +736,7 @@ export default function SpaceInvadersGame({ onGameOver }: SpaceInvadersGameProps
       canvas.removeEventListener('touchmove', handleTouchMove);
       canvas.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [onGameOver, shoot]);
+  }, [onGameOver, shoot, alienRows, initialAlienSpeed, enemyShootChance, initialLives]);
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>

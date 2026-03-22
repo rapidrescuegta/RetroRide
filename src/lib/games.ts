@@ -1,4 +1,11 @@
 export type Difficulty = 'kids' | 'everyone' | 'adults'
+export type GameLevel = 'easy' | 'medium' | 'hard'
+
+export const LEVEL_LABELS: Record<GameLevel, { label: string; stars: string; color: string }> = {
+  easy: { label: 'Easy', stars: '⭐', color: '#10b981' },
+  medium: { label: 'Medium', stars: '⭐⭐', color: '#f59e0b' },
+  hard: { label: 'Hard', stars: '⭐⭐⭐', color: '#ef4444' },
+}
 
 export interface GameInfo {
   id: string

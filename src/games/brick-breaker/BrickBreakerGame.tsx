@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 
 interface BrickBreakerGameProps {
   onGameOver: (score: number) => void;
+  level: 'easy' | 'medium' | 'hard';
 }
 
 const W = 380;
@@ -47,7 +48,14 @@ const BRICK_COLORS: Record<number, string[]> = {
   3: ['#ffd700'],
 };
 
-export default function BrickBreakerGame({ onGameOver }: BrickBreakerGameProps) {
+export default function BrickBreakerGame({ onGameOver, level: difficulty }: BrickBreakerGameProps) {
+  // Difficulty settings
+  const difficultyConfig = {
+    easy:   { startLives: 5, paddleWidth: 100, ballSpeed: 4, powerUpChance: 0.35 },
+    medium: { startLives: 3, paddleWidth: 70, ballSpeed: 5, powerUpChance: 0.2 },
+    hard:   { startLives: 2, paddleWidth: 50, ballSpeed: 6.5, powerUpChance: 0.1 },
+  }[difficulty];
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<{
     paddleX: number;
@@ -121,18 +129,18 @@ export default function BrickBreakerGame({ onGameOver }: BrickBreakerGameProps) 
       bricks: createBricks(1),
       powerUps: [],
       score: 0,
-      lives: 3,
+      lives: difficultyConfig.startLives,
       level: 1,
       gameOver: false,
       launched: false,
       wideTimer: 0,
-      paddleW: PADDLE_W,
+      paddleW: difficultyConfig.paddleWidth,
       frameCount: 0,
       touchX: null,
       particles: [],
     };
     setScore(0);
-    setLives(3);
+    setLives(difficultyConfig.startLives);
     setLevel(1);
     setGameOver(false);
     setGameOverCalled(false);
@@ -167,8 +175,9 @@ export default function BrickBreakerGame({ onGameOver }: BrickBreakerGameProps) 
 
       if (!gs.launched) {
         gs.launched = true;
-        gs.balls[0].vx = 3;
-        gs.balls[0].vy = -5;
+        const launchAngle = difficultyConfig.ballSpeed;
+        gs.balls[0].vx = launchAngle * 0.6;
+        gs.balls[0].vy = -launchAngle;
       }
     };
     const handleEnd = (e: TouchEvent) => {
@@ -232,8 +241,8 @@ export default function BrickBreakerGame({ onGameOver }: BrickBreakerGameProps) 
         if (keys.has('ArrowRight') || keys.has('d')) gs.paddleX += speed;
         if (keys.has(' ') && !gs.launched) {
           gs.launched = true;
-          gs.balls[0].vx = 3;
-          gs.balls[0].vy = -5;
+          gs.balls[0].vx = difficultyConfig.ballSpeed * 0.6;
+          gs.balls[0].vy = -difficultyConfig.ballSpeed;
         }
 
         if (gs.touchX !== null) {
@@ -246,7 +255,7 @@ export default function BrickBreakerGame({ onGameOver }: BrickBreakerGameProps) 
         // Wide paddle timer
         if (gs.wideTimer > 0) {
           gs.wideTimer--;
-          if (gs.wideTimer === 0) gs.paddleW = PADDLE_W;
+          if (gs.wideTimer === 0) gs.paddleW = difficultyConfig.paddleWidth;
         }
 
         // Ball on paddle before launch
@@ -279,8 +288,9 @@ export default function BrickBreakerGame({ onGameOver }: BrickBreakerGameProps) 
               ball.y = paddleTop - BALL_R;
               // Angle based on hit position
               const hitPos = (ball.x - gs.paddleX) / (gs.paddleW / 2);
-              ball.vx = hitPos * 5;
-              ball.vy = -Math.sqrt(25 - ball.vx * ball.vx);
+              const totalSpeed = difficultyConfig.ballSpeed;
+              ball.vx = hitPos * totalSpeed;
+              ball.vy = -Math.sqrt(totalSpeed * totalSpeed - ball.vx * ball.vx);
               if (ball.vy > -2) ball.vy = -2;
             }
           }
@@ -313,7 +323,7 @@ export default function BrickBreakerGame({ onGameOver }: BrickBreakerGameProps) 
                 }
 
                 // Power-up drop
-                if (Math.random() < 0.2) {
+                if (Math.random() < difficultyConfig.powerUpChance) {
                   const types: PowerUp['type'][] = ['wide', 'multi', 'life'];
                   gs.powerUps.push({
                     x: bx + bw / 2,
@@ -362,7 +372,7 @@ export default function BrickBreakerGame({ onGameOver }: BrickBreakerGameProps) 
               y: H - 40 - PADDLE_H / 2 - BALL_R,
               vx: 0, vy: 0, trail: [],
             }];
-            gs.paddleW = PADDLE_W;
+            gs.paddleW = difficultyConfig.paddleWidth;
             gs.wideTimer = 0;
           }
         }
@@ -374,7 +384,7 @@ export default function BrickBreakerGame({ onGameOver }: BrickBreakerGameProps) 
           if (pu.y + 8 >= H - 40 && pu.y - 8 <= H - 40 + PADDLE_H) {
             if (pu.x >= gs.paddleX - gs.paddleW / 2 && pu.x <= gs.paddleX + gs.paddleW / 2) {
               if (pu.type === 'wide') {
-                gs.paddleW = PADDLE_W * 1.6;
+                gs.paddleW = difficultyConfig.paddleWidth * 1.6;
                 gs.wideTimer = 600; // 10 seconds
               } else if (pu.type === 'multi') {
                 const newBalls: Ball[] = [];
@@ -413,7 +423,7 @@ export default function BrickBreakerGame({ onGameOver }: BrickBreakerGameProps) 
             vx: 0, vy: 0, trail: [],
           }];
           gs.powerUps = [];
-          gs.paddleW = PADDLE_W;
+          gs.paddleW = difficultyConfig.paddleWidth;
           gs.wideTimer = 0;
         }
       }
