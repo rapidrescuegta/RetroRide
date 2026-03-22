@@ -16,17 +16,31 @@ model Family {
 }
 
 model Member {
-  id           String        @id @default(cuid())
-  name         String
-  avatar       String        @default("😀")
-  familyId     String
-  family       Family        @relation(fields: [familyId], references: [id])
-  createdAt    DateTime      @default(now())
-  scores       Score[]
-  presence     Presence?
-  chatMessages ChatMessage[]
+  id            String        @id @default(cuid())
+  name          String
+  email         String
+  emailVerified Boolean       @default(false)
+  avatar        String        @default("😀")
+  familyId      String
+  family        Family        @relation(fields: [familyId], references: [id])
+  createdAt     DateTime      @default(now())
+  scores        Score[]
+  presence      Presence?
+  chatMessages  ChatMessage[]
 
   @@unique([familyId, name])
+  @@unique([email])
+}
+
+model VerificationCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, code])
 }
 
 model Score {

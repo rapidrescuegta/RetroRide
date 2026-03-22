@@ -201,6 +201,11 @@ export default function FamilyPage() {
   const [justJoined, setJustJoined] = useState(false)
   const [avatarMode, setAvatarMode] = useState<'emoji' | 'camera'>('emoji')
   const [showCamera, setShowCamera] = useState(false)
+  const [email, setEmail] = useState('')
+  const [verificationCode, setVerificationCode] = useState('')
+  const [emailVerified, setEmailVerified] = useState(false)
+  const [codeSent, setCodeSent] = useState(false)
+  const [sendingCode, setSendingCode] = useState(false)
 
   const formatCode = (raw: string) => {
     const clean = raw.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 8)
@@ -213,27 +218,67 @@ export default function FamilyPage() {
     setError('')
   }
 
-  const handleCreate = useCallback(async () => {
-    if (!ctx || !familyName.trim() || !playerName.trim()) return
+  const handleSendVerification = useCallback(async () => {
+    if (!email.includes('@')) { setError('Enter a valid email'); return }
+    setSendingCode(true)
+    setError('')
+    try {
+      const res = await fetch('/api/auth/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (data.error) { setError(data.error); return }
+      setCodeSent(true)
+    } catch {
+      setError('Failed to send code')
+    } finally {
+      setSendingCode(false)
+    }
+  }, [email])
+
+  const handleVerifyCode = useCallback(async () => {
+    if (verificationCode.length !== 6) { setError('Enter the 6-digit code'); return }
     setLoading(true)
     setError('')
     try {
-      await ctx.createFamily(familyName.trim(), playerName.trim(), avatar)
+      const res = await fetch('/api/auth/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code: verificationCode }),
+      })
+      const data = await res.json()
+      if (data.error) { setError(data.error); return }
+      setEmailVerified(true)
+    } catch {
+      setError('Verification failed')
+    } finally {
+      setLoading(false)
+    }
+  }, [email, verificationCode])
+
+  const handleCreate = useCallback(async () => {
+    if (!ctx || !familyName.trim() || !playerName.trim() || !emailVerified) return
+    setLoading(true)
+    setError('')
+    try {
+      await ctx.createFamily(familyName.trim(), playerName.trim(), email.trim(), avatar)
       setJustCreated(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create family')
     } finally {
       setLoading(false)
     }
-  }, [ctx, familyName, playerName, avatar])
+  }, [ctx, familyName, playerName, email, avatar, emailVerified])
 
   const handleJoin = useCallback(async () => {
-    if (!ctx || !playerName.trim() || code.replace('-', '').length !== 8) return
+    if (!ctx || !playerName.trim() || !emailVerified || code.replace('-', '').length !== 8) return
     setLoading(true)
     setError('')
     try {
       const rawCode = code.replace('-', '')
-      const err = await ctx.joinFamily(rawCode, playerName.trim(), avatar)
+      const err = await ctx.joinFamily(rawCode, playerName.trim(), email.trim(), avatar)
       if (err) {
         setError(err)
       } else {
@@ -245,7 +290,7 @@ export default function FamilyPage() {
     } finally {
       setLoading(false)
     }
-  }, [ctx, playerName, code, avatar])
+  }, [ctx, playerName, email, code, avatar, emailVerified])
 
   // If logged in, show appropriate screen
   if (ctx?.isLoggedIn) {
@@ -406,6 +451,64 @@ export default function FamilyPage() {
             />
           </div>
 
+          {/* Email + Verification */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              Email
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="email"
+                placeholder="you@email.com"
+                value={email}
+                onChange={e => { setEmail(e.target.value); setError(''); setCodeSent(false); setEmailVerified(false) }}
+                disabled={emailVerified}
+                className={`flex-1 bg-slate-900/60 border rounded-xl px-4 py-3 text-sm placeholder-slate-600 focus:outline-none transition-all ${
+                  emailVerified
+                    ? 'border-emerald-500/40 text-emerald-400'
+                    : 'border-slate-600/40 text-slate-200 focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/30'
+                }`}
+              />
+              {!emailVerified && (
+                <button
+                  type="button"
+                  onClick={handleSendVerification}
+                  disabled={sendingCode || !email.includes('@')}
+                  className="px-4 py-3 rounded-xl text-xs font-semibold bg-purple-600 hover:bg-purple-500 text-white disabled:opacity-40 transition-all whitespace-nowrap"
+                >
+                  {sendingCode ? '...' : codeSent ? 'Resend' : 'Send Code'}
+                </button>
+              )}
+              {emailVerified && (
+                <span className="flex items-center text-emerald-400 text-lg px-2">✓</span>
+              )}
+            </div>
+
+            {codeSent && !emailVerified && (
+              <div className="mt-3">
+                <p className="text-xs text-slate-400 mb-2">Enter the 6-digit code sent to your email:</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="000000"
+                    value={verificationCode}
+                    onChange={e => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    maxLength={6}
+                    className="flex-1 bg-slate-900/60 border border-slate-600/40 rounded-xl px-4 py-3 text-center text-lg font-mono tracking-[0.3em] text-cyan-400 placeholder-slate-600 focus:outline-none focus:border-cyan-500/60 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleVerifyCode}
+                    disabled={loading || verificationCode.length !== 6}
+                    className="px-4 py-3 rounded-xl text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white disabled:opacity-40 transition-all"
+                  >
+                    Verify
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
               Your Avatar
@@ -495,7 +598,7 @@ export default function FamilyPage() {
           {mode === 'create' ? (
             <button
               onClick={handleCreate}
-              disabled={loading || !familyName.trim() || !playerName.trim()}
+              disabled={loading || !familyName.trim() || !playerName.trim() || !emailVerified}
               className="touch-btn w-full py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-40 disabled:hover:from-purple-600 disabled:hover:to-pink-600 shadow-lg shadow-purple-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               {loading ? (
@@ -509,7 +612,7 @@ export default function FamilyPage() {
           ) : (
             <button
               onClick={handleJoin}
-              disabled={loading || !playerName.trim() || code.replace('-', '').length !== 8}
+              disabled={loading || !playerName.trim() || !emailVerified || code.replace('-', '').length !== 8}
               className="touch-btn w-full py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:opacity-40 disabled:hover:from-cyan-600 disabled:hover:to-blue-600 shadow-lg shadow-cyan-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               {loading ? (

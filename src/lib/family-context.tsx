@@ -27,8 +27,8 @@ interface FamilyContextType {
   onlineMembers: OnlineMember[]
   setOnlineMembers: (members: OnlineMember[]) => void
   isLoggedIn: boolean
-  createFamily: (familyName: string, memberName: string, avatar: string) => Promise<void>
-  joinFamily: (code: string, memberName: string, avatar: string) => Promise<string | null>
+  createFamily: (familyName: string, memberName: string, email: string, avatar: string) => Promise<void>
+  joinFamily: (code: string, memberName: string, email: string, avatar: string) => Promise<string | null>
   switchMember: (memberId: string) => void
   logout: () => void
   refreshMembers: () => Promise<void>
@@ -99,11 +99,11 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     if (data.family?.members) setMembers(data.family.members)
   }, [family])
 
-  const createFamily = useCallback(async (familyName: string, memberName: string, avatar: string) => {
+  const createFamily = useCallback(async (familyName: string, memberName: string, email: string, avatar: string) => {
     const res = await fetch('/api/family', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ familyName, memberName, avatar }),
+      body: JSON.stringify({ familyName, memberName, email, avatar }),
     })
     const data = await res.json()
     if (data.error) throw new Error(data.error)
@@ -113,11 +113,11 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     saveSession(data.family, data.member)
   }, [])
 
-  const joinFamily = useCallback(async (code: string, memberName: string, avatar: string): Promise<string | null> => {
+  const joinFamily = useCallback(async (code: string, memberName: string, email: string, avatar: string): Promise<string | null> => {
     const res = await fetch('/api/family/join', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, memberName, avatar }),
+      body: JSON.stringify({ code, memberName, email, avatar }),
     })
     const data = await res.json()
     if (data.error) return data.error

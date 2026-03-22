@@ -9,10 +9,16 @@ function generateCode(familyName: string): string {
 
 // POST: Create a new family
 export async function POST(req: NextRequest) {
-  const { familyName, memberName, avatar } = await req.json()
+  const { familyName, memberName, email, avatar } = await req.json()
 
-  if (!familyName || !memberName) {
-    return NextResponse.json({ error: 'Family name and your name are required' }, { status: 400 })
+  if (!familyName || !memberName || !email) {
+    return NextResponse.json({ error: 'Family name, your name, and email are required' }, { status: 400 })
+  }
+
+  // Check email isn't already used
+  const existing = await prisma.member.findUnique({ where: { email: email.toLowerCase().trim() } })
+  if (existing) {
+    return NextResponse.json({ error: 'This email is already registered. Try joining instead.' }, { status: 400 })
   }
 
   const code = generateCode(familyName)
@@ -24,6 +30,8 @@ export async function POST(req: NextRequest) {
       members: {
         create: {
           name: memberName,
+          email: email.toLowerCase().trim(),
+          emailVerified: true,
           avatar: avatar || '😀',
         },
       },
