@@ -100,6 +100,23 @@ export default function DinoRunGame({ onGameOver, level }: Props) {
     else jump();
   }, [started, jump, startGame]);
 
+  // Touch / click on window
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
+      handleTap();
+    };
+    const handleClick = () => {
+      handleTap();
+    };
+    window.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('click', handleClick);
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('click', handleClick);
+    };
+  }, [handleTap]);
+
   // Game loop
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -578,11 +595,6 @@ export default function DinoRunGame({ onGameOver, level }: Props) {
         ref={canvasRef}
         width={CANVAS_W}
         height={CANVAS_H}
-        onClick={handleTap}
-        onTouchStart={(e) => {
-          e.preventDefault();
-          handleTap();
-        }}
         className="rounded-xl border border-zinc-700 cursor-pointer max-w-full"
         style={{ touchAction: 'none' }}
       />

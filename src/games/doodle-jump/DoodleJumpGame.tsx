@@ -202,6 +202,7 @@ export default function DoodleJumpGame({ onGameOver, level }: DoodleJumpGameProp
     };
 
     const handleTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
       const canvas = canvasRef.current;
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
@@ -209,21 +210,23 @@ export default function DoodleJumpGame({ onGameOver, level }: DoodleJumpGameProp
       touchSideRef.current = x < rect.width / 2 ? -1 : 1;
     };
     const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
       const canvas = canvasRef.current;
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
       const x = e.touches[0].clientX - rect.left;
       touchSideRef.current = x < rect.width / 2 ? -1 : 1;
     };
-    const handleTouchEnd = () => {
+    const handleTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
       touchSideRef.current = 0;
     };
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd, { passive: false });
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);

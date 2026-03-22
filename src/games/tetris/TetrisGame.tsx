@@ -707,16 +707,16 @@ export default function TetrisGame({ onGameOver, level }: TetrisGameProps) {
     }
 
     window.addEventListener('keydown', handleKey);
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+    window.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd, { passive: false });
 
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('keydown', handleKey);
-      canvas.removeEventListener('touchstart', handleTouchStart);
-      canvas.removeEventListener('touchmove', handleTouchMove);
-      canvas.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
   }, [onGameOver, moveLeft, moveRight, softDrop, rotate, COLS, initialDropInterval, minDropInterval, speedIncrement]);
 

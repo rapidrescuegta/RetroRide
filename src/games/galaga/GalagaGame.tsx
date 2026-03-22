@@ -188,13 +188,15 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
       }
     };
 
-    canvas.addEventListener('touchmove', handleTouch, { passive: false });
-    canvas.addEventListener('touchstart', (e) => { handleTouch(e); handleTap(e); }, { passive: false });
-    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+    const handleTouchStart = (e: TouchEvent) => { handleTouch(e); handleTap(e); };
+
+    window.addEventListener('touchmove', handleTouch, { passive: false });
+    window.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd, { passive: false });
     return () => {
-      canvas.removeEventListener('touchmove', handleTouch);
-      canvas.removeEventListener('touchstart', handleTouch);
-      canvas.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchmove', handleTouch);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
   }, []);
 

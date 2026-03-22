@@ -257,11 +257,13 @@ export default function CrossyRoadGame({ onGameOver, level }: CrossyRoadGameProp
     };
 
     const handleTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
       const t = e.touches[0];
       touchStartRef.current = { x: t.clientX, y: t.clientY };
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
       if (!touchStartRef.current) return;
       const t = e.changedTouches[0];
       const dx = t.clientX - touchStartRef.current.x;
@@ -280,8 +282,8 @@ export default function CrossyRoadGame({ onGameOver, level }: CrossyRoadGameProp
     };
 
     window.addEventListener('keydown', handleKey);
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd, { passive: false });
 
     return () => {
       window.removeEventListener('keydown', handleKey);

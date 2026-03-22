@@ -411,9 +411,6 @@ export default function SnakeGame({ onGameOver, level }: SnakeGameProps) {
 
   // Touch
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
     const handleTouchStart = (e: TouchEvent) => {
       e.preventDefault();
       const state = gameStateRef.current;
@@ -443,11 +440,11 @@ export default function SnakeGame({ onGameOver, level }: SnakeGameProps) {
       touchStartRef.current = null;
     };
 
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+    window.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd, { passive: false });
     return () => {
-      canvas.removeEventListener('touchstart', handleTouchStart);
-      canvas.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
   }, [handleDirection, restart]);
 

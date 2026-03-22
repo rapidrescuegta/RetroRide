@@ -161,9 +161,6 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
 
   // Touch swipe
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
     const onTouchStart = (e: TouchEvent) => {
       e.preventDefault();
       const t = e.touches[0];
@@ -190,11 +187,11 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
       touchStart.current = null;
     };
 
-    canvas.addEventListener('touchstart', onTouchStart, { passive: false });
-    canvas.addEventListener('touchend', onTouchEnd, { passive: false });
+    window.addEventListener('touchstart', onTouchStart, { passive: false });
+    window.addEventListener('touchend', onTouchEnd, { passive: false });
     return () => {
-      canvas.removeEventListener('touchstart', onTouchStart);
-      canvas.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchend', onTouchEnd);
     };
   }, [moveFrog]);
 
