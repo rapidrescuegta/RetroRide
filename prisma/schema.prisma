@@ -8,11 +8,30 @@ datasource db {
 }
 
 model Family {
-  id        String   @id @default(cuid())
-  name      String
-  code      String   @unique
-  createdAt DateTime @default(now())
-  members   Member[]
+  id                 String         @id @default(cuid())
+  name               String
+  code               String         @unique
+  stripeCustomerId   String?
+  subscriptionStatus String?
+  planType           String?
+  planExpiresAt      DateTime?
+  createdAt          DateTime       @default(now())
+  members            Member[]
+  subscriptions      Subscription[]
+}
+
+model Subscription {
+  id              String    @id @default(cuid())
+  familyId        String
+  family          Family    @relation(fields: [familyId], references: [id])
+  stripeSessionId String?   @unique
+  stripeSubId     String?   @unique
+  planType        String
+  status          String    @default("pending")
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@index([familyId])
 }
 
 model Member {
