@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useFamily } from '@/lib/family-context'
 import AvatarCreator from '@/components/AvatarCreator'
 import Link from 'next/link'
@@ -110,6 +110,131 @@ function SuccessJoinScreen({ familyName, members }: { familyName: string; member
   )
 }
 
+interface PendingInvite {
+  id: string
+  email: string
+  status: string
+  createdAt: string
+  expiresAt: string
+}
+
+function InviteSection() {
+  const ctx = useFamily()
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [sending, setSending] = useState(false)
+  const [inviteMsg, setInviteMsg] = useState('')
+  const [inviteError, setInviteError] = useState('')
+  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([])
+  const [loadingInvites, setLoadingInvites] = useState(true)
+
+  const familyId = ctx?.family?.id
+  const memberId = ctx?.member?.id
+
+  const fetchInvites = useCallback(async () => {
+    if (!familyId) return
+    try {
+      const res = await fetch(`/api/family/invite?familyId=${familyId}`)
+      const data = await res.json()
+      if (data.invites) setPendingInvites(data.invites)
+    } catch {
+      // silently fail
+    } finally {
+      setLoadingInvites(false)
+    }
+  }, [familyId])
+
+  useEffect(() => {
+    fetchInvites()
+  }, [fetchInvites])
+
+  const handleSendInvite = async () => {
+    if (!inviteEmail.includes('@') || !familyId || !memberId) return
+    setSending(true)
+    setInviteError('')
+    setInviteMsg('')
+    try {
+      const res = await fetch('/api/family/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ familyId, email: inviteEmail, invitedByMemberId: memberId }),
+      })
+      const data = await res.json()
+      if (data.error) {
+        setInviteError(data.error)
+      } else {
+        setInviteMsg('Invite sent!')
+        setInviteEmail('')
+        fetchInvites()
+        setTimeout(() => setInviteMsg(''), 3000)
+      }
+    } catch {
+      setInviteError('Failed to send invite')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const daysLeft = (expiresAt: string) => {
+    const diff = new Date(expiresAt).getTime() - Date.now()
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+  }
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider px-1">
+        Invite Family Members
+      </h3>
+
+      <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl p-4 space-y-3">
+        <div className="flex gap-2">
+          <input
+            type="email"
+            placeholder="email@example.com"
+            value={inviteEmail}
+            onChange={e => { setInviteEmail(e.target.value); setInviteError(''); setInviteMsg('') }}
+            className="flex-1 bg-slate-900/60 border border-slate-600/40 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/30 transition-all"
+          />
+          <button
+            onClick={handleSendInvite}
+            disabled={sending || !inviteEmail.includes('@')}
+            className="px-5 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-40 shadow-lg shadow-purple-600/20 transition-all whitespace-nowrap"
+          >
+            {sending ? '...' : 'Send'}
+          </button>
+        </div>
+
+        {inviteMsg && (
+          <p className="text-sm text-emerald-400 flex items-center gap-1.5">
+            <span>✓</span> {inviteMsg}
+          </p>
+        )}
+        {inviteError && (
+          <p className="text-sm text-red-400">{inviteError}</p>
+        )}
+
+        {/* Pending invites */}
+        {!loadingInvites && pendingInvites.length > 0 && (
+          <div className="space-y-2 pt-2 border-t border-slate-700/40">
+            <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Pending Invites</p>
+            {pendingInvites.map(inv => (
+              <div
+                key={inv.id}
+                className="flex items-center gap-3 bg-slate-800/40 rounded-xl px-4 py-2.5"
+              >
+                <span className="text-lg">📧</span>
+                <span className="flex-1 text-sm text-slate-300 truncate">{inv.email}</span>
+                <span className="text-xs text-slate-500 whitespace-nowrap">
+                  {daysLeft(inv.expiresAt)}d left
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function FamilyDashboard() {
   const ctx = useFamily()
   if (!ctx) return null
@@ -163,6 +288,9 @@ function FamilyDashboard() {
         })}
       </div>
 
+      {/* Invite section */}
+      <InviteSection />
+
       {/* Actions */}
       <div className="flex flex-col gap-3 pt-2">
         <Link
@@ -176,6 +304,12 @@ function FamilyDashboard() {
           className="touch-btn w-full px-6 py-3 rounded-xl font-semibold text-center text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 transition-all"
         >
           🏆 Leaderboard
+        </Link>
+        <Link
+          href="/settings"
+          className="touch-btn w-full px-6 py-3 rounded-xl font-semibold text-center text-slate-300 bg-slate-700/50 border border-slate-600/30 hover:bg-slate-600/50 transition-all"
+        >
+          ⚙️ Settings
         </Link>
         <button
           onClick={logout}
@@ -206,6 +340,7 @@ export default function FamilyPage() {
   const [emailVerified, setEmailVerified] = useState(false)
   const [codeSent, setCodeSent] = useState(false)
   const [sendingCode, setSendingCode] = useState(false)
+  const [emailConsent, setEmailConsent] = useState(true)
 
   const formatCode = (raw: string) => {
     const clean = raw.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 8)
@@ -263,14 +398,14 @@ export default function FamilyPage() {
     setLoading(true)
     setError('')
     try {
-      await ctx.createFamily(familyName.trim(), playerName.trim(), email.trim(), avatar)
+      await ctx.createFamily(familyName.trim(), playerName.trim(), email.trim(), avatar, emailConsent)
       setJustCreated(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create family')
     } finally {
       setLoading(false)
     }
-  }, [ctx, familyName, playerName, email, avatar, emailVerified])
+  }, [ctx, familyName, playerName, email, avatar, emailVerified, emailConsent])
 
   const handleJoin = useCallback(async () => {
     if (!ctx || !playerName.trim() || !emailVerified || code.replace('-', '').length !== 8) return
@@ -278,7 +413,7 @@ export default function FamilyPage() {
     setError('')
     try {
       const rawCode = code.replace('-', '')
-      const err = await ctx.joinFamily(rawCode, playerName.trim(), email.trim(), avatar)
+      const err = await ctx.joinFamily(rawCode, playerName.trim(), email.trim(), avatar, emailConsent)
       if (err) {
         setError(err)
       } else {
@@ -290,7 +425,7 @@ export default function FamilyPage() {
     } finally {
       setLoading(false)
     }
-  }, [ctx, playerName, email, code, avatar, emailVerified])
+  }, [ctx, playerName, email, code, avatar, emailVerified, emailConsent])
 
   // If logged in, show appropriate screen
   if (ctx?.isLoggedIn) {
@@ -372,7 +507,7 @@ export default function FamilyPage() {
             Family Mode
           </h1>
           <p className="text-slate-400 text-sm mt-2">
-            Compete with your family on leaderboards!
+            Multiplayer, chat, leaderboards, and local play for your group.
           </p>
         </div>
       </header>
@@ -587,6 +722,20 @@ export default function FamilyPage() {
             )}
           </div>
 
+          {/* Email consent */}
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="emailConsent"
+              checked={emailConsent}
+              onChange={e => setEmailConsent(e.target.checked)}
+              className="mt-1 w-4 h-4 rounded border-slate-600 bg-slate-900 text-purple-600 focus:ring-purple-500/30 cursor-pointer accent-purple-600"
+            />
+            <label htmlFor="emailConsent" className="text-xs text-slate-400 leading-relaxed cursor-pointer">
+              I agree to receive emails about new games, features, and updates. You can unsubscribe anytime.
+            </label>
+          </div>
+
           {/* Error */}
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-sm text-red-400">
@@ -598,7 +747,7 @@ export default function FamilyPage() {
           {mode === 'create' ? (
             <button
               onClick={handleCreate}
-              disabled={loading || !familyName.trim() || !playerName.trim() || !emailVerified}
+              disabled={loading || !familyName.trim() || !playerName.trim() || !emailVerified || !emailConsent}
               className="touch-btn w-full py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-40 disabled:hover:from-purple-600 disabled:hover:to-pink-600 shadow-lg shadow-purple-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               {loading ? (
@@ -612,7 +761,7 @@ export default function FamilyPage() {
           ) : (
             <button
               onClick={handleJoin}
-              disabled={loading || !playerName.trim() || !emailVerified || code.replace('-', '').length !== 8}
+              disabled={loading || !playerName.trim() || !emailVerified || code.replace('-', '').length !== 8 || !emailConsent}
               className="touch-btn w-full py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:opacity-40 disabled:hover:from-cyan-600 disabled:hover:to-blue-600 shadow-lg shadow-cyan-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               {loading ? (

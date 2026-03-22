@@ -78,13 +78,13 @@ function NotLoggedIn() {
       <div className="max-w-md mx-auto px-4 text-center space-y-6 pt-12">
         <div className="text-6xl">🏆</div>
         <p className="text-slate-400">
-          Join or create a family to compete on the leaderboard!
+          Leaderboards are a Family Mode feature. Upgrade to compete with your family!
         </p>
         <Link
           href="/family"
           className="touch-btn inline-flex px-8 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-lg shadow-purple-600/30 transition-all hover:scale-105"
         >
-          Set Up Family
+          Upgrade to Family Mode
         </Link>
       </div>
     </div>

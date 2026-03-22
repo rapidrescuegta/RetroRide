@@ -9,7 +9,7 @@ function generateCode(familyName: string): string {
 
 // POST: Create a new family
 export async function POST(req: NextRequest) {
-  const { familyName, memberName, email, avatar } = await req.json()
+  const { familyName, memberName, email, avatar, emailConsent } = await req.json()
 
   if (!familyName || !memberName || !email) {
     return NextResponse.json({ error: 'Family name, your name, and email are required' }, { status: 400 })
@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
           name: memberName,
           email: email.toLowerCase().trim(),
           emailVerified: true,
+          emailConsent: emailConsent !== false,
           avatar: avatar || '😀',
         },
       },

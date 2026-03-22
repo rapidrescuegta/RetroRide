@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { getGameById, LEVEL_LABELS, type GameLevel } from '@/lib/games'
 import { saveScore, getHighScore } from '@/lib/scores'
 import { useFamily } from '@/lib/family-context'
+import EmailCapturePrompt, { shouldShowEmailCapture } from '@/components/EmailCapturePrompt'
 
 // Game imports
 import SnakeGame from '@/games/snake/SnakeGame'
@@ -32,6 +33,11 @@ import BrickBreakerGame from '@/games/brick-breaker/BrickBreakerGame'
 import CrossyRoadGame from '@/games/crossy-road/CrossyRoadGame'
 import DoodleJumpGame from '@/games/doodle-jump/DoodleJumpGame'
 import ChessGame from '@/games/chess/ChessGame'
+import RummyGame from '@/games/rummy-500/RummyGame'
+import CrazyEightsGame from '@/games/crazy-eights/CrazyEightsGame'
+import GoFishGame from '@/games/go-fish/GoFishGame'
+import HeartsGame from '@/games/hearts/HeartsGame'
+import SpadesGame from '@/games/spades/SpadesGame'
 
 type GameProps = { onGameOver: (score: number) => void; level: GameLevel }
 
@@ -61,6 +67,11 @@ const GAME_COMPONENTS: Record<string, React.ComponentType<GameProps>> = {
   'crossy-road': CrossyRoadGame as React.ComponentType<GameProps>,
   'doodle-jump': DoodleJumpGame as React.ComponentType<GameProps>,
   'chess': ChessGame as React.ComponentType<GameProps>,
+  'rummy-500': RummyGame as React.ComponentType<GameProps>,
+  'crazy-eights': CrazyEightsGame as React.ComponentType<GameProps>,
+  'go-fish': GoFishGame as React.ComponentType<GameProps>,
+  'hearts': HeartsGame as React.ComponentType<GameProps>,
+  'spades': SpadesGame as React.ComponentType<GameProps>,
 }
 
 const LEVEL_STORAGE_KEY = 'retroride-last-level'
@@ -76,6 +87,7 @@ export default function PlayClient({ gameId }: { gameId: string }) {
   const [highScore, setHighScore] = useState(0)
   const [isNewHigh, setIsNewHigh] = useState(false)
   const [showOverlay, setShowOverlay] = useState(false)
+  const [showEmailCapture, setShowEmailCapture] = useState(false)
 
   // Restore last used level
   useEffect(() => {
@@ -112,6 +124,10 @@ export default function PlayClient({ gameId }: { gameId: string }) {
         setHighScore(finalScore)
       }
     }
+    // Check if we should show email capture
+    if (shouldShowEmailCapture()) {
+      setShowEmailCapture(true)
+    }
     setTimeout(() => setShowOverlay(true), 1800)
   }, [game, familyCtx])
 
@@ -120,6 +136,7 @@ export default function PlayClient({ gameId }: { gameId: string }) {
     setScore(0)
     setIsNewHigh(false)
     setShowOverlay(false)
+    setShowEmailCapture(false)
   }
 
   if (!game) {
@@ -303,6 +320,10 @@ export default function PlayClient({ gameId }: { gameId: string }) {
                   Back to Games
                 </button>
               </div>
+
+              {showEmailCapture && (
+                <EmailCapturePrompt onClose={() => setShowEmailCapture(false)} />
+              )}
             </div>
           </div>
         )}

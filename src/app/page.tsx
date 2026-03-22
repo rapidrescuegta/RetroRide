@@ -5,11 +5,14 @@ import { GAMES, type Difficulty, type GameInfo } from '@/lib/games'
 import { getHighScore, getTotalGamesPlayed } from '@/lib/scores'
 import { useFamily } from '@/lib/family-context'
 import FamilyHub from '@/components/FamilyHub'
+import OfflineIndicator from '@/components/OfflineIndicator'
+import { PendingVerificationBanner } from '@/components/EmailCapturePrompt'
 import Link from 'next/link'
 
 const FILTERS: { label: string; value: Difficulty | 'all' }[] = [
   { label: '🎮 All Games', value: 'all' },
   { label: '🧒 Kids', value: 'kids' },
+  { label: '🃏 Card Games', value: 'everyone' },
   { label: '🎯 Challenge', value: 'adults' },
 ]
 
@@ -78,14 +81,14 @@ function FamilyBar() {
       <div className="mx-4 mb-4 p-3 rounded-xl bg-purple-900/20 border border-purple-500/20">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold text-purple-300">Family Challenge Mode</p>
-            <p className="text-xs text-slate-400">Compete with your family for high scores!</p>
+            <p className="text-sm font-semibold text-purple-300">Unlock Family Mode</p>
+            <p className="text-xs text-slate-400">Multiplayer, chat, leaderboards & more</p>
           </div>
           <Link
             href="/family"
             className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold rounded-lg transition-all"
           >
-            Join
+            Upgrade
           </Link>
         </div>
       </div>
@@ -114,6 +117,12 @@ function FamilyBar() {
             className="px-3 py-1.5 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 text-xs rounded-lg transition-all"
           >
             Family
+          </Link>
+          <Link
+            href="/settings"
+            className="px-3 py-1.5 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 text-xs rounded-lg transition-all"
+          >
+            ⚙️
           </Link>
         </div>
       </div>
@@ -158,8 +167,36 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Offline indicator */}
+      <OfflineIndicator />
+
+      {/* Pending email verification (shows when back online after offline signup) */}
+      <PendingVerificationBanner />
+
       {/* Family bar */}
       <FamilyBar />
+
+      {/* Local Play (Family Mode only) */}
+      {familyCtx?.isLoggedIn && (
+        <div className="mx-4 mb-4">
+          <Link
+            href="/local"
+            className="block w-full p-4 rounded-xl bg-gradient-to-r from-emerald-600/20 to-cyan-600/20 border border-emerald-500/30 hover:border-emerald-400/50 transition-all group"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-emerald-300 group-hover:text-emerald-200 transition-colors">
+                  Local Play
+                </p>
+                <p className="text-xs text-slate-400">
+                  Play with nearby friends — no internet needed
+                </p>
+              </div>
+              <span className="text-lg text-emerald-400">&rarr;</span>
+            </div>
+          </Link>
+        </div>
+      )}
 
       {/* Family Hub (chat + presence) */}
       {familyCtx?.isLoggedIn && (
@@ -205,7 +242,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="text-center text-xs text-slate-600 mt-8 px-4">
-        Tap any game to play • Works offline • No ads
+        Free to play solo • Works offline • No ads
       </footer>
     </div>
   )

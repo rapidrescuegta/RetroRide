@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useFamily } from '@/lib/family-context'
 import { GAMES } from '@/lib/games'
+import { queueAction } from '@/lib/offline-queue'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -22,6 +23,7 @@ interface ChatMsg {
   type: string
   createdAt: string
   member: ChatMember
+  pending?: boolean
 }
 
 interface ChallengeData {
@@ -248,7 +250,14 @@ function MessageBubble({
         >
           {msg.text}
         </div>
-        <span className="text-[9px] text-slate-600 mt-0.5 px-1">{timeAgo(msg.createdAt)}</span>
+        <span className="text-[9px] text-slate-600 mt-0.5 px-1">
+          {msg.pending ? (
+            <span className="inline-flex items-center gap-1 text-amber-400/70">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Pending sync
+            </span>
+          ) : timeAgo(msg.createdAt)}
+        </span>
       </div>
     </div>
   )
@@ -360,6 +369,7 @@ export default function FamilyHub() {
   const sendMessage = useCallback(async () => {
     if (!family || !member || !input.trim() || sending) return
     const text = input.trim()
+    const body = JSON.stringify({ familyId: family.id, memberId: member.id, text })
     setInput('')
     setSending(true)
 
@@ -367,20 +377,41 @@ export default function FamilyHub() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ familyId: family.id, memberId: member.id, text }),
+        body,
       })
       if (res.ok) {
         const data = await res.json()
         setMessages((prev) => {
-          if (prev.some((m) => m.id === data.message.id)) return prev
-          return [...prev, data.message]
+          // Remove any pending placeholder for this text, then add real message
+          const filtered = prev.filter((m) => !(m.pending && m.text === text))
+          if (filtered.some((m) => m.id === data.message.id)) return filtered
+          return [...filtered, data.message]
         })
         lastSeenRef.current = data.message.createdAt
         setTimeout(() => scrollToBottom(true), 50)
       }
     } catch {
-      // restore text on failure
-      setInput(text)
+      // Offline — queue for background sync and show pending message
+      await queueAction('/api/chat', 'POST', body)
+      const pendingMsg: ChatMsg = {
+        id: `pending-${Date.now()}`,
+        familyId: family.id,
+        memberId: member.id,
+        text,
+        type: 'chat',
+        createdAt: new Date().toISOString(),
+        member: { id: member.id, name: member.name, avatar: member.avatar },
+        pending: true,
+      }
+      setMessages((prev) => [...prev, pendingMsg])
+      // Also back up messages to localStorage for offline viewing
+      try {
+        const key = `retroride-chat-${family.id}`
+        const existing = JSON.parse(localStorage.getItem(key) || '[]')
+        existing.push(pendingMsg)
+        localStorage.setItem(key, JSON.stringify(existing.slice(-100)))
+      } catch { /* ignore */ }
+      setTimeout(() => scrollToBottom(true), 50)
     } finally {
       setSending(false)
     }
@@ -390,16 +421,17 @@ export default function FamilyHub() {
   const sendChallenge = useCallback(
     async (toMemberId: string, gameId: string) => {
       if (!family || !member) return
+      const body = JSON.stringify({
+        familyId: family.id,
+        fromMemberId: member.id,
+        toMemberId,
+        gameId,
+      })
       try {
         const res = await fetch('/api/challenge', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            familyId: family.id,
-            fromMemberId: member.id,
-            toMemberId,
-            gameId,
-          }),
+          body,
         })
         if (res.ok) {
           const data = await res.json()
@@ -411,7 +443,8 @@ export default function FamilyHub() {
           setTimeout(() => scrollToBottom(true), 50)
         }
       } catch {
-        // ignore
+        // Offline — queue for later
+        await queueAction('/api/challenge', 'POST', body)
       }
     },
     [family, member, scrollToBottom]
@@ -446,8 +479,11 @@ export default function FamilyHub() {
   // ---------- Not logged in ----------
   if (!family || !member) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur p-6 text-center">
-        <p className="text-slate-400 text-sm">Join or create a family to start chatting!</p>
+      <div className="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur p-6 text-center space-y-3">
+        <p className="text-slate-400 text-sm">Family Mode members can chat and challenge each other here.</p>
+        <a href="/family" className="inline-block text-sm text-purple-400 hover:text-purple-300 font-semibold transition-colors">
+          Upgrade to Family Mode &rarr;
+        </a>
       </div>
     )
   }

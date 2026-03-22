@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { queueAction } from '@/lib/offline-queue'
 
 interface FamilyMember {
   id: string
@@ -27,8 +28,8 @@ interface FamilyContextType {
   onlineMembers: OnlineMember[]
   setOnlineMembers: (members: OnlineMember[]) => void
   isLoggedIn: boolean
-  createFamily: (familyName: string, memberName: string, email: string, avatar: string) => Promise<void>
-  joinFamily: (code: string, memberName: string, email: string, avatar: string) => Promise<string | null>
+  createFamily: (familyName: string, memberName: string, email: string, avatar: string, emailConsent?: boolean) => Promise<void>
+  joinFamily: (code: string, memberName: string, email: string, avatar: string, emailConsent?: boolean) => Promise<string | null>
   switchMember: (memberId: string) => void
   logout: () => void
   refreshMembers: () => Promise<void>
@@ -99,11 +100,11 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     if (data.family?.members) setMembers(data.family.members)
   }, [family])
 
-  const createFamily = useCallback(async (familyName: string, memberName: string, email: string, avatar: string) => {
+  const createFamily = useCallback(async (familyName: string, memberName: string, email: string, avatar: string, emailConsent?: boolean) => {
     const res = await fetch('/api/family', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ familyName, memberName, email, avatar }),
+      body: JSON.stringify({ familyName, memberName, email, avatar, emailConsent }),
     })
     const data = await res.json()
     if (data.error) throw new Error(data.error)
@@ -113,11 +114,11 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     saveSession(data.family, data.member)
   }, [])
 
-  const joinFamily = useCallback(async (code: string, memberName: string, email: string, avatar: string): Promise<string | null> => {
+  const joinFamily = useCallback(async (code: string, memberName: string, email: string, avatar: string, emailConsent?: boolean): Promise<string | null> => {
     const res = await fetch('/api/family/join', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, memberName, email, avatar }),
+      body: JSON.stringify({ code, memberName, email, avatar, emailConsent }),
     })
     const data = await res.json()
     if (data.error) return data.error
@@ -144,11 +145,18 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
   const submitScore = useCallback(async (gameId: string, score: number) => {
     if (!member) return
-    await fetch('/api/scores', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ gameId, score, memberId: member.id }),
-    }).catch(() => {})
+    const body = JSON.stringify({ gameId, score, memberId: member.id })
+    try {
+      const res = await fetch('/api/scores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      })
+      if (!res.ok) throw new Error('Score submission failed')
+    } catch {
+      // Offline or failed — queue for later sync
+      await queueAction('/api/scores', 'POST', body)
+    }
   }, [member])
 
   return (

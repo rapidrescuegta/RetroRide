@@ -291,7 +291,9 @@ function StepCard({ num, icon, title, desc }: { num: number; icon: string; title
 
 export default function LandingPage() {
   const kidsGames = GAMES.filter((g) => g.difficulty === 'kids')
+  const cardGames = GAMES.filter((g) => g.difficulty === 'everyone')
   const adultGames = GAMES.filter((g) => g.difficulty === 'adults')
+  const totalGames = GAMES.length
 
   return (
     <div className="min-h-screen bg-[#0a0a1a] overflow-x-hidden" style={{ scrollBehavior: 'smooth' }}>
@@ -321,14 +323,14 @@ export default function LandingPage() {
 
           {/* Headline */}
           <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight tracking-tight">
-            Family Game Night,{' '}
+            Game Night Goes{' '}
             <span className="bg-gradient-to-r from-[#8b5cf6] via-[#ec4899] to-[#06b6d4] bg-clip-text text-transparent">
-              Anywhere
+              Everywhere
             </span>
           </h2>
 
           <p className="text-lg sm:text-xl text-[#94a3b8] max-w-xl leading-relaxed">
-            <AnimatedCounter target={25} suffix="+" /> classic arcade games. No WiFi needed. Challenge your whole family.
+            <AnimatedCounter target={totalGames} /> classic games — free to play solo. Upgrade to Family Mode to play together.
           </p>
 
           {/* CTAs */}
@@ -353,6 +355,8 @@ export default function LandingPage() {
               <span className="text-[#f59e0b]">&#9733;&#9733;&#9733;&#9733;&#9733;</span> 4.9 rating
             </span>
             <span>|</span>
+            <span>Local Hotspot Play</span>
+            <span>|</span>
             <span>Works Offline</span>
             <span>|</span>
             <span>No Ads</span>
@@ -367,6 +371,40 @@ export default function LandingPage() {
         </div>
       </div>
 
+      {/* ─── LOCAL PLAY HERO BANNER ───────────────────────────────────── */}
+      <Section className="px-4 py-16 max-w-5xl mx-auto">
+        <div className="relative rounded-3xl overflow-hidden p-8 sm:p-12 text-center"
+          style={{
+            background: 'linear-gradient(135deg, rgba(139,92,246,0.15) 0%, rgba(6,182,212,0.1) 50%, rgba(236,72,153,0.1) 100%)',
+            border: '1px solid rgba(139,92,246,0.3)',
+          }}
+        >
+          <span className="text-6xl mb-4 block">📡</span>
+          <h2
+            className="neon-text text-lg sm:text-xl mb-4"
+            style={{ fontFamily: "'Press Start 2P', monospace" }}
+          >
+            Local Hotspot Play
+          </h2>
+          <p className="text-[#cbd5e1] text-lg max-w-2xl mx-auto leading-relaxed mb-6">
+            On a plane at 35,000 feet? Subway with no signal? Cabin in the woods?
+            One person turns on their phone&apos;s hotspot, everyone connects, and you&apos;re
+            playing together. Card games, challenges, leaderboards — all without the internet.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-[#94a3b8]">
+            <span className="bg-white/5 border border-white/10 rounded-full px-4 py-2">&#9992;&#65039; Flights</span>
+            <span className="bg-white/5 border border-white/10 rounded-full px-4 py-2">&#128646; Trains</span>
+            <span className="bg-white/5 border border-white/10 rounded-full px-4 py-2">&#128663; Road Trips</span>
+            <span className="bg-white/5 border border-white/10 rounded-full px-4 py-2">&#127956;&#65039; Cabins</span>
+            <span className="bg-white/5 border border-white/10 rounded-full px-4 py-2">&#9978;&#65039; Camping</span>
+            <span className="bg-white/5 border border-white/10 rounded-full px-4 py-2">&#127758; Traveling Abroad</span>
+          </div>
+        </div>
+      </Section>
+
+      {/* ─── DIVIDER ──────────────────────────────────────────────────── */}
+      <div className="max-w-4xl mx-auto h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
+
       {/* ─── GAMES SHOWCASE ───────────────────────────────────────────── */}
       <Section className="px-4 py-20 max-w-6xl mx-auto">
         <div className="text-center mb-12">
@@ -374,10 +412,10 @@ export default function LandingPage() {
             className="neon-text text-xl sm:text-2xl mb-4"
             style={{ fontFamily: "'Press Start 2P', monospace" }}
           >
-            <AnimatedCounter target={25} suffix="+" /> Classic Games
+            <AnimatedCounter target={totalGames} /> Games
           </h2>
           <p className="text-[#94a3b8] text-lg max-w-lg mx-auto">
-            From Snake to Chess — something for every age. All playable right now, totally free.
+            Arcade classics, card games, and brain teasers — something for every age. Free to play solo.
           </p>
         </div>
 
@@ -391,6 +429,22 @@ export default function LandingPage() {
               <GameCard key={game.id} game={game} />
             ))}
           </div>
+        </div>
+
+        {/* Card Games */}
+        <div className="mb-10">
+          <h3 className="text-blue-400 font-semibold text-sm mb-4 flex items-center gap-2">
+            <span className="text-lg">&#127183;</span> Multiplayer Card Games ({cardGames.length} games)
+            <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-[#8b5cf6]/20 text-[#a78bfa] border border-[#8b5cf6]/30">NEW</span>
+          </h3>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+            {cardGames.map((game) => (
+              <GameCard key={game.id} game={game} />
+            ))}
+          </div>
+          <p className="text-[#64748b] text-xs mt-3">
+            Play solo vs AI or together via local hotspot — 2 to 7 players depending on the game.
+          </p>
         </div>
 
         {/* Adult / Challenge Games */}
@@ -416,43 +470,43 @@ export default function LandingPage() {
             className="neon-text text-xl sm:text-2xl mb-4"
             style={{ fontFamily: "'Press Start 2P', monospace" }}
           >
-            Challenge Your Family
+            Unlock Family Mode
           </h2>
           <p className="text-[#94a3b8] text-lg max-w-lg mx-auto">
-            Family Mode turns RetroRide into the ultimate family competition. Everyone plays, everyone competes.
+            Solo games are always free. Family Mode unlocks multiplayer, chat, leaderboards, and local play.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           <FeatureCard
-            icon="👨‍👩‍👧‍👦"
-            title="Family Leaderboards"
-            desc="Everyone in your family competes for the top spot. Crown the champion after every game."
+            icon="📡"
+            title="Local Hotspot Play"
+            desc="Play together anywhere, no internet needed. One person creates a hotspot, everyone connects, and you're playing in seconds."
           />
           <FeatureCard
-            icon="💬"
-            title="Family Chat"
-            desc="Talk trash, send challenges, and celebrate wins — all inside the app."
+            icon="🃏"
+            title="Multiplayer Card Games"
+            desc="Rummy 500, Hearts, Spades, Crazy Eights, and Go Fish. Play with 2-7 people on your own phones."
           />
           <FeatureCard
-            icon="📸"
-            title="Cartoon Avatars"
-            desc="Take a selfie and get a fun cartoon avatar. Kids love picking their character."
+            icon="📶"
+            title="Works Everywhere Offline"
+            desc="Installed as a PWA on your home screen. Games, chat, and scores all work without WiFi and sync when you're back online."
           />
           <FeatureCard
             icon="🏆"
-            title="Live Challenges"
-            desc="Challenge anyone in your family to Chess, Checkers, or a Wordle Race in real time."
+            title="Family Leaderboards"
+            desc={`Crown the champion. Track scores across all ${totalGames} games with per-game rankings and overall standings.`}
           />
           <FeatureCard
-            icon="✈️"
-            title="Works Offline"
-            desc="No WiFi? No problem. Perfect for flights, road trips, and waiting rooms."
+            icon="💬"
+            title="Email Invites & Chat"
+            desc="Invite family by email — they join with a simple code. Chat, send challenges, and talk trash in real-time."
           />
           <FeatureCard
-            icon="⭐"
-            title="Difficulty Levels"
-            desc="Easy mode for little ones, hard mode for competitive adults. Everyone has fun."
+            icon="📊"
+            title="Weekly Rankings"
+            desc="Get ranking digest emails so you always know who's on top. Daily and weekly leaderboard updates delivered to your inbox."
           />
         </div>
       </Section>
@@ -475,20 +529,20 @@ export default function LandingPage() {
           <StepCard
             num={1}
             icon="🎮"
-            title="Download & Play Free"
-            desc="All 25+ games are free to play. No account needed, no ads, no catch."
+            title="Play Free Instantly"
+            desc="Open the app, pick a game, play. No account, no signup. Works offline on any device."
           />
           <StepCard
             num={2}
-            icon="👨‍👩‍👧‍👦"
-            title="Create Your Family"
-            desc="Share a simple code. Everyone joins your family in seconds — even Grandma."
+            icon="💎"
+            title="Upgrade to Family Mode"
+            desc="Create your group with email verification. Choose a plan that fits your family."
           />
           <StepCard
             num={3}
-            icon="🏆"
-            title="Compete Everywhere"
-            desc="Leaderboards, chat, and live challenges — even when you're offline at 35,000 feet."
+            icon="📡"
+            title="Play Together Anywhere"
+            desc="Multiplayer, chat, leaderboards, local hotspot play — even without WiFi."
           />
         </div>
       </Section>
@@ -503,10 +557,10 @@ export default function LandingPage() {
             className="neon-text text-xl sm:text-2xl mb-4"
             style={{ fontFamily: "'Press Start 2P', monospace" }}
           >
-            Unlock Family Mode
+            Upgrade to Family Mode
           </h2>
           <p className="text-[#94a3b8] text-lg max-w-lg mx-auto">
-            Free games for everyone. Family Mode adds leaderboards, chat, challenges, and avatars.
+            Solo games are always free. Family Mode unlocks multiplayer, chat, leaderboards, and local play.
           </p>
         </div>
 
@@ -517,10 +571,11 @@ export default function LandingPage() {
             period="3 days"
             plan="weekend"
             features={[
-              'All 25+ games',
+              `All ${totalGames} games`,
+              'Local hotspot play',
+              'Multiplayer card games',
               'Family leaderboards',
               'Family chat',
-              'Cartoon avatars',
               'Perfect for a trip',
             ]}
           />
@@ -530,10 +585,11 @@ export default function LandingPage() {
             period="7 days"
             plan="weekly"
             features={[
-              'All 25+ games',
+              `All ${totalGames} games`,
+              'Local hotspot play',
+              'Multiplayer card games',
               'Family leaderboards',
               'Family chat',
-              'Cartoon avatars',
               'Live challenges',
             ]}
           />
@@ -543,11 +599,13 @@ export default function LandingPage() {
             period="per month"
             plan="monthly"
             features={[
-              'All 25+ games',
+              `All ${totalGames} games`,
+              'Local hotspot play',
+              'Multiplayer card games',
               'Family leaderboards',
               'Family chat',
-              'Cartoon avatars',
               'Live challenges',
+              'Weekly ranking emails',
               'Cancel anytime',
             ]}
           />
@@ -559,11 +617,13 @@ export default function LandingPage() {
             featured
             badge="BEST VALUE  ·  Save 72%"
             features={[
-              'All 25+ games',
+              `All ${totalGames} games`,
+              'Local hotspot play',
+              'Multiplayer card games',
               'Family leaderboards',
               'Family chat',
-              'Cartoon avatars',
               'Live challenges',
+              'Weekly ranking emails',
               'Priority support',
               'Just $4.17/month',
             ]}
@@ -587,19 +647,19 @@ export default function LandingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <TestimonialCard
-            quote="We downloaded this for a 5-hour flight to Orlando. The kids didn't ask for the iPad once. My husband and I got into a serious Chess rivalry by the time we landed."
+            quote="We played Rummy 500 the entire flight to London. No WiFi needed — just turned on a hotspot and all four of us were connected in seconds. The kids didn't ask for the iPad once."
             name="The Martinez Family"
-            context="Used on a flight to Florida"
+            context="6-hour flight to London"
             stars={5}
           />
           <TestimonialCard
-            quote="My 7-year-old beats me at Snake every single time and won't let me forget it. The family leaderboard has made car rides actually fun. Best $5 we've spent."
-            name="Sarah & Tom K."
-            context="Weekly road trips"
+            quote="My subway commute used to be dead time. Now my daughter and I play Go Fish and Hearts every morning. The local play is genius — it just works underground with no signal."
+            name="David & Lily R."
+            context="Daily subway commute"
             stars={5}
           />
           <TestimonialCard
-            quote="No WiFi at the cabin this Thanksgiving — didn't matter. The whole family played Wordle races after dinner. Even Grandpa got competitive with Checkers."
+            quote="No WiFi at the cabin this Thanksgiving — didn't matter at all. After dinner we played Spades teams, then the kids ran a Wordle tournament. The weekly rankings email the next Monday was hilarious."
             name="The Nguyen Family"
             context="Thanksgiving at the cabin"
             stars={5}
@@ -616,10 +676,10 @@ export default function LandingPage() {
           className="neon-text text-2xl sm:text-3xl mb-6"
           style={{ fontFamily: "'Press Start 2P', monospace" }}
         >
-          Ready for Game Night?
+          Ready to Play?
         </h2>
         <p className="text-[#94a3b8] text-lg mb-8 max-w-md mx-auto">
-          25+ free games waiting for you. No download, no signup, just play.
+          {totalGames} classic games, free to play solo. Upgrade to Family Mode for multiplayer, chat, leaderboards, and local play.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
@@ -628,12 +688,12 @@ export default function LandingPage() {
           >
             Play Free Now
           </Link>
-          <a
-            href="#pricing"
-            className="text-[#8b5cf6] hover:text-[#a78bfa] font-semibold transition-colors text-lg"
+          <Link
+            href="/family"
+            className="px-10 py-4 rounded-xl border-2 border-[#8b5cf6]/50 text-white font-bold text-lg hover:bg-[#8b5cf6]/10 hover:border-[#8b5cf6] transition-all duration-300"
           >
-            or Get Family Mode &rarr;
-          </a>
+            Upgrade to Family Mode
+          </Link>
         </div>
       </Section>
 
@@ -661,6 +721,9 @@ export default function LandingPage() {
             </Link>
             <Link href="/leaderboard" className="hover:text-white transition-colors">
               Leaderboards
+            </Link>
+            <Link href="/local-play" className="hover:text-white transition-colors">
+              Local Play
             </Link>
           </div>
           <p className="text-xs text-[#475569]">&copy; {new Date().getFullYear()} RetroRide. All rights reserved.</p>

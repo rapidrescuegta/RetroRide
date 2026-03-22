@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { FamilyProvider } from '@/lib/family-context'
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 
 export const metadata: Metadata = {
   title: 'RetroRide — Classic Arcade Games',
@@ -38,6 +39,7 @@ export default function RootLayout({
         <FamilyProvider>
           {children}
         </FamilyProvider>
+        <ServiceWorkerRegistration />
       </body>
     </html>
   )

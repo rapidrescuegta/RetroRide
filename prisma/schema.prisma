@@ -39,13 +39,15 @@ model Member {
   name          String
   email         String
   emailVerified Boolean       @default(false)
+  emailConsent  Boolean       @default(true)
   avatar        String        @default("😀")
   familyId      String
   family        Family        @relation(fields: [familyId], references: [id])
   createdAt     DateTime      @default(now())
-  scores        Score[]
-  presence      Presence?
-  chatMessages  ChatMessage[]
+  scores            Score[]
+  presence          Presence?
+  chatMessages      ChatMessage[]
+  notificationPref  NotificationPreference?
 
   @@unique([familyId, name])
   @@unique([email])
@@ -92,4 +94,39 @@ model ChatMessage {
   createdAt DateTime @default(now())
 
   @@index([familyId, createdAt(sort: Desc)])
+}
+
+model NotificationPreference {
+  id              String   @id @default(cuid())
+  memberId        String   @unique
+  member          Member   @relation(fields: [memberId], references: [id])
+  rankingEmail    String   @default("weekly") // "daily", "weekly", "off"
+  challengeEmail  Boolean  @default(true)
+  newMemberEmail  Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+
+  @@index([memberId])
+}
+
+model Invite {
+  id        String   @id @default(cuid())
+  familyId  String
+  email     String
+  status    String   @default("pending") // pending, accepted, expired
+  invitedBy String   // memberId of who sent it
+  createdAt DateTime @default(now())
+  expiresAt DateTime // 7 days from creation
+
+  @@index([familyId])
+  @@index([email])
+}
+
+model Subscriber {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  emailConsent  Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  @@index([email])
 }

@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 
 // POST: Join a family with a code
 export async function POST(req: NextRequest) {
-  const { code, memberName, email, avatar } = await req.json()
+  const { code, memberName, email, avatar, emailConsent } = await req.json()
 
   if (!code || !memberName || !email) {
     return NextResponse.json({ error: 'Family code, your name, and email are required' }, { status: 400 })
@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       name: memberName,
       email: normalizedEmail,
       emailVerified: true,
+      emailConsent: emailConsent !== false,
       avatar: avatar || '😀',
       familyId: family.id,
     },
