@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useFamily } from '@/lib/family-context'
+import AvatarCreator from '@/components/AvatarCreator'
 import Link from 'next/link'
 
 const AVATARS = [
@@ -198,6 +199,8 @@ export default function FamilyPage() {
   const [error, setError] = useState('')
   const [justCreated, setJustCreated] = useState(false)
   const [justJoined, setJustJoined] = useState(false)
+  const [avatarMode, setAvatarMode] = useState<'emoji' | 'camera'>('emoji')
+  const [showCamera, setShowCamera] = useState(false)
 
   const formatCode = (raw: string) => {
     const clean = raw.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 8)
@@ -404,10 +407,81 @@ export default function FamilyPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Pick Your Avatar
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+              Your Avatar
             </label>
-            <AvatarPicker selected={avatar} onSelect={setAvatar} />
+
+            {/* Avatar mode toggle */}
+            <div className="flex bg-slate-900/60 rounded-xl p-1 gap-1 mb-4">
+              <button
+                type="button"
+                onClick={() => setAvatarMode('emoji')}
+                className={`flex-1 touch-btn py-2 rounded-lg text-xs font-semibold transition-all ${
+                  avatarMode === 'emoji'
+                    ? 'bg-purple-600/40 text-purple-300'
+                    : 'text-slate-500 hover:text-slate-400'
+                }`}
+              >
+                😎 Pick Emoji
+              </button>
+              <button
+                type="button"
+                onClick={() => setAvatarMode('camera')}
+                className={`flex-1 touch-btn py-2 rounded-lg text-xs font-semibold transition-all ${
+                  avatarMode === 'camera'
+                    ? 'bg-cyan-600/40 text-cyan-300'
+                    : 'text-slate-500 hover:text-slate-400'
+                }`}
+              >
+                📸 Take Photo
+              </button>
+            </div>
+
+            {avatarMode === 'emoji' && (
+              <AvatarPicker selected={avatar} onSelect={setAvatar} />
+            )}
+
+            {avatarMode === 'camera' && !showCamera && (
+              <div className="text-center py-6">
+                {avatar.startsWith('data:') ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <img
+                      src={avatar}
+                      alt="Your avatar"
+                      className="w-24 h-24 rounded-full border-2 border-cyan-500/50 shadow-lg shadow-cyan-500/20"
+                    />
+                    <p className="text-xs text-emerald-400 font-medium">Photo avatar set!</p>
+                    <button
+                      type="button"
+                      onClick={() => setShowCamera(true)}
+                      className="text-xs text-cyan-400 hover:text-cyan-300 underline transition-colors"
+                    >
+                      Retake photo
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowCamera(true)}
+                    className="touch-btn px-6 py-4 rounded-xl bg-cyan-600/20 border border-cyan-500/30 hover:bg-cyan-600/30 transition-all flex flex-col items-center gap-2 mx-auto"
+                  >
+                    <span className="text-3xl">📷</span>
+                    <span className="text-sm text-cyan-400 font-medium">Open Camera</span>
+                    <span className="text-xs text-slate-500">Take a selfie and turn it into a cartoon!</span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {avatarMode === 'camera' && showCamera && (
+              <AvatarCreator
+                onAvatarSaved={(dataUrl) => {
+                  setAvatar(dataUrl)
+                  setShowCamera(false)
+                }}
+                onCancel={() => setShowCamera(false)}
+              />
+            )}
           </div>
 
           {/* Error */}
