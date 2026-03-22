@@ -514,7 +514,7 @@ export default function LandingPage() {
       {/* ─── DIVIDER ──────────────────────────────────────────────────── */}
       <div className="max-w-4xl mx-auto h-px bg-gradient-to-r from-transparent via-[#06b6d4]/30 to-transparent" />
 
-      {/* ─── HOW IT WORKS ─────────────────────────────────────────────── */}
+      {/* ─── FREE vs PAID ─────────────────────────────────────────────── */}
       <Section className="px-4 py-20 max-w-4xl mx-auto">
         <div className="text-center mb-14">
           <h2
@@ -523,27 +523,105 @@ export default function LandingPage() {
           >
             How It Works
           </h2>
+          <p className="text-[#94a3b8] text-lg max-w-lg mx-auto">
+            Play solo for free. Upgrade when you want to play together.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          <StepCard
-            num={1}
-            icon="🎮"
-            title="Play Free Instantly"
-            desc="Open the app, pick a game, play. No account, no signup. Works offline on any device."
-          />
-          <StepCard
-            num={2}
-            icon="💎"
-            title="Upgrade to Family Mode"
-            desc="Create your group with email verification. Choose a plan that fits your family."
-          />
-          <StepCard
-            num={3}
-            icon="📡"
-            title="Play Together Anywhere"
-            desc="Multiplayer, chat, leaderboards, local hotspot play — even without WiFi."
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          {/* Free tier */}
+          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🎮</span>
+              <div>
+                <h3 className="text-white font-bold text-lg">Solo Play</h3>
+                <span className="text-emerald-400 text-sm font-bold">Always Free</span>
+              </div>
+            </div>
+            <ul className="space-y-2.5 text-sm text-[#94a3b8]">
+              <li className="flex items-center gap-2">
+                <span className="text-emerald-400">&#10003;</span>
+                All {totalGames} games — no limits
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-emerald-400">&#10003;</span>
+                Card games vs AI opponents
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-emerald-400">&#10003;</span>
+                Works offline — planes, trains, anywhere
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-emerald-400">&#10003;</span>
+                No account needed, no ads
+              </li>
+              <li className="flex items-center gap-2 text-[#475569]">
+                <span className="text-[#475569]">&#10007;</span>
+                No multiplayer
+              </li>
+              <li className="flex items-center gap-2 text-[#475569]">
+                <span className="text-[#475569]">&#10007;</span>
+                No stats, leaderboards, or rankings
+              </li>
+              <li className="flex items-center gap-2 text-[#475569]">
+                <span className="text-[#475569]">&#10007;</span>
+                No messaging or challenges
+              </li>
+            </ul>
+            <Link
+              href="/"
+              className="block w-full py-3 rounded-xl font-semibold text-sm text-center bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 transition-all"
+            >
+              Play Free Now
+            </Link>
+          </div>
+
+          {/* Paid tier */}
+          <div className="rounded-2xl border-2 border-[#8b5cf6]/60 bg-[#8b5cf6]/5 p-6 space-y-4 relative shadow-[0_0_30px_rgba(139,92,246,0.15)]">
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#8b5cf6] to-[#ec4899] text-white text-[10px] font-bold px-4 py-1 rounded-full whitespace-nowrap" style={{ fontFamily: "'Press Start 2P', monospace", fontSize: '8px' }}>
+              PLAY TOGETHER
+            </span>
+            <div className="flex items-center gap-3 pt-1">
+              <span className="text-3xl">👥</span>
+              <div>
+                <h3 className="text-white font-bold text-lg">Family Mode</h3>
+                <span className="text-[#a78bfa] text-sm font-bold">From $4.99</span>
+              </div>
+            </div>
+            <p className="text-xs text-[#94a3b8]">Everything in Solo Play, plus:</p>
+            <ul className="space-y-2.5 text-sm text-[#94a3b8]">
+              <li className="flex items-center gap-2">
+                <span className="text-[#a78bfa]">&#10003;</span>
+                <span className="text-white">Multiplayer on local hotspot — no WiFi needed</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-[#a78bfa]">&#10003;</span>
+                <span className="text-white">Card games with real people (2-7 players)</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-[#a78bfa]">&#10003;</span>
+                <span className="text-white">In-app messaging & challenges</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-[#a78bfa]">&#10003;</span>
+                <span className="text-white">Leaderboards, stats & crown rankings</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-[#a78bfa]">&#10003;</span>
+                <span className="text-white">Weekly ranking emails</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-[#a78bfa]">&#10003;</span>
+                <span className="text-white">Invite members by email</span>
+              </li>
+            </ul>
+            <a
+              href="#pricing"
+              className="block w-full py-3 rounded-xl font-semibold text-sm text-center bg-gradient-to-r from-[#8b5cf6] to-[#ec4899] text-white hover:shadow-[0_0_25px_rgba(139,92,246,0.4)] hover:scale-[1.02] transition-all"
+            >
+              See Plans & Pricing
+            </a>
+          </div>
         </div>
       </Section>
 
