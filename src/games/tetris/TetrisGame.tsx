@@ -635,6 +635,15 @@ export default function TetrisGame({ onGameOver, level }: TetrisGameProps) {
       }
     }
 
+    // Touch state tracking for continuous movement
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let touchCurrentX = 0;
+    let touchCurrentY = 0;
+    let touchMovedCells = 0; // how many cells moved during this drag
+    let touchDropped = false; // whether soft drop was triggered this touch
+
     function handleTouchStart(e: TouchEvent) {
       e.preventDefault();
       if (s.gameOver) return;
@@ -643,36 +652,70 @@ export default function TetrisGame({ onGameOver, level }: TetrisGameProps) {
         return;
       }
       const touch = e.touches[0];
-      s.touchStartX = touch.clientX;
-      s.touchStartY = touch.clientY;
-      s.touchStartTime = Date.now();
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      touchCurrentX = touch.clientX;
+      touchCurrentY = touch.clientY;
+      touchStartTime = Date.now();
+      touchMovedCells = 0;
+      touchDropped = false;
+    }
+
+    function handleTouchMove(e: TouchEvent) {
+      e.preventDefault();
+      if (!s.started || s.gameOver) return;
+      const touch = e.touches[0];
+      touchCurrentX = touch.clientX;
+      touchCurrentY = touch.clientY;
+
+      const dx = touchCurrentX - touchStartX;
+      const dy = touchCurrentY - touchStartY;
+
+      // Horizontal movement: move one cell per ~25px of drag
+      const cellThreshold = 25;
+      const targetCells = Math.round(dx / cellThreshold);
+      while (touchMovedCells < targetCells) {
+        moveRight();
+        touchMovedCells++;
+      }
+      while (touchMovedCells > targetCells) {
+        moveLeft();
+        touchMovedCells--;
+      }
+
+      // Downward drag for soft drop (continuous)
+      if (dy > 40 && !touchDropped) {
+        softDrop();
+        touchDropped = true;
+        // Reset Y origin so continued dragging triggers more drops
+        touchStartY = touchCurrentY - 20;
+        touchDropped = false;
+      }
     }
 
     function handleTouchEnd(e: TouchEvent) {
       e.preventDefault();
       if (!s.started || s.gameOver) return;
-      const touch = e.changedTouches[0];
-      const dx = touch.clientX - s.touchStartX;
-      const dy = touch.clientY - s.touchStartY;
-      const dt = Date.now() - s.touchStartTime;
+      const dt = Date.now() - touchStartTime;
+      const dx = Math.abs(touchCurrentX - touchStartX);
+      const dy = Math.abs(touchCurrentY - touchStartY);
 
-      if (Math.abs(dx) < 15 && Math.abs(dy) < 15 && dt < 300) {
+      // Tap to rotate (short touch with minimal movement)
+      if (dx < 15 && dy < 15 && dt < 300) {
         rotate();
-      } else if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
-        if (dx < 0) moveLeft(); else moveRight();
-      } else if (dy > 30) {
-        softDrop();
       }
     }
 
     window.addEventListener('keydown', handleKey);
     canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
     canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('keydown', handleKey);
       canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchmove', handleTouchMove);
       canvas.removeEventListener('touchend', handleTouchEnd);
     };
   }, [onGameOver, moveLeft, moveRight, softDrop, rotate, COLS, initialDropInterval, minDropInterval, speedIncrement]);
@@ -688,6 +731,7 @@ export default function TetrisGame({ onGameOver, level }: TetrisGameProps) {
           borderRadius: '12px',
           border: '2px solid rgba(100,100,255,0.2)',
           boxShadow: '0 0 30px rgba(0,100,255,0.15)',
+          touchAction: 'none',
         }}
       />
     </div>

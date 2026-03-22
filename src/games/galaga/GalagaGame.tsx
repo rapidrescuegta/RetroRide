@@ -485,10 +485,15 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
           gs.started = true;
         }
 
-        // Touch movement
+        // Touch movement + auto-fire while touching
         if (gs.touchX !== null) {
           const diff = gs.touchX - gs.playerX;
           gs.playerX += Math.sign(diff) * Math.min(Math.abs(diff), speed);
+          // Auto-fire while touching
+          if (gs.shootCooldown <= 0) {
+            gs.bullets.push({ x: gs.playerX, y: H - 50, isEnemy: false });
+            gs.shootCooldown = 12;
+          }
         }
 
         gs.playerX = Math.max(PLAYER_W / 2, Math.min(W - PLAYER_W / 2, gs.playerX));
