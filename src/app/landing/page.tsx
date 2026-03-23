@@ -379,19 +379,26 @@ export default function LandingPage() {
             border: '1px solid rgba(139,92,246,0.3)',
           }}
         >
-          <span className="text-6xl mb-4 block">📡</span>
+          <div className="text-6xl mb-4 block relative inline-flex items-center justify-center">
+            <span>📶</span>
+            <span className="absolute -top-1 -right-6 text-2xl rotate-12 text-red-500">🚫</span>
+          </div>
           <h2
-            className="neon-text text-lg sm:text-xl mb-4"
+            className="neon-text text-lg sm:text-xl mb-3"
             style={{ fontFamily: "'Press Start 2P', monospace" }}
           >
-            Local Hotspot Play
+            No WiFi? No Problem.
           </h2>
-          <p className="text-[#cbd5e1] text-lg max-w-2xl mx-auto leading-relaxed mb-6">
-            On a plane at 35,000 feet? Subway with no signal? Cabin in the woods?
-            One person turns on their phone&apos;s hotspot, everyone connects, and you&apos;re
-            playing together. Card games, challenges, leaderboards — all without the internet.
+          <p className="text-[#f59e0b] text-sm font-semibold mb-4 tracking-wide uppercase">
+            Zero internet required — not even satellite
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-[#94a3b8]">
+          <p className="text-[#cbd5e1] text-lg max-w-2xl mx-auto leading-relaxed mb-6">
+            On a cruise ship with no signal? Plane at 35,000 feet? Train through a tunnel?
+            One person turns on their phone&apos;s hotspot, everyone connects, and you&apos;re
+            playing together. Card games, challenges, chat — all without WiFi, data, or any internet at all.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-[#94a3b8]">
+            <span className="bg-white/5 border border-white/10 rounded-full px-4 py-2">&#128674; Cruise Ships</span>
             <span className="bg-white/5 border border-white/10 rounded-full px-4 py-2">&#9992;&#65039; Flights</span>
             <span className="bg-white/5 border border-white/10 rounded-full px-4 py-2">&#128646; Trains</span>
             <span className="bg-white/5 border border-white/10 rounded-full px-4 py-2">&#128663; Road Trips</span>
