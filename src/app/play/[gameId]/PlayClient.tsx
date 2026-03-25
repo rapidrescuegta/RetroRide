@@ -6,6 +6,7 @@ import { getGameById, LEVEL_LABELS, type GameLevel } from '@/lib/games'
 import { saveScore, getHighScore } from '@/lib/scores'
 import { useFamily } from '@/lib/family-context'
 import EmailCapturePrompt, { shouldShowEmailCapture } from '@/components/EmailCapturePrompt'
+import GameController from '@/components/GameController'
 
 // Game imports
 import SnakeGame from '@/games/snake/SnakeGame'
@@ -38,6 +39,24 @@ import CrazyEightsGame from '@/games/crazy-eights/CrazyEightsGame'
 import GoFishGame from '@/games/go-fish/GoFishGame'
 import HeartsGame from '@/games/hearts/HeartsGame'
 import SpadesGame from '@/games/spades/SpadesGame'
+
+function getControllerConfig(gameId: string): { dpad: boolean; buttons: ('A' | 'B')[]; buttonKeys: { A?: string; B?: string } } | null {
+  const dpadAndShoot = ['space-invaders', 'asteroids', 'galaga']
+  const dpadOnly = ['snake', 'pac-man', 'frogger', 'crossy-road']
+  const dpadAndDrop = ['tetris']
+  const tapOnly = ['flappy-bird', 'dino-run']
+  const slideOnly = ['breakout', 'brick-breaker', 'pong']
+  const noController = ['memory-match', 'tic-tac-toe', 'simon', 'whack-a-mole', 'connect-four',
+    'hangman', 'wordle', 'minesweeper', '2048', 'checkers', 'chess', 'doodle-jump',
+    'rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades']
+
+  if (noController.includes(gameId) || slideOnly.includes(gameId)) return null
+  if (dpadAndShoot.includes(gameId)) return { dpad: true, buttons: ['A'], buttonKeys: { A: ' ' } }
+  if (dpadOnly.includes(gameId)) return { dpad: true, buttons: [], buttonKeys: {} }
+  if (dpadAndDrop.includes(gameId)) return { dpad: true, buttons: ['A'], buttonKeys: { A: 'ArrowUp' } }
+  if (tapOnly.includes(gameId)) return { dpad: false, buttons: ['A'], buttonKeys: { A: ' ' } }
+  return null
+}
 
 type GameProps = { onGameOver: (score: number) => void; level: GameLevel }
 
@@ -259,7 +278,12 @@ export default function PlayClient({ gameId }: { gameId: string }) {
       </div>
 
       {/* Game area */}
-      <div className="flex-1 flex items-center justify-center relative">
+      <div
+        className="flex-1 flex items-center justify-center relative"
+        style={{
+          paddingBottom: gameState === 'playing' && getControllerConfig(gameId) ? '110px' : undefined,
+        }}
+      >
         {gameState === 'playing' && GameComponent && (
           <GameComponent key={level} onGameOver={handleGameOver} level={level} />
         )}
@@ -328,6 +352,13 @@ export default function PlayClient({ gameId }: { gameId: string }) {
           </div>
         )}
       </div>
+
+      {/* On-screen game controller (touch devices only) */}
+      {gameState === 'playing' && (() => {
+        const config = getControllerConfig(gameId)
+        if (!config) return null
+        return <GameController dpad={config.dpad} buttons={config.buttons} buttonKeys={config.buttonKeys} />
+      })()}
 
       {/* Controls hint */}
       <div className="text-center py-2 text-xs text-slate-600">
