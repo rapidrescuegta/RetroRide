@@ -100,8 +100,11 @@ export default function DinoRunGame({ onGameOver, level }: Props) {
     else jump();
   }, [started, jump, startGame]);
 
-  // Touch / click on window
+  // Touch / click on canvas
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const handleTouchStart = (e: TouchEvent) => {
       e.preventDefault();
       handleTap();
@@ -109,11 +112,11 @@ export default function DinoRunGame({ onGameOver, level }: Props) {
     const handleClick = () => {
       handleTap();
     };
-    window.addEventListener('touchstart', handleTouchStart, { passive: false });
-    window.addEventListener('click', handleClick);
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('click', handleClick);
     return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('click', handleClick);
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('click', handleClick);
     };
   }, [handleTap]);
 

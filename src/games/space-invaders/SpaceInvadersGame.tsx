@@ -708,12 +708,16 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
     }
 
     function handleTouchStart(e: TouchEvent) {
+      // Only respond to touches on the canvas — ignore GameController touches
+      const target = e.target as HTMLElement;
+      if (target !== canvas && !canvas!.contains(target)) return;
       e.preventDefault();
       if (!s.started) { s.started = true; return; }
       s.touchX = e.touches[0].clientX;
       shoot();
     }
     function handleTouchMove(e: TouchEvent) {
+      if (s.touchX < 0) return; // only track if touch started on canvas
       e.preventDefault();
       s.touchX = e.touches[0].clientX;
     }
@@ -724,17 +728,17 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
-    window.addEventListener('touchstart', handleTouchStart, { passive: false });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
-    window.addEventListener('touchend', handleTouchEnd, { passive: false });
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleTouchEnd);
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+      canvas.removeEventListener('touchend', handleTouchEnd);
     };
   }, [onGameOver, shoot, alienRows, initialAlienSpeed, enemyShootChance, initialLives]);
 

@@ -190,13 +190,13 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
 
     const handleTouchStart = (e: TouchEvent) => { handleTouch(e); handleTap(e); };
 
-    window.addEventListener('touchmove', handleTouch, { passive: false });
-    window.addEventListener('touchstart', handleTouchStart, { passive: false });
-    window.addEventListener('touchend', handleTouchEnd, { passive: false });
+    canvas.addEventListener('touchmove', handleTouch, { passive: false });
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
     return () => {
-      window.removeEventListener('touchmove', handleTouch);
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchend', handleTouchEnd);
+      canvas.removeEventListener('touchmove', handleTouch);
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchend', handleTouchEnd);
     };
   }, []);
 

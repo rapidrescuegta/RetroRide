@@ -698,14 +698,14 @@ export default function FlappyBirdGame({ onGameOver, level }: FlappyBirdGameProp
     }
 
     window.addEventListener('keydown', handleKey);
-    window.addEventListener('click', handleClick);
-    window.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('click', handleClick);
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
 
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('keydown', handleKey);
-      window.removeEventListener('click', handleClick);
-      window.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('click', handleClick);
+      canvas.removeEventListener('touchstart', handleTouchStart);
     };
   }, [onGameOver, flap]);
 

@@ -281,14 +281,19 @@ export default function CrossyRoadGame({ onGameOver, level }: CrossyRoadGameProp
       touchStartRef.current = null;
     };
 
+    const canvas = canvasRef.current;
     window.addEventListener('keydown', handleKey);
-    window.addEventListener('touchstart', handleTouchStart, { passive: false });
-    window.addEventListener('touchend', handleTouchEnd, { passive: false });
+    if (canvas) {
+      canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+      canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+    }
 
     return () => {
       window.removeEventListener('keydown', handleKey);
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchend', handleTouchEnd);
+      if (canvas) {
+        canvas.removeEventListener('touchstart', handleTouchStart);
+        canvas.removeEventListener('touchend', handleTouchEnd);
+      }
       cancelAnimationFrame(animFrameRef.current);
     };
   }, [initGame, tryHop]);
