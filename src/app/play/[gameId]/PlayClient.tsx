@@ -278,12 +278,7 @@ export default function PlayClient({ gameId }: { gameId: string }) {
       </div>
 
       {/* Game area */}
-      <div
-        className="flex-1 flex items-center justify-center relative"
-        style={{
-          paddingBottom: gameState === 'playing' && getControllerConfig(gameId) ? '110px' : undefined,
-        }}
-      >
+      <div className="flex-1 flex items-center justify-center relative overflow-hidden">
         {gameState === 'playing' && GameComponent && (
           <GameComponent key={level} onGameOver={handleGameOver} level={level} />
         )}
@@ -360,10 +355,12 @@ export default function PlayClient({ gameId }: { gameId: string }) {
         return <GameController dpad={config.dpad} buttons={config.buttons} buttonKeys={config.buttonKeys} />
       })()}
 
-      {/* Controls hint */}
-      <div className="text-center py-2 text-xs text-slate-600">
-        {game.controls}
-      </div>
+      {/* Controls hint (hidden when game controller is showing) */}
+      {!(gameState === 'playing' && getControllerConfig(gameId)) && (
+        <div className="text-center py-2 text-xs text-slate-600">
+          {game.controls}
+        </div>
+      )}
     </div>
   )
 }

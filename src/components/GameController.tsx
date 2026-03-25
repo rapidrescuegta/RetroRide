@@ -162,13 +162,11 @@ export default function GameController({
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-40"
+      className="flex-shrink-0 w-full"
       style={{
-        height: '110px',
-        background: 'rgba(10, 10, 26, 0.85)',
-        backdropFilter: 'blur(4px)',
-        borderTopLeftRadius: '16px',
-        borderTopRightRadius: '16px',
+        height: '120px',
+        background: 'linear-gradient(180deg, #0f0a1e, #0a0a1a)',
+        borderTop: '1px solid rgba(139, 92, 246, 0.2)',
         touchAction: 'none',
       }}
     >
