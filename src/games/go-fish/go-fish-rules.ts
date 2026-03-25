@@ -52,6 +52,7 @@ export interface GoFishState {
   gameWinner: string | null
   message: string
   goAgain: boolean
+  turnSeq: number  // monotonically increasing counter to trigger AI re-runs
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -119,6 +120,7 @@ export function initGame(numAI: number = 1): GoFishState {
     gameWinner: null,
     message: 'Your turn! Tap a card to ask for that rank.',
     goAgain: false,
+    turnSeq: 0,
   }
 }
 
@@ -181,7 +183,7 @@ function canPlayerAsk(player: GoFishPlayer): boolean {
 // ─── Actions ────────────────────────────────────────────────────────────────
 
 export function selectRank(state: GoFishState, rank: Rank): GoFishState {
-  if (state.phase !== 'select-rank') return state
+  if (state.phase !== 'select-rank' && state.phase !== 'ai-turn') return state
   const player = state.players[state.currentPlayerIndex]
   if (!player.hand.some(c => c.rank === rank)) return state
 
@@ -205,12 +207,17 @@ export function cancelRankSelection(state: GoFishState): GoFishState {
 export function askPlayer(state: GoFishState, targetPlayerId: string): GoFishState {
   if (state.phase !== 'select-player' || !state.selectedRank) return state
 
+  const rank: Rank = state.selectedRank
+
+  // Increment turn sequence so useEffect can detect state changes even when
+  // currentPlayerIndex and phase remain the same (e.g., AI goes again)
+  state = { ...state, turnSeq: (state.turnSeq ?? 0) + 1 }
+
   const currentPlayer = state.players[state.currentPlayerIndex]
   const targetIndex = state.players.findIndex(p => p.id === targetPlayerId)
   if (targetIndex === -1 || targetIndex === state.currentPlayerIndex) return state
 
   const target = state.players[targetIndex]
-  const rank = state.selectedRank
 
   // Find matching cards in target's hand
   const matchingCards = target.hand.filter(c => c.rank === rank)

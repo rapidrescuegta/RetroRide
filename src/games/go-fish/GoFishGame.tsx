@@ -34,6 +34,8 @@ function CardView({
   size = 'md',
   highlighted = false,
   disabled = false,
+  customWidth,
+  customHeight,
 }: {
   card: Card
   selected?: boolean
@@ -42,13 +44,20 @@ function CardView({
   size?: 'sm' | 'md' | 'lg'
   highlighted?: boolean
   disabled?: boolean
+  customWidth?: number
+  customHeight?: number
 }) {
   const sizes = {
     sm: { w: 40, h: 56, rank: 'text-[9px]', suit: 'text-xs' },
     md: { w: 56, h: 78, rank: 'text-xs', suit: 'text-lg' },
     lg: { w: 72, h: 100, rank: 'text-sm', suit: 'text-xl' },
   }
-  const { w, h, rank: rankSize, suit: suitSize } = sizes[size]
+  const preset = sizes[size]
+  const w = customWidth ?? preset.w
+  const h = customHeight ?? preset.h
+  // Scale font sizes when using custom dimensions
+  const rankSize = w < 36 ? 'text-[7px]' : w < 48 ? 'text-[9px]' : preset.rank
+  const suitSize = w < 36 ? 'text-[10px]' : w < 48 ? 'text-xs' : preset.suit
   const color = SUIT_COLORS[card.suit]
 
   if (!faceUp) {
@@ -195,6 +204,114 @@ function RulesModal({ onClose }: { onClose: () => void }) {
   )
 }
 
+// ─── Player Hand (Responsive) ───────────────────────────────────────────────
+
+function PlayerHand({
+  hand,
+  isHumanTurn,
+  phase,
+  selectedCardRank,
+  onCardTap,
+}: {
+  hand: Card[]
+  isHumanTurn: boolean
+  phase: string
+  selectedCardRank: Rank | null
+  onCardTap: (card: Card) => void
+}) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [containerWidth, setContainerWidth] = useState(360)
+
+  useEffect(() => {
+    const measure = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.clientWidth)
+      }
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [])
+
+  const cardCount = hand.length
+  // Calculate card width: fit all cards with some overlap within the container
+  // Max card width is 56, min is 28. Leave 16px padding on each side.
+  const availableWidth = containerWidth - 32
+  const maxCardWidth = 56
+  const minCardWidth = 28
+  // Each card except the last overlaps; we need: cardWidth + (cardCount - 1) * overlap <= availableWidth
+  // overlap = cardWidth * 0.55 (55% overlap when tight)
+  // If cards fit without overlap, use gap layout. Otherwise, overlap them.
+  const fullWidth = cardCount * maxCardWidth + (cardCount - 1) * 4
+  const needsOverlap = fullWidth > availableWidth
+
+  let cardWidth = maxCardWidth
+  let offset = maxCardWidth + 4 // default: full card + 4px gap
+
+  if (needsOverlap && cardCount > 1) {
+    // Solve: cardWidth + (cardCount - 1) * offset = availableWidth
+    // offset = fraction of cardWidth. Let's compute the offset directly.
+    // We want all cards visible, so offset = (availableWidth - cardWidth) / (cardCount - 1)
+    // But cardWidth should shrink too if needed
+    // First try with max card width
+    offset = (availableWidth - maxCardWidth) / (cardCount - 1)
+    if (offset < minCardWidth * 0.4) {
+      // Cards too small with max width, shrink card width
+      cardWidth = Math.max(minCardWidth, availableWidth / (cardCount * 0.45 + 0.55))
+      offset = Math.max(cardWidth * 0.35, (availableWidth - cardWidth) / (cardCount - 1))
+    }
+    cardWidth = Math.min(maxCardWidth, Math.max(minCardWidth, cardWidth))
+  }
+
+  const cardHeight = Math.round(cardWidth * 1.4)
+  const totalWidth = needsOverlap && cardCount > 1
+    ? cardWidth + (cardCount - 1) * offset
+    : cardCount * cardWidth + (cardCount - 1) * 4
+
+  return (
+    <div ref={containerRef} className="px-2 pb-4 pt-1 overflow-hidden">
+      <div
+        className="relative mx-auto"
+        style={{
+          width: Math.min(totalWidth, availableWidth),
+          height: cardHeight + 16, // extra space for selected card lift
+        }}
+      >
+        {hand.map((card, i) => {
+          const isSelectable = isHumanTurn && phase === 'select-rank'
+          const isSelected = selectedCardRank === card.rank
+          const left = needsOverlap && cardCount > 1
+            ? i * offset
+            : i * (cardWidth + 4)
+
+          return (
+            <div
+              key={card.id}
+              className="absolute transition-all duration-200"
+              style={{
+                left,
+                top: isSelected ? 0 : 12,
+                zIndex: isSelected ? 50 : i,
+              }}
+            >
+              <CardView
+                card={card}
+                faceUp
+                selected={isSelected}
+                highlighted={phase === 'select-rank' && isHumanTurn && !selectedCardRank}
+                disabled={!isSelectable}
+                onClick={() => onCardTap(card)}
+                customWidth={Math.round(cardWidth)}
+                customHeight={cardHeight}
+              />
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Game Component ────────────────────────────────────────────────────
 
 export default function GoFishGame({ onGameOver, level }: Props) {
@@ -217,33 +334,35 @@ export default function GoFishGame({ onGameOver, level }: Props) {
     const delay = 900 + Math.random() * 600
 
     aiTimerRef.current = setTimeout(() => {
-      const decision = getAIDecision(state, level)
-      if (!decision) {
-        // AI can't do anything, advance turn
-        setState(prev => {
+      // Use setState updater to read fresh state (avoids stale closure)
+      setState(prev => {
+        // Guard: make sure it's still an AI turn
+        const cp = prev.players[prev.currentPlayerIndex]
+        if (!cp.isAI || prev.phase !== 'ai-turn') return prev
+
+        const aiDecision = getAIDecision(prev, level)
+        if (!aiDecision) {
+          // AI can't do anything, advance turn
           const nextIndex = (prev.currentPlayerIndex + 1) % prev.players.length
           const nextPlayer = prev.players[nextIndex]
           return {
             ...prev,
             currentPlayerIndex: nextIndex,
-            phase: nextPlayer.isAI ? 'ai-turn' : 'select-rank',
+            phase: nextPlayer.isAI ? 'ai-turn' : ('select-rank' as const),
+            turnSeq: (prev.turnSeq ?? 0) + 1,
             message: nextPlayer.isAI ? `${nextPlayer.name} is thinking...` : 'Your turn! Tap a card to ask for that rank.',
           }
-        })
-        return
-      }
+        }
 
-      // First select rank, then ask
-      setState(prev => {
-        const withRank = selectRank(prev, decision.rank)
-        const result = askPlayer(withRank, decision.targetId)
+        const withRank = selectRank(prev, aiDecision.rank)
+        const result = askPlayer(withRank, aiDecision.targetId)
 
         // Show animation based on result
         if (result.lastEvent?.type === 'go-fish') {
           setShowGoFish(true)
           setTimeout(() => setShowGoFish(false), 1500)
         } else if (result.lastEvent?.type === 'got-cards') {
-          setShowGotCards({ count: result.lastEvent.count ?? 0, rank: decision.rank })
+          setShowGotCards({ count: result.lastEvent.count ?? 0, rank: aiDecision.rank })
           setTimeout(() => setShowGotCards(null), 1200)
         }
 
@@ -254,7 +373,7 @@ export default function GoFishGame({ onGameOver, level }: Props) {
     return () => {
       if (aiTimerRef.current) clearTimeout(aiTimerRef.current)
     }
-  }, [state.currentPlayerIndex, state.phase, level])
+  }, [state.currentPlayerIndex, state.phase, state.turnSeq, level])
 
   // Game over callback
   useEffect(() => {
@@ -477,26 +596,13 @@ export default function GoFishGame({ onGameOver, level }: Props) {
       )}
 
       {/* Player hand */}
-      <div className="px-2 pb-4 pt-1">
-        <div className="flex justify-center flex-wrap gap-1">
-          {humanPlayer.hand.map(card => {
-            const isSelectable = isHumanTurn && state.phase === 'select-rank'
-            const isSelected = selectedCardRank === card.rank
-            return (
-              <CardView
-                key={card.id}
-                card={card}
-                size="md"
-                faceUp
-                selected={isSelected}
-                highlighted={state.phase === 'select-rank' && isHumanTurn && !selectedCardRank}
-                disabled={!isSelectable}
-                onClick={() => handleCardTap(card)}
-              />
-            )
-          })}
-        </div>
-      </div>
+      <PlayerHand
+        hand={humanPlayer.hand}
+        isHumanTurn={isHumanTurn}
+        phase={state.phase}
+        selectedCardRank={selectedCardRank}
+        onCardTap={handleCardTap}
+      />
 
       {/* Go Fish animation */}
       {showGoFish && <GoFishFlash />}

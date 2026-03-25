@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 
 interface MinesweeperGameProps {
   onGameOver: (score: number) => void;
@@ -99,18 +99,37 @@ const NUMBER_COLORS: Record<number, string> = {
 };
 
 export default function MinesweeperGame({ onGameOver, level }: MinesweeperGameProps) {
-  const ROWS = level === 'easy' ? 6 : level === 'hard' ? 12 : 9;
-  const COLS = level === 'easy' ? 6 : level === 'hard' ? 12 : 9;
-  const MINES = level === 'easy' ? 5 : level === 'hard' ? 25 : 10;
+  const ROWS = level === 'easy' ? 6 : level === 'hard' ? 10 : 9;
+  const COLS = level === 'easy' ? 6 : level === 'hard' ? 10 : 9;
+  const MINES = level === 'easy' ? 5 : level === 'hard' ? 20 : 10;
   const [grid, setGrid] = useState<CellState[][]>(() => createEmptyGrid(ROWS, COLS));
   const [started, setStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
   const [timer, setTimer] = useState(0);
   const [flagCount, setFlagCount] = useState(0);
+  const [cellSize, setCellSize] = useState(34);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
+
+  // Calculate responsive cell size based on screen width
+  const calculateCellSize = useCallback(() => {
+    if (typeof window === 'undefined') return 34;
+    // Account for padding (16px each side) + gap (2px per gap) + grid padding (16px)
+    const availableWidth = window.innerWidth - 32 - 16;
+    const gapTotal = (COLS - 1) * 2;
+    const maxCellSize = Math.floor((availableWidth - gapTotal) / COLS);
+    return Math.max(28, Math.min(40, maxCellSize));
+  }, [COLS]);
+
+  // Recalculate cell size on mount and window resize
+  useEffect(() => {
+    setCellSize(calculateCellSize());
+    const handleResize = () => setCellSize(calculateCellSize());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [calculateCellSize]);
 
   // Timer
   useEffect(() => {
@@ -212,21 +231,28 @@ export default function MinesweeperGame({ onGameOver, level }: MinesweeperGamePr
     }
   };
 
+  const cellStyle = useMemo(() => ({
+    width: `${cellSize}px`,
+    height: `${cellSize}px`,
+    fontSize: cellSize >= 34 ? '0.875rem' : '0.75rem',
+  }), [cellSize]);
+
   const renderCell = (cell: CellState, row: number, col: number) => {
-    const base = 'w-[34px] h-[34px] sm:w-[40px] sm:h-[40px] flex items-center justify-center text-sm sm:text-base font-bold select-none transition-all duration-150';
+    const base = 'flex items-center justify-center font-bold select-none transition-all duration-150';
 
     if (!cell.isRevealed) {
       return (
         <div
           key={`${row}-${col}`}
           className={`${base} bg-zinc-600 hover:bg-zinc-500 border border-zinc-500 rounded-sm cursor-pointer active:scale-95`}
+          style={cellStyle}
           onClick={() => !longPressTriggered.current && revealCell(row, col)}
           onContextMenu={(e) => handleContextMenu(e, row, col)}
           onTouchStart={() => handleTouchStart(row, col)}
           onTouchEnd={() => handleTouchEnd(row, col)}
           onTouchMove={handleTouchMove}
         >
-          {cell.isFlagged && <span className="text-red-400 text-lg">🚩</span>}
+          {cell.isFlagged && <span className="text-red-400" style={{ fontSize: cellSize >= 34 ? '1.125rem' : '0.875rem' }}>🚩</span>}
         </div>
       );
     }
@@ -236,8 +262,9 @@ export default function MinesweeperGame({ onGameOver, level }: MinesweeperGamePr
         <div
           key={`${row}-${col}`}
           className={`${base} bg-red-600 border border-red-700 rounded-sm`}
+          style={cellStyle}
         >
-          <span className="text-lg">💣</span>
+          <span style={{ fontSize: cellSize >= 34 ? '1.125rem' : '0.875rem' }}>💣</span>
         </div>
       );
     }
@@ -246,6 +273,7 @@ export default function MinesweeperGame({ onGameOver, level }: MinesweeperGamePr
       <div
         key={`${row}-${col}`}
         className={`${base} bg-zinc-800 border border-zinc-700/50 rounded-sm`}
+        style={cellStyle}
       >
         {cell.adjacentMines > 0 && (
           <span className={NUMBER_COLORS[cell.adjacentMines] || 'text-white'}>

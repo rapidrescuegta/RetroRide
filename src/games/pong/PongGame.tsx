@@ -464,24 +464,32 @@ export default function PongGame({ onGameOver, level }: PongGameProps) {
     return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
   }, [restart]);
 
-  // Touch
+  // Touch — mapped proportionally to canvas coordinates regardless of touch position
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const getY = (e: TouchEvent) => {
+    const getCanvasY = (e: TouchEvent) => {
       const rect = canvas.getBoundingClientRect();
-      return e.touches[0].clientY - rect.top;
+      const touchClientY = e.touches[0].clientY;
+      // Map touch position relative to canvas position, proportionally scaled to game height
+      const relativeY = (touchClientY - rect.top) / rect.height;
+      const s = stateRef.current;
+      if (!s) return touchClientY - rect.top;
+      // Clamp to valid paddle range and scale to game coordinates
+      return Math.max(0, Math.min(1, relativeY)) * s.h;
     };
 
     const start = (e: TouchEvent) => {
       e.preventDefault();
       if (stateRef.current?.gameOver) { restart(); return; }
-      touchYRef.current = getY(e);
+      touchYRef.current = getCanvasY(e);
     };
     const move = (e: TouchEvent) => {
       e.preventDefault();
-      touchYRef.current = getY(e);
+      if (e.touches.length > 0) {
+        touchYRef.current = getCanvasY(e);
+      }
     };
     const end = (e: TouchEvent) => {
       e.preventDefault();
@@ -533,7 +541,19 @@ export default function PongGame({ onGameOver, level }: PongGameProps) {
   }, [getSize]);
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100%',
+        flex: 1,
+        minHeight: canvasSize.height + 16,
+        touchAction: 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+      }}
+    >
       <canvas
         ref={canvasRef}
         width={canvasSize.width}
