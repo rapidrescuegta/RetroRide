@@ -507,12 +507,14 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
       ctx.font = 'bold 16px sans-serif';
       ctx.fillText(`SCORE: ${s.score}`, 10, 24);
 
-      // Lives as glowing hearts
+      // Lives display — large and visible
       ctx.fillStyle = '#ff4466';
       ctx.shadowColor = '#ff2244';
-      ctx.shadowBlur = 8;
-      ctx.font = '18px sans-serif';
-      ctx.fillText('\u2665'.repeat(s.lives), W - 70, 24);
+      ctx.shadowBlur = 10;
+      ctx.font = 'bold 22px sans-serif';
+      const heartsText = '\u2665'.repeat(s.lives);
+      const heartsWidth = ctx.measureText(heartsText).width;
+      ctx.fillText(heartsText, W - heartsWidth - 10, 26);
       ctx.restore();
 
       // 1UP flash

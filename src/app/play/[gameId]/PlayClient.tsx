@@ -270,6 +270,7 @@ export default function PlayClient({ gameId }: { gameId: string }) {
           <span className="text-[10px]" style={{ color: LEVEL_LABELS[level].color }}>
             {LEVEL_LABELS[level].stars}
           </span>
+          <span className="text-[8px] text-slate-600 ml-1">v5</span>
         </div>
 
         <div className="text-[10px] text-slate-500 min-w-[50px] text-right">
