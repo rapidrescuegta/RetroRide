@@ -639,12 +639,25 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
           }
         }
 
-        // Aliens reach bottom check
+        // Aliens reach bottom — lose a life and reset wave
+        let aliensReachedBottom = false;
         for (const a of s.aliens) {
           if (a.alive && a.y + ALIEN_H / 2 >= H - 40) {
+            aliensReachedBottom = true;
+            break;
+          }
+        }
+        if (aliensReachedBottom) {
+          s.lives--;
+          spawnExplosion(s, s.playerX, H - 30, '#ff4444');
+          if (s.lives <= 0) {
             s.gameOver = true;
             s.gameOverTime = Date.now();
-            break;
+          } else {
+            // Reset aliens and give brief invincibility
+            initAliens(s);
+            s.alienSpeed = initialAlienSpeed;
+            s.invincibleUntil = Date.now() + 1500;
           }
         }
 
