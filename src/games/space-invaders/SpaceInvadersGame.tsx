@@ -647,7 +647,7 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
 
       if (s.started && !s.gameOver) {
         // Player movement
-        const moveSpeed = level === 'easy' ? 3 : level === 'hard' ? 4.5 : 3.5;
+        const moveSpeed = level === 'easy' ? 2 : level === 'hard' ? 3 : 2.5;
         if (keys['ArrowLeft'] || keys['a']) s.playerX = Math.max(PLAYER_W / 2, s.playerX - moveSpeed);
         if (keys['ArrowRight'] || keys['d']) s.playerX = Math.min(W - PLAYER_W / 2, s.playerX + moveSpeed);
 
