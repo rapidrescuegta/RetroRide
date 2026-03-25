@@ -765,7 +765,7 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
       <div className="flex justify-between w-full max-w-[400px] px-2 text-white font-mono text-sm">
         <span>Score: {score}</span>
         <span>Wave: {wave}</span>
-        <span>Lives: {lives}</span>
+        <span>{lives === 1 ? <span className="text-red-500 animate-pulse">LAST LIFE</span> : `Lives: ${lives - 1}`}</span>
       </div>
       <canvas
         ref={canvasRef}

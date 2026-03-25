@@ -733,8 +733,19 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
       drawPacMan(gs.pacX, gs.pacY, gs.pacDir === 'none' ? 'right' : gs.pacDir, gs.mouthOpen);
       gs.ghosts.forEach(g => drawGhost(g, gs.frameCount));
 
-      // Lives display - mini glossy pac-mans
-      for (let i = 0; i < gs.lives; i++) {
+      // Lives display - mini glossy pac-mans (reserve lives only)
+      const reserveLives = Math.max(0, gs.lives - 1);
+      if (gs.lives === 1) {
+        ctx.fillStyle = '#ff3333';
+        ctx.shadowColor = '#ff3333';
+        ctx.shadowBlur = 8;
+        ctx.font = 'bold 10px monospace';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('LAST LIFE', 10, canvas.height - 12);
+        ctx.shadowBlur = 0;
+      }
+      for (let i = 0; i < reserveLives; i++) {
         const lx = 15 + i * 22;
         const ly = canvas.height - 12;
         const lr = 8;
@@ -786,7 +797,7 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
     <div className="flex flex-col items-center gap-2 select-none">
       <div className="flex justify-between w-full max-w-[400px] px-2 text-white font-mono text-sm">
         <span>Score: {score}</span>
-        <span>Lives: {lives}</span>
+        <span>{lives === 1 ? <span className="text-red-500 animate-pulse">LAST LIFE</span> : `Lives: ${lives - 1}`}</span>
       </div>
       <canvas
         ref={canvasRef}

@@ -679,14 +679,26 @@ export default function BrickBreakerGame({ onGameOver, level: difficulty }: Bric
         ctx.fillText(labels[pu.type], pu.x, pu.y + 1);
       });
 
-      // Lives display - glowing hearts
-      for (let i = 0; i < gs.lives; i++) {
-        ctx.shadowColor = '#ff2266';
-        ctx.shadowBlur = 6;
-        ctx.fillStyle = '#ff4488';
-        ctx.font = '14px sans-serif';
-        ctx.fillText('\u2665', 10 + i * 18, H - 8);
+      // Lives display - glowing hearts (reserve lives only)
+      const reserveLives = Math.max(0, gs.lives - 1);
+      if (gs.lives === 1) {
+        ctx.fillStyle = '#ff3333';
+        ctx.shadowColor = '#ff3333';
+        ctx.shadowBlur = 8;
+        ctx.font = 'bold 10px monospace';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('LAST LIFE', 10, H - 8);
         ctx.shadowBlur = 0;
+      } else {
+        for (let i = 0; i < reserveLives; i++) {
+          ctx.shadowColor = '#ff2266';
+          ctx.shadowBlur = 6;
+          ctx.fillStyle = '#ff4488';
+          ctx.font = '14px sans-serif';
+          ctx.fillText('\u2665', 10 + i * 18, H - 8);
+          ctx.shadowBlur = 0;
+        }
       }
 
       // 1UP flash
@@ -752,7 +764,7 @@ export default function BrickBreakerGame({ onGameOver, level: difficulty }: Bric
       <div className="flex justify-between w-full max-w-[400px] px-2 text-white font-mono text-sm">
         <span>Score: {score}</span>
         <span>Level: {level}</span>
-        <span>Lives: {lives}</span>
+        <span>{lives === 1 ? <span className="text-red-500 animate-pulse">LAST LIFE</span> : `Lives: ${lives - 1}`}</span>
       </div>
       <canvas
         ref={canvasRef}

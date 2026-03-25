@@ -881,7 +881,11 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
           SCORE: {displayScore}
         </div>
         <div className="text-red-400 font-mono font-bold text-lg flex items-center gap-1">
-          {'🐸'.repeat(displayLives)}
+          {displayLives === 1 ? (
+            <span className="text-red-500 text-sm animate-pulse">LAST LIFE</span>
+          ) : (
+            '🐸'.repeat(Math.max(0, displayLives - 1))
+          )}
         </div>
       </div>
 

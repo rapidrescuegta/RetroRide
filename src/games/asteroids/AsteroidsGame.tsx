@@ -750,12 +750,16 @@ export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps)
         <div className="text-white font-mono font-bold text-lg">
           {displayScore}
         </div>
-        <div className="text-white font-mono text-sm flex gap-1">
-          {Array.from({ length: displayLives }, (_, i) => (
-            <svg key={i} width="16" height="16" viewBox="0 0 16 16" className="fill-none stroke-white" strokeWidth="1.5">
-              <path d="M8 1 L14 13 L8 10 L2 13 Z" />
-            </svg>
-          ))}
+        <div className="text-white font-mono text-sm flex gap-1 items-center">
+          {displayLives === 1 ? (
+            <span className="text-red-500 font-bold text-xs animate-pulse">LAST LIFE</span>
+          ) : (
+            Array.from({ length: Math.max(0, displayLives - 1) }, (_, i) => (
+              <svg key={i} width="16" height="16" viewBox="0 0 16 16" className="fill-none stroke-white" strokeWidth="1.5">
+                <path d="M8 1 L14 13 L8 10 L2 13 Z" />
+              </svg>
+            ))
+          )}
         </div>
       </div>
 

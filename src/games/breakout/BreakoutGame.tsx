@@ -306,29 +306,43 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
     ctx.fillStyle = '#ffffff';
     ctx.fillText(`${s.score}`, 10 + ctx.measureText('SCORE ').width, hudY);
 
-    // Lives as glowing hearts
-    const heartSize = Math.max(8, s.w * 0.018);
-    const heartSpacing = heartSize * 2.5;
-    const heartsStartX = s.w - 12 - (s.lives - 1) * heartSpacing;
-    for (let i = 0; i < s.lives; i++) {
-      const hx = heartsStartX + i * heartSpacing;
-      const hy = hudY - 4;
-      const pulse = 1 + Math.sin(time * 3 + i * 0.5) * 0.1;
+    // Lives as glowing hearts (reserve lives only)
+    const reserveLives = Math.max(0, s.lives - 1);
+    if (s.lives === 1) {
       ctx.save();
-      ctx.shadowColor = '#ff2255';
-      ctx.shadowBlur = 10;
-      const heartGrad = ctx.createRadialGradient(hx, hy, 0, hx, hy, heartSize * pulse);
-      heartGrad.addColorStop(0, '#ff4477');
-      heartGrad.addColorStop(1, '#cc1144');
-      ctx.fillStyle = heartGrad;
-      drawHeart(ctx, hx, hy, heartSize * pulse);
-      ctx.fill();
+      ctx.fillStyle = '#ff3333';
+      ctx.shadowColor = '#ff3333';
+      ctx.shadowBlur = 8;
+      ctx.font = `bold ${Math.max(10, s.w * 0.02)}px monospace`;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('LAST LIFE', s.w - 12, hudY - 4);
       ctx.shadowBlur = 0;
-      // Highlight on heart
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-      drawHeart(ctx, hx - heartSize * 0.05, hy - heartSize * 0.1, heartSize * pulse * 0.5);
-      ctx.fill();
       ctx.restore();
+    } else {
+      const heartSize = Math.max(8, s.w * 0.018);
+      const heartSpacing = heartSize * 2.5;
+      const heartsStartX = s.w - 12 - (reserveLives - 1) * heartSpacing;
+      for (let i = 0; i < reserveLives; i++) {
+        const hx = heartsStartX + i * heartSpacing;
+        const hy = hudY - 4;
+        const pulse = 1 + Math.sin(time * 3 + i * 0.5) * 0.1;
+        ctx.save();
+        ctx.shadowColor = '#ff2255';
+        ctx.shadowBlur = 10;
+        const heartGrad = ctx.createRadialGradient(hx, hy, 0, hx, hy, heartSize * pulse);
+        heartGrad.addColorStop(0, '#ff4477');
+        heartGrad.addColorStop(1, '#cc1144');
+        ctx.fillStyle = heartGrad;
+        drawHeart(ctx, hx, hy, heartSize * pulse);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        // Highlight on heart
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        drawHeart(ctx, hx - heartSize * 0.05, hy - heartSize * 0.1, heartSize * pulse * 0.5);
+        ctx.fill();
+        ctx.restore();
+      }
     }
 
     // 1UP flash
