@@ -48,10 +48,12 @@ const PLAYER_H = 24;
 
 export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
   // Difficulty settings
+  const EXTRA_LIFE_INTERVAL = 3000;
+  const MAX_LIVES = 5;
   const difficultyConfig = {
-    easy:   { startLives: 5, rowMod: -1, colMod: -2, diveChanceBase: 0.002, diveChancePerWave: 0.001, diveSpeedBase: 1.5, diveSpeedPerWave: 0.15, enemyShootChance: 0.01, formationShootInterval: 80 },
-    medium: { startLives: 3, rowMod: 0, colMod: 0, diveChanceBase: 0.005, diveChancePerWave: 0.003, diveSpeedBase: 2, diveSpeedPerWave: 0.3, enemyShootChance: 0.03, formationShootInterval: 40 },
-    hard:   { startLives: 2, rowMod: 1, colMod: 1, diveChanceBase: 0.008, diveChancePerWave: 0.005, diveSpeedBase: 2.5, diveSpeedPerWave: 0.45, enemyShootChance: 0.05, formationShootInterval: 25 },
+    easy:   { startLives: 3, rowMod: -2, colMod: -3, diveChanceBase: 0.001, diveChancePerWave: 0.0005, diveSpeedBase: 1.0, diveSpeedPerWave: 0.08, enemyShootChance: 0.005, formationShootInterval: 120 },
+    medium: { startLives: 3, rowMod: 0, colMod: 0, diveChanceBase: 0.004, diveChancePerWave: 0.002, diveSpeedBase: 1.8, diveSpeedPerWave: 0.25, enemyShootChance: 0.02, formationShootInterval: 50 },
+    hard:   { startLives: 3, rowMod: 1, colMod: 1, diveChanceBase: 0.007, diveChancePerWave: 0.004, diveSpeedBase: 2.2, diveSpeedPerWave: 0.35, enemyShootChance: 0.04, formationShootInterval: 30 },
   }[level];
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -71,6 +73,8 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
     frameCount: number;
     touchX: number | null;
     started: boolean;
+    nextExtraLife: number;
+    extraLifeFlash: number;
   } | null>(null);
   const animRef = useRef(0);
   const [score, setScore] = useState(0);
@@ -135,6 +139,8 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
       frameCount: 0,
       touchX: null,
       started: false,
+      nextExtraLife: EXTRA_LIFE_INTERVAL,
+      extraLifeFlash: 0,
     };
     setScore(0);
     setLives(difficultyConfig.startLives);
@@ -568,6 +574,13 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
                 const pts = e.type === 'boss' ? 40 : e.type === 'medium' ? 20 : 10;
                 gs.score += pts;
                 setScore(gs.score);
+                // Extra life check
+                if (gs.score >= gs.nextExtraLife && gs.lives < MAX_LIVES) {
+                  gs.lives++;
+                  gs.nextExtraLife += EXTRA_LIFE_INTERVAL;
+                  gs.extraLifeFlash = 60;
+                  setLives(gs.lives);
+                }
                 gs.explosions.push({ x: e.x, y: e.y, frame: 0, maxFrames: 20 });
               }
               return false;
@@ -702,6 +715,20 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
         if (gs.invincible <= 0 || gs.frameCount % 4 < 2) {
           drawShip(gs.playerX, H - 40, gs.frameCount);
         }
+      }
+
+      // 1UP flash
+      if (gs.extraLifeFlash > 0) {
+        gs.extraLifeFlash--;
+        ctx.save();
+        ctx.globalAlpha = gs.extraLifeFlash / 60;
+        ctx.fillStyle = '#00ff88';
+        ctx.shadowColor = '#00ff88';
+        ctx.shadowBlur = 20;
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('1UP!', W / 2, H / 2 - 40);
+        ctx.restore();
       }
 
       // Game over text with neon glow

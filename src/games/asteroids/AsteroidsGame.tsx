@@ -101,9 +101,11 @@ function dist(a: Vec2, b: Vec2) {
 
 export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps) {
   // Level-based settings
-  const startingAsteroids = level === 'easy' ? 2 : level === 'hard' ? 6 : 4;
-  const asteroidSpeedMultiplier = level === 'easy' ? 0.6 : level === 'hard' ? 1.5 : 1.0;
-  const initialLives = level === 'easy' ? 5 : level === 'hard' ? 2 : 3;
+  const startingAsteroids = level === 'easy' ? 1 : level === 'hard' ? 5 : 3;
+  const asteroidSpeedMultiplier = level === 'easy' ? 0.4 : level === 'hard' ? 1.3 : 1.0;
+  const initialLives = 3;
+  const EXTRA_LIFE_INTERVAL = 2000;
+  const MAX_LIVES = 5;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const keysRef = useRef<Set<string>>(new Set());
   const stateRef = useRef<{
@@ -123,6 +125,8 @@ export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps)
     starsInited: boolean;
     shieldFlash: number;
     nebulaTime: number;
+    nextExtraLife: number;
+    extraLifeFlash: number;
   } | null>(null);
   const [displayScore, setDisplayScore] = useState(0);
   const [displayLives, setDisplayLives] = useState(initialLives);
@@ -219,6 +223,8 @@ export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps)
       starsInited: true,
       shieldFlash: 0,
       nebulaTime: 0,
+      nextExtraLife: EXTRA_LIFE_INTERVAL,
+      extraLifeFlash: 0,
     };
 
     const spawnExplosion = (pos: Vec2, count: number, isShip: boolean) => {
@@ -590,6 +596,14 @@ export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps)
             s.score += pts[a.size];
             setDisplayScore(s.score);
 
+            // Extra life check
+            if (s.score >= s.nextExtraLife && s.lives < MAX_LIVES) {
+              s.lives++;
+              s.nextExtraLife += EXTRA_LIFE_INTERVAL;
+              s.extraLifeFlash = 60;
+              setDisplayLives(s.lives);
+            }
+
             // Break apart
             if (a.size === 'large') {
               newAsteroids.push(spawnAsteroid('medium', { ...a.pos }));
@@ -677,6 +691,20 @@ export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps)
             ctx.shadowBlur = 0;
           }
         }
+      }
+
+      // 1UP flash
+      if (s.extraLifeFlash > 0) {
+        s.extraLifeFlash--;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, s.extraLifeFlash / 60);
+        ctx.fillStyle = '#00ff88';
+        ctx.shadowColor = '#00ff88';
+        ctx.shadowBlur = 20;
+        ctx.font = 'bold 28px "Segoe UI", system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('1UP!', BASE_W / 2, BASE_H / 2 - 40);
+        ctx.restore();
       }
 
       // Game over text

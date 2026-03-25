@@ -52,10 +52,12 @@ interface Ghost {
 
 export default function PacManGame({ onGameOver, level }: PacManGameProps) {
   // Difficulty settings
+  const EXTRA_LIFE_INTERVAL = 5000;
+  const MAX_LIVES = 5;
   const difficultyConfig = {
-    easy:   { ghostCount: 2, ghostMoveInterval: 250, powerDuration: 480, startLives: 5 },
-    medium: { ghostCount: 4, ghostMoveInterval: 200, powerDuration: 300, startLives: 3 },
-    hard:   { ghostCount: 4, ghostMoveInterval: 160, powerDuration: 180, startLives: 2 },
+    easy:   { ghostCount: 2, ghostMoveInterval: 320, powerDuration: 600, startLives: 3 },
+    medium: { ghostCount: 3, ghostMoveInterval: 220, powerDuration: 350, startLives: 3 },
+    hard:   { ghostCount: 4, ghostMoveInterval: 150, powerDuration: 200, startLives: 3 },
   }[level];
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -80,6 +82,8 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
     frameCount: number;
     started: boolean;
     readyTimer: number;
+    nextExtraLife: number;
+    extraLifeFlash: number;
   } | null>(null);
   const animFrameRef = useRef<number>(0);
   const [score, setScore] = useState(0);
@@ -127,6 +131,8 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
       frameCount: 0,
       started: false,
       readyTimer: 90,
+      nextExtraLife: EXTRA_LIFE_INTERVAL,
+      extraLifeFlash: 0,
     };
     setScore(0);
     setLives(difficultyConfig.startLives);
@@ -662,6 +668,14 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
 
           setScore(gs.score);
 
+          // Extra life check
+          if (gs.score >= gs.nextExtraLife && gs.lives < MAX_LIVES) {
+            gs.lives++;
+            gs.nextExtraLife += EXTRA_LIFE_INTERVAL;
+            gs.extraLifeFlash = 60;
+            setLives(gs.lives);
+          }
+
           if (gs.dotsEaten >= gs.totalDots) {
             gs.levelComplete = true;
             gs.frameCount = 0;
@@ -693,6 +707,13 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
             ghost.eaten = true;
             gs.score += 200;
             setScore(gs.score);
+            // Extra life check
+            if (gs.score >= gs.nextExtraLife && gs.lives < MAX_LIVES) {
+              gs.lives++;
+              gs.nextExtraLife += EXTRA_LIFE_INTERVAL;
+              gs.extraLifeFlash = 60;
+              setLives(gs.lives);
+            }
           } else {
             gs.lives--;
             setLives(gs.lives);
@@ -729,6 +750,20 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
         ctx.lineTo(lx, ly);
         ctx.fill();
         ctx.shadowBlur = 0;
+      }
+
+      // 1UP flash
+      if (gs.extraLifeFlash > 0) {
+        gs.extraLifeFlash--;
+        ctx.save();
+        ctx.globalAlpha = gs.extraLifeFlash / 60;
+        ctx.fillStyle = '#00ff88';
+        ctx.shadowColor = '#00ff88';
+        ctx.shadowBlur = 20;
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('1UP!', canvas.width / 2, canvas.height / 2 - 40);
+        ctx.restore();
       }
 
       animFrameRef.current = requestAnimationFrame(gameLoop);

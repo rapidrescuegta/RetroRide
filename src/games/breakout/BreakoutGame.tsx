@@ -24,11 +24,13 @@ type Brick = { x: number; y: number; w: number; h: number; color: string; alive:
 
 export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
   // Difficulty settings
-  const BRICK_ROWS = level === 'easy' ? 4 : level === 'hard' ? 8 : 6;
-  const PADDLE_WIDTH_RATIO = level === 'easy' ? 0.22 : level === 'hard' ? 0.10 : 0.15;
+  const BRICK_ROWS = level === 'easy' ? 3 : level === 'hard' ? 7 : 5;
+  const PADDLE_WIDTH_RATIO = level === 'easy' ? 0.28 : level === 'hard' ? 0.12 : 0.18;
   const BALL_RADIUS_RATIO = 0.01;
-  const BALL_SPEED_RATIO = level === 'easy' ? 0.004 : level === 'hard' ? 0.007 : 0.005;
-  const INITIAL_LIVES = level === 'easy' ? 5 : level === 'hard' ? 2 : 3;
+  const BALL_SPEED_RATIO = level === 'easy' ? 0.003 : level === 'hard' ? 0.006 : 0.0045;
+  const INITIAL_LIVES = 3;
+  const EXTRA_LIFE_INTERVAL = 500;
+  const MAX_LIVES = 5;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<{
@@ -51,6 +53,8 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
     h: number;
     launched: boolean;
     particles: Array<{ x: number; y: number; vx: number; vy: number; life: number; color: string; size: number }>;
+    nextExtraLife: number;
+    extraLifeFlash: number;
   } | null>(null);
   const animRef = useRef<number>(0);
   const keysRef = useRef<Set<string>>(new Set());
@@ -131,6 +135,8 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
       w, h,
       launched: false,
       particles: [],
+      nextExtraLife: EXTRA_LIFE_INTERVAL,
+      extraLifeFlash: 0,
     };
     stateRef.current = s;
   }, [getSize, createBricks, PADDLE_WIDTH_RATIO, BALL_RADIUS_RATIO, BALL_SPEED_RATIO, INITIAL_LIVES]);
@@ -325,6 +331,20 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
       ctx.restore();
     }
 
+    // 1UP flash
+    if (s.extraLifeFlash > 0) {
+      s.extraLifeFlash--;
+      ctx.save();
+      ctx.globalAlpha = s.extraLifeFlash / 60;
+      ctx.fillStyle = '#00ff88';
+      ctx.shadowColor = '#00ff88';
+      ctx.shadowBlur = 20;
+      ctx.font = 'bold 24px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('1UP!', s.w / 2, s.h / 2 - 40);
+      ctx.restore();
+    }
+
     // Launch prompt
     if (!s.launched && !s.gameOver) {
       const promptAlpha = 0.4 + Math.sin(time * 4) * 0.2;
@@ -440,6 +460,12 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
       if (dist <= s.ballR) {
         brick.alive = false;
         s.score += 10;
+        // Extra life check
+        if (s.score >= s.nextExtraLife && s.lives < MAX_LIVES) {
+          s.lives++;
+          s.nextExtraLife += EXTRA_LIFE_INTERVAL;
+          s.extraLifeFlash = 60;
+        }
         spawnParticles(brick.x + brick.w / 2, brick.y + brick.h / 2, brick.color, 12);
 
         // Determine bounce direction

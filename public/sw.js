@@ -1,7 +1,7 @@
 // RetroRide Service Worker
 // Cache-first for static assets, network-first for pages, background sync for API actions
 
-const CACHE_NAME = 'retroride-v2'
+const CACHE_NAME = 'retroride-v3'
 const STATIC_EXTENSIONS = /\.(js|css|woff2?|ttf|otf|png|jpg|jpeg|svg|gif|ico|webp|avif|json)$/
 const API_SYNC_URLS = ['/api/chat', '/api/scores', '/api/challenge']
 

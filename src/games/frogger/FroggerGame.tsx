@@ -31,9 +31,11 @@ type SplashParticle = {
 
 export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
   // Level-based settings
-  const speedMultiplier = level === 'easy' ? 0.6 : level === 'hard' ? 1.5 : 1.0;
-  const logWidthMultiplier = level === 'easy' ? 1.3 : level === 'hard' ? 0.7 : 1.0;
-  const initialLives = level === 'easy' ? 5 : level === 'hard' ? 2 : 3;
+  const speedMultiplier = level === 'easy' ? 0.4 : level === 'hard' ? 1.3 : 1.0;
+  const logWidthMultiplier = level === 'easy' ? 1.5 : level === 'hard' ? 0.8 : 1.0;
+  const initialLives = 3;
+  const EXTRA_LIFE_INTERVAL = 500;
+  const MAX_LIVES = 5;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<{
     frogX: number;
@@ -52,6 +54,8 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
     deathY: number;
     splashParticles: SplashParticle[];
     waveOffset: number;
+    nextExtraLife: number;
+    extraLifeFlash: number;
   } | null>(null);
   const [displayScore, setDisplayScore] = useState(0);
   const [displayLives, setDisplayLives] = useState(initialLives);
@@ -109,6 +113,8 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
       deathY: 0,
       splashParticles: [] as SplashParticle[],
       waveOffset: 0,
+      nextExtraLife: EXTRA_LIFE_INTERVAL,
+      extraLifeFlash: 0,
     };
   }, [speedMultiplier, logWidthMultiplier, initialLives]);
 
@@ -139,6 +145,13 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
       s.score += 10 * (s.maxRow - row);
       s.maxRow = row;
       setDisplayScore(s.score);
+      // Extra life check
+      if (s.score >= s.nextExtraLife && s.lives < MAX_LIVES) {
+        s.lives++;
+        s.nextExtraLife += EXTRA_LIFE_INTERVAL;
+        s.extraLifeFlash = 60;
+        setDisplayLives(s.lives);
+      }
     }
   }, []);
 
@@ -691,6 +704,13 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
             home.filled = true;
             s.score += 50;
             setDisplayScore(s.score);
+            // Extra life check
+            if (s.score >= s.nextExtraLife && s.lives < MAX_LIVES) {
+              s.lives++;
+              s.nextExtraLife += EXTRA_LIFE_INTERVAL;
+              s.extraLifeFlash = 60;
+              setDisplayLives(s.lives);
+            }
             landed = true;
             resetFrog(s);
 
@@ -827,6 +847,20 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
       } else {
         // Draw frog
         drawFrog(ctx, s.frogX, s.frogY, CELL, false);
+      }
+
+      // 1UP flash
+      if (s.extraLifeFlash > 0) {
+        s.extraLifeFlash--;
+        ctx.save();
+        ctx.globalAlpha = s.extraLifeFlash / 60;
+        ctx.fillStyle = '#00ff88';
+        ctx.shadowColor = '#00ff88';
+        ctx.shadowBlur = 20;
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('1UP!', WIDTH / 2, HEIGHT / 2 - 40);
+        ctx.restore();
       }
     };
 

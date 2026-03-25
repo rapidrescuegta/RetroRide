@@ -50,10 +50,12 @@ const BRICK_COLORS: Record<number, string[]> = {
 
 export default function BrickBreakerGame({ onGameOver, level: difficulty }: BrickBreakerGameProps) {
   // Difficulty settings
+  const EXTRA_LIFE_INTERVAL = 500;
+  const MAX_LIVES = 5;
   const difficultyConfig = {
-    easy:   { startLives: 5, paddleWidth: 100, ballSpeed: 4, powerUpChance: 0.35 },
-    medium: { startLives: 3, paddleWidth: 70, ballSpeed: 5, powerUpChance: 0.2 },
-    hard:   { startLives: 2, paddleWidth: 50, ballSpeed: 6.5, powerUpChance: 0.1 },
+    easy:   { startLives: 3, paddleWidth: 120, ballSpeed: 3, powerUpChance: 0.4 },
+    medium: { startLives: 3, paddleWidth: 80, ballSpeed: 4.5, powerUpChance: 0.25 },
+    hard:   { startLives: 3, paddleWidth: 55, ballSpeed: 6, powerUpChance: 0.12 },
   }[difficulty];
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -72,6 +74,8 @@ export default function BrickBreakerGame({ onGameOver, level: difficulty }: Bric
     frameCount: number;
     touchX: number | null;
     particles: { x: number; y: number; vx: number; vy: number; life: number; color: string }[];
+    nextExtraLife: number;
+    extraLifeFlash: number;
   } | null>(null);
   const animRef = useRef(0);
   const [score, setScore] = useState(0);
@@ -138,6 +142,8 @@ export default function BrickBreakerGame({ onGameOver, level: difficulty }: Bric
       frameCount: 0,
       touchX: null,
       particles: [],
+      nextExtraLife: EXTRA_LIFE_INTERVAL,
+      extraLifeFlash: 0,
     };
     setScore(0);
     setLives(difficultyConfig.startLives);
@@ -309,6 +315,13 @@ export default function BrickBreakerGame({ onGameOver, level: difficulty }: Bric
                 const pts = brick.maxHp === 3 ? 50 : brick.maxHp === 2 ? 25 : 10;
                 gs.score += pts;
                 setScore(gs.score);
+                // Extra life check
+                if (gs.score >= gs.nextExtraLife && gs.lives < MAX_LIVES) {
+                  gs.lives++;
+                  gs.nextExtraLife += EXTRA_LIFE_INTERVAL;
+                  gs.extraLifeFlash = 60;
+                  setLives(gs.lives);
+                }
 
                 // Particles - more for visual impact
                 for (let i = 0; i < 12; i++) {
@@ -674,6 +687,20 @@ export default function BrickBreakerGame({ onGameOver, level: difficulty }: Bric
         ctx.font = '14px sans-serif';
         ctx.fillText('\u2665', 10 + i * 18, H - 8);
         ctx.shadowBlur = 0;
+      }
+
+      // 1UP flash
+      if (gs.extraLifeFlash > 0) {
+        gs.extraLifeFlash--;
+        ctx.save();
+        ctx.globalAlpha = gs.extraLifeFlash / 60;
+        ctx.fillStyle = '#00ff88';
+        ctx.shadowColor = '#00ff88';
+        ctx.shadowBlur = 20;
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('1UP!', W / 2, H / 2 - 40);
+        ctx.restore();
       }
 
       // Game over with neon glow
