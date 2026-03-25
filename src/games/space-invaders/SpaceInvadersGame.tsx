@@ -507,14 +507,24 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
       ctx.font = 'bold 16px sans-serif';
       ctx.fillText(`SCORE: ${s.score}`, 10, 24);
 
-      // Lives display — large and visible
+      // Lives display — shows lives in reserve (not counting current life)
+      const reserveLives = Math.max(0, s.lives - 1);
       ctx.fillStyle = '#ff4466';
       ctx.shadowColor = '#ff2244';
       ctx.shadowBlur = 10;
       ctx.font = 'bold 22px sans-serif';
-      const heartsText = '\u2665'.repeat(s.lives);
-      const heartsWidth = ctx.measureText(heartsText).width;
-      ctx.fillText(heartsText, W - heartsWidth - 10, 26);
+      const heartsText = reserveLives > 0 ? '\u2665'.repeat(reserveLives) : '';
+      if (heartsText) {
+        const heartsWidth = ctx.measureText(heartsText).width;
+        ctx.fillText(heartsText, W - heartsWidth - 10, 26);
+      }
+      // Show "LAST LIFE" warning when on final life
+      if (s.lives === 1) {
+        ctx.fillStyle = '#ff4466';
+        ctx.shadowBlur = 6;
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText('LAST LIFE', W - 68, 26);
+      }
       ctx.restore();
 
       // 1UP flash
@@ -602,8 +612,9 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
 
       if (s.started && !s.gameOver) {
         // Player movement
-        if (keys['ArrowLeft'] || keys['a']) s.playerX = Math.max(PLAYER_W / 2, s.playerX - 4);
-        if (keys['ArrowRight'] || keys['d']) s.playerX = Math.min(W - PLAYER_W / 2, s.playerX + 4);
+        const moveSpeed = level === 'easy' ? 3 : level === 'hard' ? 4.5 : 3.5;
+        if (keys['ArrowLeft'] || keys['a']) s.playerX = Math.max(PLAYER_W / 2, s.playerX - moveSpeed);
+        if (keys['ArrowRight'] || keys['d']) s.playerX = Math.min(W - PLAYER_W / 2, s.playerX + moveSpeed);
 
         // Touch movement
         if (s.touchX >= 0) {
