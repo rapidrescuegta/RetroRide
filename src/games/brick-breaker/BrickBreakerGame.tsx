@@ -76,6 +76,8 @@ export default function BrickBreakerGame({ onGameOver, level: difficulty }: Bric
     particles: { x: number; y: number; vx: number; vy: number; life: number; color: string }[];
     nextExtraLife: number;
     extraLifeFlash: number;
+    deathFlash: number;
+    paddleGlowUntil: number;
   } | null>(null);
   const animRef = useRef(0);
   const [score, setScore] = useState(0);
@@ -144,6 +146,8 @@ export default function BrickBreakerGame({ onGameOver, level: difficulty }: Bric
       particles: [],
       nextExtraLife: EXTRA_LIFE_INTERVAL,
       extraLifeFlash: 0,
+      deathFlash: 0,
+      paddleGlowUntil: 0,
     };
     setScore(0);
     setLives(difficultyConfig.startLives);
@@ -214,6 +218,57 @@ export default function BrickBreakerGame({ onGameOver, level: difficulty }: Bric
       if (!gs) return;
 
       gs.frameCount++;
+
+      // Death flash freeze
+      if (gs.deathFlash > 0) {
+        gs.deathFlash--;
+        // Still update particles during flash
+        gs.particles = gs.particles.filter(p => {
+          p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.life--;
+          return p.life > 0;
+        });
+        // Draw background + static scene
+        const bgGrad2 = ctx.createRadialGradient(W / 2, H / 3, 30, W / 2, H / 2, W);
+        bgGrad2.addColorStop(0, '#0c0c28');
+        bgGrad2.addColorStop(1, '#040410');
+        ctx.fillStyle = bgGrad2;
+        ctx.fillRect(0, 0, W, H);
+        // Draw bricks
+        gs.bricks.forEach(brick => {
+          if (!brick.alive) return;
+          const bw = BRICK_W - BRICK_PAD * 2;
+          ctx.fillStyle = brick.color;
+          ctx.beginPath();
+          ctx.roundRect(brick.x, brick.y, bw, BRICK_H, 3);
+          ctx.fill();
+        });
+        // Draw paddle
+        const paddleTop2 = H - 40;
+        const paddleL2 = gs.paddleX - gs.paddleW / 2;
+        ctx.fillStyle = '#4488ee';
+        ctx.beginPath();
+        ctx.roundRect(paddleL2, paddleTop2, gs.paddleW, PADDLE_H, 6);
+        ctx.fill();
+        // Draw particles
+        gs.particles.forEach(p => {
+          ctx.globalAlpha = p.life / 35;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+        // Flash overlay
+        const flashAlpha = (gs.deathFlash / 30) * 0.5;
+        if (gs.deathFlash > 20) {
+          ctx.fillStyle = `rgba(255,255,255,${flashAlpha * 0.6})`;
+        } else {
+          ctx.fillStyle = `rgba(255,0,0,${flashAlpha})`;
+        }
+        ctx.fillRect(0, 0, W, H);
+        animRef.current = requestAnimationFrame(loop);
+        return;
+      }
 
       // Dark background with subtle radial gradient
       const bgGrad = ctx.createRadialGradient(W / 2, H / 3, 30, W / 2, H / 2, W);
@@ -379,6 +434,8 @@ export default function BrickBreakerGame({ onGameOver, level: difficulty }: Bric
             finalScoreRef.current = gs.score;
             setGameOver(true);
           } else {
+            gs.deathFlash = 30;
+            gs.paddleGlowUntil = Date.now() + 2000;
             gs.launched = false;
             gs.balls = [{
               x: gs.paddleX,
@@ -581,10 +638,25 @@ export default function BrickBreakerGame({ onGameOver, level: difficulty }: Bric
       // Draw paddle with rounded neon glow + metallic gradient
       const paddleTop = H - 40;
       const paddleL = gs.paddleX - gs.paddleW / 2;
+      const isPaddleGlowing = Date.now() < gs.paddleGlowUntil;
+
+      if (isPaddleGlowing) {
+        const t = Date.now() * 0.01;
+        ctx.save();
+        ctx.globalAlpha = 0.5 + Math.sin(t) * 0.4;
+        ctx.strokeStyle = '#4488ff';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#4488ff';
+        ctx.shadowBlur = 15 + Math.sin(t * 2) * 10;
+        ctx.beginPath();
+        ctx.roundRect(paddleL - 4, paddleTop - 4, gs.paddleW + 8, PADDLE_H + 8, 10);
+        ctx.stroke();
+        ctx.restore();
+      }
 
       // Paddle glow
       ctx.shadowColor = '#4488ff';
-      ctx.shadowBlur = 16;
+      ctx.shadowBlur = isPaddleGlowing ? 25 : 16;
 
       const paddleGrad = ctx.createLinearGradient(paddleL, paddleTop, paddleL + gs.paddleW, paddleTop + PADDLE_H);
       paddleGrad.addColorStop(0, '#88bbff');

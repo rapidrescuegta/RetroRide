@@ -84,6 +84,8 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
     readyTimer: number;
     nextExtraLife: number;
     extraLifeFlash: number;
+    deathFlash: number;
+    invincibleUntil: number;
   } | null>(null);
   const animFrameRef = useRef<number>(0);
   const [score, setScore] = useState(0);
@@ -133,6 +135,8 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
       readyTimer: 90,
       nextExtraLife: EXTRA_LIFE_INTERVAL,
       extraLifeFlash: 0,
+      deathFlash: 0,
+      invincibleUntil: 0,
     };
     setScore(0);
     setLives(difficultyConfig.startLives);
@@ -597,6 +601,22 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
         return;
       }
 
+      // Death flash freeze
+      if (gs.deathFlash > 0) {
+        gs.deathFlash--;
+        drawPacMan(gs.pacX, gs.pacY, gs.pacDir === 'none' ? 'right' : gs.pacDir, gs.mouthOpen);
+        gs.ghosts.forEach(g => drawGhost(g, gs.frameCount));
+        const flashAlpha = (gs.deathFlash / 30) * 0.5;
+        if (gs.deathFlash > 20) {
+          ctx.fillStyle = `rgba(255,255,255,${flashAlpha * 0.6})`;
+        } else {
+          ctx.fillStyle = `rgba(255,0,0,${flashAlpha})`;
+        }
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        animFrameRef.current = requestAnimationFrame(gameLoop);
+        return;
+      }
+
       if (gs.gameOver || gs.levelComplete) {
         drawPacMan(gs.pacX, gs.pacY, gs.pacDir, 0.5);
         gs.ghosts.forEach(g => drawGhost(g, gs.frameCount));
@@ -703,6 +723,7 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
       gs.ghosts.forEach(ghost => {
         if (ghost.eaten) return;
         if (ghost.x === gs.pacX && ghost.y === gs.pacY) {
+          if (Date.now() < gs.invincibleUntil && !ghost.scared) return;
           if (ghost.scared) {
             ghost.eaten = true;
             gs.score += 200;
@@ -723,6 +744,8 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
               setScore(gs.score);
               setGameOver(true);
             } else {
+              gs.deathFlash = 30;
+              gs.invincibleUntil = Date.now() + 2000;
               resetPositions();
             }
           }
@@ -730,7 +753,25 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
       });
 
       // Draw pac-man and ghosts
-      drawPacMan(gs.pacX, gs.pacY, gs.pacDir === 'none' ? 'right' : gs.pacDir, gs.mouthOpen);
+      if (Date.now() < gs.invincibleUntil) {
+        const t = Date.now() * 0.01;
+        ctx.save();
+        ctx.globalAlpha = 0.4 + Math.sin(t) * 0.4;
+        drawPacMan(gs.pacX, gs.pacY, gs.pacDir === 'none' ? 'right' : gs.pacDir, gs.mouthOpen);
+        // Glow ring
+        const pcx = gs.pacX * CELL + CELL / 2;
+        const pcy = gs.pacY * CELL + CELL / 2;
+        ctx.strokeStyle = '#ffee00';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#ffee00';
+        ctx.shadowBlur = 15 + Math.sin(t * 2) * 10;
+        ctx.beginPath();
+        ctx.arc(pcx, pcy, CELL / 2 + 4, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      } else {
+        drawPacMan(gs.pacX, gs.pacY, gs.pacDir === 'none' ? 'right' : gs.pacDir, gs.mouthOpen);
+      }
       gs.ghosts.forEach(g => drawGhost(g, gs.frameCount));
 
       // Lives display - mini glossy pac-mans (reserve lives only)

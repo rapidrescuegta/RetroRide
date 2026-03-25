@@ -55,6 +55,8 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
     particles: Array<{ x: number; y: number; vx: number; vy: number; life: number; color: string; size: number }>;
     nextExtraLife: number;
     extraLifeFlash: number;
+    deathFlash: number;
+    paddleGlowUntil: number;
   } | null>(null);
   const animRef = useRef<number>(0);
   const keysRef = useRef<Set<string>>(new Set());
@@ -137,6 +139,8 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
       particles: [],
       nextExtraLife: EXTRA_LIFE_INTERVAL,
       extraLifeFlash: 0,
+      deathFlash: 0,
+      paddleGlowUntil: 0,
     };
     stateRef.current = s;
   }, [getSize, createBricks, PADDLE_WIDTH_RATIO, BALL_RADIUS_RATIO, BALL_SPEED_RATIO, INITIAL_LIVES]);
@@ -241,13 +245,30 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
     // Paddle with neon glow, gradient, and rounded shape
     const paddleY = s.h - s.paddleH * 3;
     const paddleLeft = s.paddleX - s.paddleW / 2;
+    const isPaddleGlowing = Date.now() < s.paddleGlowUntil;
+
+    if (isPaddleGlowing) {
+      const t = Date.now() * 0.01;
+      ctx.save();
+      ctx.globalAlpha = 0.5 + Math.sin(t) * 0.4;
+      // Glow ring around paddle
+      ctx.strokeStyle = '#00ccff';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = '#00ccff';
+      ctx.shadowBlur = 15 + Math.sin(t * 2) * 10;
+      ctx.beginPath();
+      ctx.roundRect(paddleLeft - 4, paddleY - 4, s.paddleW + 8, s.paddleH + 8, s.paddleH / 2 + 4);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     const paddleGrad = ctx.createLinearGradient(paddleLeft, paddleY, paddleLeft + s.paddleW, paddleY);
     paddleGrad.addColorStop(0, '#0088cc');
     paddleGrad.addColorStop(0.3, '#00ccff');
     paddleGrad.addColorStop(0.7, '#00ccff');
     paddleGrad.addColorStop(1, '#0088cc');
     ctx.shadowColor = '#00ccff';
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = isPaddleGlowing ? 30 : 20;
     ctx.fillStyle = paddleGrad;
     ctx.beginPath();
     ctx.roundRect(paddleLeft, paddleY, s.paddleW, s.paddleH, s.paddleH / 2);
@@ -359,6 +380,17 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
       ctx.restore();
     }
 
+    // Death flash overlay
+    if (s.deathFlash > 0) {
+      const flashAlpha = (s.deathFlash / 30) * 0.5;
+      if (s.deathFlash > 20) {
+        ctx.fillStyle = `rgba(255,255,255,${flashAlpha * 0.6})`;
+      } else {
+        ctx.fillStyle = `rgba(255,0,0,${flashAlpha})`;
+      }
+      ctx.fillRect(0, 0, s.w, s.h);
+    }
+
     // Launch prompt
     if (!s.launched && !s.gameOver) {
       const promptAlpha = 0.4 + Math.sin(time * 4) * 0.2;
@@ -401,6 +433,20 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
   const update = useCallback(() => {
     const s = stateRef.current;
     if (!s || s.gameOver) return;
+
+    // During death flash, skip game logic
+    if (s.deathFlash > 0) {
+      s.deathFlash--;
+      // Still update particles
+      s.particles = s.particles.filter(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.1;
+        p.life--;
+        return p.life > 0;
+      });
+      return;
+    }
 
     // Paddle movement
     const paddleSpeed = s.w * 0.012;
@@ -519,6 +565,8 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
         }
         return;
       }
+      s.deathFlash = 30;
+      s.paddleGlowUntil = Date.now() + 2000;
       resetBall(s);
     }
 

@@ -56,6 +56,8 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
     waveOffset: number;
     nextExtraLife: number;
     extraLifeFlash: number;
+    deathFlash: number;
+    invincibleUntil: number;
   } | null>(null);
   const [displayScore, setDisplayScore] = useState(0);
   const [displayLives, setDisplayLives] = useState(initialLives);
@@ -115,6 +117,8 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
       waveOffset: 0,
       nextExtraLife: EXTRA_LIFE_INTERVAL,
       extraLifeFlash: 0,
+      deathFlash: 0,
+      invincibleUntil: 0,
     };
   }, [speedMultiplier, logWidthMultiplier, initialLives]);
 
@@ -676,8 +680,31 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
             return;
           }
           resetFrog(s);
+          s.deathFlash = 30;
+          s.invincibleUntil = Date.now() + 2000;
         }
         drawFrame(ctx, s);
+        // Red/white flash overlay during death
+        if (s.deathTimer > 0) {
+          const flashProgress = s.deathTimer / 30;
+          if (flashProgress > 0.7) {
+            ctx.fillStyle = `rgba(255,255,255,${(flashProgress - 0.7) * 1.5})`;
+          } else {
+            ctx.fillStyle = `rgba(255,0,0,${flashProgress * 0.4})`;
+          }
+          ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        }
+        s.animFrame = requestAnimationFrame(gameLoop);
+        return;
+      }
+
+      // Death flash after respawn
+      if (s.deathFlash > 0) {
+        s.deathFlash -= dt;
+        drawFrame(ctx, s);
+        const flashAlpha = Math.max(0, (s.deathFlash / 30)) * 0.4;
+        ctx.fillStyle = `rgba(255,0,0,${flashAlpha})`;
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
         s.animFrame = requestAnimationFrame(gameLoop);
         return;
       }
@@ -732,9 +759,9 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
         }
       }
 
-      // Road collision
+      // Road collision (skip if invincible)
       const roadLane = s.lanes.find(l => l.type === 'road' && l.row === frogRow);
-      if (roadLane) {
+      if (roadLane && Date.now() >= s.invincibleUntil) {
         for (const item of roadLane.items) {
           if (frogCenterX > item.x && frogCenterX < item.x + item.width &&
               Math.abs(s.frogY - roadLane.row * CELL) < CELL * 0.6) {
@@ -845,8 +872,24 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
         ctx.textAlign = 'center';
         ctx.fillText('X', s.deathX + CELL / 2, s.deathY + CELL / 2 + 8);
       } else {
-        // Draw frog
-        drawFrog(ctx, s.frogX, s.frogY, CELL, false);
+        // Draw frog with glow if invincible
+        if (Date.now() < s.invincibleUntil) {
+          const t = Date.now() * 0.01;
+          ctx.save();
+          ctx.globalAlpha = 0.4 + Math.sin(t) * 0.4;
+          drawFrog(ctx, s.frogX, s.frogY, CELL, false);
+          // Glow ring
+          ctx.strokeStyle = '#22c55e';
+          ctx.lineWidth = 2;
+          ctx.shadowColor = '#22c55e';
+          ctx.shadowBlur = 15 + Math.sin(t * 2) * 10;
+          ctx.beginPath();
+          ctx.arc(s.frogX + CELL / 2, s.frogY + CELL / 2, CELL / 2 + 4, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        } else {
+          drawFrog(ctx, s.frogX, s.frogY, CELL, false);
+        }
       }
 
       // 1UP flash

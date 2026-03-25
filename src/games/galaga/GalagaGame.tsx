@@ -75,6 +75,7 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
     started: boolean;
     nextExtraLife: number;
     extraLifeFlash: number;
+    deathFlash: number;
   } | null>(null);
   const animRef = useRef(0);
   const [score, setScore] = useState(0);
@@ -141,6 +142,7 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
       started: false,
       nextExtraLife: EXTRA_LIFE_INTERVAL,
       extraLifeFlash: 0,
+      deathFlash: 0,
     };
     setScore(0);
     setLives(difficultyConfig.startLives);
@@ -452,6 +454,55 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
 
       gs.frameCount++;
 
+      // Death flash freeze
+      if (gs.deathFlash > 0) {
+        gs.deathFlash--;
+        // Still draw the frame but skip game logic
+        // Background
+        const bgGrad2 = ctx.createLinearGradient(0, 0, 0, H);
+        bgGrad2.addColorStop(0, '#020010');
+        bgGrad2.addColorStop(0.5, '#050020');
+        bgGrad2.addColorStop(1, '#020010');
+        ctx.fillStyle = bgGrad2;
+        ctx.fillRect(0, 0, W, H);
+        // Draw entities frozen
+        gs.stars.forEach(s2 => {
+          ctx.fillStyle = `rgba(200,220,255,${s2.brightness})`;
+          ctx.beginPath();
+          ctx.arc(s2.x, s2.y, s2.speed > 1.5 ? 1 : 0.5, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        gs.enemies.forEach(e2 => { if (e2.alive) drawEnemy(e2, gs.frameCount); });
+        // Draw and update particles during flash
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.life--;
+          const alpha = p.life / p.maxLife;
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          if (p.life <= 0) particles.splice(i, 1);
+        }
+        gs.explosions = gs.explosions.filter(exp => {
+          drawExplosion(exp);
+          exp.frame++;
+          return exp.frame < exp.maxFrames;
+        });
+        // Red/white overlay
+        const flashAlpha = (gs.deathFlash / 30) * 0.5;
+        if (gs.deathFlash > 20) {
+          ctx.fillStyle = `rgba(255,255,255,${flashAlpha * 0.6})`;
+        } else {
+          ctx.fillStyle = `rgba(255,0,0,${flashAlpha})`;
+        }
+        ctx.fillRect(0, 0, W, H);
+        animRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
       // Deep space background with gradient
       const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
       bgGrad.addColorStop(0, '#020010');
@@ -595,7 +646,8 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
             if (!b.isEnemy) return true;
             if (Math.abs(b.x - gs.playerX) < PLAYER_W / 2 && Math.abs(b.y - (H - 40)) < PLAYER_H / 2) {
               gs.lives--;
-              gs.invincible = 90;
+              gs.invincible = 120;
+              gs.deathFlash = 30;
               setLives(gs.lives);
               gs.explosions.push({ x: gs.playerX, y: H - 40, frame: 0, maxFrames: 30 });
               if (gs.lives <= 0) {
@@ -614,7 +666,8 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
               if (Math.abs(e.x - gs.playerX) < 20 && Math.abs(e.y - (H - 40)) < 20) {
                 e.alive = false;
                 gs.lives--;
-                gs.invincible = 90;
+                gs.invincible = 120;
+                gs.deathFlash = 30;
                 setLives(gs.lives);
                 gs.explosions.push({ x: gs.playerX, y: H - 40, frame: 0, maxFrames: 30 });
                 gs.explosions.push({ x: e.x, y: e.y, frame: 0, maxFrames: 20 });
@@ -712,7 +765,21 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
 
       // Draw player
       if (!gs.gameOver) {
-        if (gs.invincible <= 0 || gs.frameCount % 4 < 2) {
+        if (gs.invincible > 0) {
+          const t = Date.now() * 0.01;
+          ctx.save();
+          ctx.globalAlpha = 0.4 + Math.sin(t) * 0.4;
+          drawShip(gs.playerX, H - 40, gs.frameCount);
+          // Glow ring
+          ctx.strokeStyle = '#00ccff';
+          ctx.lineWidth = 2;
+          ctx.shadowColor = '#00ccff';
+          ctx.shadowBlur = 15 + Math.sin(t * 2) * 10;
+          ctx.beginPath();
+          ctx.arc(gs.playerX, H - 40, 20, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        } else {
           drawShip(gs.playerX, H - 40, gs.frameCount);
         }
       }

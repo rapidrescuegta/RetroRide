@@ -48,6 +48,7 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
     time: 0,
     nextExtraLife: EXTRA_LIFE_INTERVAL,
     extraLifeFlash: 0,
+    deathFlash: 0,
   });
 
   function initAliens(s: typeof stateRef.current) {
@@ -489,8 +490,23 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
 
       // Player
       if (!s.gameOver) {
-        const blink = Date.now() < s.invincibleUntil && Math.floor(Date.now() / 100) % 2;
-        if (!blink) drawPlayer(s.playerX, H - 36);
+        if (Date.now() < s.invincibleUntil) {
+          const t = Date.now() * 0.01;
+          ctx.save();
+          ctx.globalAlpha = 0.4 + Math.sin(t) * 0.4;
+          drawPlayer(s.playerX, H - 36);
+          // Glow ring
+          ctx.strokeStyle = '#00ffff';
+          ctx.lineWidth = 2;
+          ctx.shadowColor = '#00ffff';
+          ctx.shadowBlur = 15 + Math.sin(t * 2) * 10;
+          ctx.beginPath();
+          ctx.arc(s.playerX, H - 28, 20, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        } else {
+          drawPlayer(s.playerX, H - 36);
+        }
       }
 
       // Bullets
@@ -610,6 +626,25 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
     function loop() {
       s.time++;
 
+      // Death flash freeze
+      if (s.deathFlash > 0) {
+        s.deathFlash--;
+        // Draw current frame (frozen) with red overlay
+        updateParticles();
+        draw();
+        if (ctx) {
+          const flashAlpha = (s.deathFlash / 30) * 0.5;
+          if (s.deathFlash > 20) {
+            ctx.fillStyle = `rgba(255,255,255,${flashAlpha * 0.6})`;
+          } else {
+            ctx.fillStyle = `rgba(255,0,0,${flashAlpha})`;
+          }
+          ctx.fillRect(0, 0, W, H);
+        }
+        animId = requestAnimationFrame(loop);
+        return;
+      }
+
       if (s.started && !s.gameOver) {
         // Player movement
         const moveSpeed = level === 'easy' ? 3 : level === 'hard' ? 4.5 : 3.5;
@@ -668,7 +703,8 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
             // Reset aliens and give brief invincibility
             initAliens(s);
             s.alienSpeed = initialAlienSpeed;
-            s.invincibleUntil = Date.now() + 1500;
+            s.invincibleUntil = Date.now() + 2000;
+            s.deathFlash = 30;
           }
         }
 
@@ -723,7 +759,8 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
               s.gameOver = true;
               s.gameOverTime = Date.now();
             } else {
-              s.invincibleUntil = Date.now() + 1500;
+              s.invincibleUntil = Date.now() + 2000;
+              s.deathFlash = 30;
             }
             return false;
           }

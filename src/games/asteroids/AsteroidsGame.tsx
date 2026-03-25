@@ -127,6 +127,7 @@ export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps)
     nebulaTime: number;
     nextExtraLife: number;
     extraLifeFlash: number;
+    deathFlash: number;
   } | null>(null);
   const [displayScore, setDisplayScore] = useState(0);
   const [displayLives, setDisplayLives] = useState(initialLives);
@@ -225,6 +226,7 @@ export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps)
       nebulaTime: 0,
       nextExtraLife: EXTRA_LIFE_INTERVAL,
       extraLifeFlash: 0,
+      deathFlash: 0,
     };
 
     const spawnExplosion = (pos: Vec2, count: number, isShip: boolean) => {
@@ -492,6 +494,28 @@ export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps)
       const dt = s.lastTime ? Math.min((time - s.lastTime) / 16.67, 3) : 1;
       s.lastTime = time;
 
+      // Death flash freeze
+      if (s.deathFlash > 0) {
+        s.deathFlash -= dt;
+        // Update particles during flash so explosion plays out
+        s.particles = s.particles.filter(p => {
+          p.pos.x += p.vel.x * dt;
+          p.pos.y += p.vel.y * dt;
+          p.life -= dt;
+          return p.life > 0;
+        });
+        draw(ctx, s);
+        const flashAlpha = Math.max(0, (s.deathFlash / 30)) * 0.5;
+        if (s.deathFlash > 20) {
+          ctx.fillStyle = `rgba(255,255,255,${flashAlpha * 0.6})`;
+        } else {
+          ctx.fillStyle = `rgba(255,0,0,${flashAlpha})`;
+        }
+        ctx.fillRect(0, 0, BASE_W, BASE_H);
+        s.animFrame = requestAnimationFrame(loop);
+        return;
+      }
+
       const keys = keysRef.current;
       const touch = touchRef.current;
 
@@ -639,6 +663,7 @@ export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps)
             }
 
             s.respawnTimer = 60;
+            s.deathFlash = 30;
             break;
           }
         }
@@ -673,23 +698,23 @@ export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps)
       // Ship
       if (s.respawnTimer <= 0) {
         const ship = s.ship;
-        const blink = ship.invincibleTimer > 0 && Math.floor(ship.invincibleTimer / 4) % 2 === 0;
 
-        if (!blink) {
+        if (ship.invincibleTimer > 0) {
+          const t = Date.now() * 0.01;
+          ctx.save();
+          ctx.globalAlpha = 0.4 + Math.sin(t) * 0.4;
           drawShip(ctx, ship);
-
-          // Shield flash effect
-          if (s.shieldFlash > 0) {
-            const alpha = (s.shieldFlash / 15) * 0.5;
-            ctx.strokeStyle = `rgba(100, 200, 255, ${alpha})`;
-            ctx.lineWidth = 2;
-            ctx.shadowColor = '#66ccff';
-            ctx.shadowBlur = 10;
-            ctx.beginPath();
-            ctx.arc(ship.pos.x, ship.pos.y, 20, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-          }
+          // Glow ring
+          ctx.strokeStyle = '#5599ff';
+          ctx.lineWidth = 2;
+          ctx.shadowColor = '#5599ff';
+          ctx.shadowBlur = 15 + Math.sin(t * 2) * 10;
+          ctx.beginPath();
+          ctx.arc(ship.pos.x, ship.pos.y, 22, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        } else {
+          drawShip(ctx, ship);
         }
       }
 
