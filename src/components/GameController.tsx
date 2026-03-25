@@ -164,19 +164,19 @@ export default function GameController({
     <div
       className="flex-shrink-0 w-full"
       style={{
-        height: '120px',
+        height: '105px',
         background: 'linear-gradient(180deg, #0f0a1e, #0a0a1a)',
         borderTop: '1px solid rgba(139, 92, 246, 0.2)',
         touchAction: 'none',
       }}
     >
-      <div className="flex items-center justify-between h-full px-6 max-w-lg mx-auto">
+      <div className="flex items-center justify-between h-full px-4 max-w-lg mx-auto">
         {/* D-pad */}
         {dpad ? (
           <div
             ref={dpadRef}
             className="relative"
-            style={{ width: '120px', height: '120px' }}
+            style={{ width: '100px', height: '100px' }}
             onTouchStart={handleDpadTouch}
             onTouchMove={handleDpadTouch}
             onTouchEnd={handleDpadEnd}
@@ -193,9 +193,9 @@ export default function GameController({
             <div
               className="absolute left-1/2 -translate-x-1/2"
               style={{
-                top: '12px',
-                width: '38px',
-                height: '96px',
+                top: '10px',
+                width: '34px',
+                height: '80px',
                 background: '#2a2a4a',
                 borderRadius: '6px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
@@ -205,9 +205,9 @@ export default function GameController({
             <div
               className="absolute top-1/2 -translate-y-1/2"
               style={{
-                left: '12px',
-                width: '96px',
-                height: '38px',
+                left: '10px',
+                width: '80px',
+                height: '34px',
                 background: '#2a2a4a',
                 borderRadius: '6px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
@@ -224,9 +224,9 @@ export default function GameController({
             <div
               className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center"
               style={{
-                top: '14px',
-                width: '34px',
-                height: '28px',
+                top: '10px',
+                width: '30px',
+                height: '24px',
                 borderRadius: '4px 4px 0 0',
                 transition: 'all 0.1s',
                 ...(activeDirs.has('up')
@@ -243,9 +243,9 @@ export default function GameController({
             <div
               className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center"
               style={{
-                bottom: '14px',
-                width: '34px',
-                height: '28px',
+                bottom: '10px',
+                width: '30px',
+                height: '24px',
                 borderRadius: '0 0 4px 4px',
                 transition: 'all 0.1s',
                 ...(activeDirs.has('down')
@@ -262,9 +262,9 @@ export default function GameController({
             <div
               className="absolute top-1/2 -translate-y-1/2 flex items-center justify-center"
               style={{
-                left: '14px',
-                width: '28px',
-                height: '34px',
+                left: '10px',
+                width: '24px',
+                height: '30px',
                 borderRadius: '4px 0 0 4px',
                 transition: 'all 0.1s',
                 ...(activeDirs.has('left')
@@ -281,9 +281,9 @@ export default function GameController({
             <div
               className="absolute top-1/2 -translate-y-1/2 flex items-center justify-center"
               style={{
-                right: '14px',
-                width: '28px',
-                height: '34px',
+                right: '10px',
+                width: '24px',
+                height: '30px',
                 borderRadius: '0 4px 4px 0',
                 transition: 'all 0.1s',
                 ...(activeDirs.has('right')
@@ -297,7 +297,7 @@ export default function GameController({
             </div>
           </div>
         ) : (
-          <div style={{ width: '120px' }} />
+          <div style={{ width: '100px' }} />
         )}
 
         {/* Action buttons */}

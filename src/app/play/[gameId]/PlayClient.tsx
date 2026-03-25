@@ -250,35 +250,35 @@ export default function PlayClient({ gameId }: { gameId: string }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col page-enter">
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-slate-900/80 backdrop-blur-sm border-b border-slate-800/50">
+    <div className="h-dvh flex flex-col page-enter overflow-hidden">
+      {/* Top bar — compact */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-slate-900/80 border-b border-slate-800/50 flex-shrink-0">
         <button
           onClick={() => router.push('/')}
-          className="touch-btn text-slate-400 hover:text-white transition-colors"
+          className="touch-btn text-slate-400 hover:text-white transition-colors p-1"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
 
-        <div className="text-center">
-          <span className="text-lg mr-1">{game.icon}</span>
-          <span className="font-semibold text-sm" style={{ color: game.color }}>
+        <div className="text-center flex items-center gap-1">
+          <span className="text-base">{game.icon}</span>
+          <span className="font-semibold text-xs" style={{ color: game.color }}>
             {game.name}
           </span>
-          <span className="ml-2 text-xs" style={{ color: LEVEL_LABELS[level].color }}>
+          <span className="text-[10px]" style={{ color: LEVEL_LABELS[level].color }}>
             {LEVEL_LABELS[level].stars}
           </span>
         </div>
 
-        <div className="text-xs text-slate-500 min-w-[60px] text-right">
+        <div className="text-[10px] text-slate-500 min-w-[50px] text-right">
           {highScore > 0 && <>Best: {highScore.toLocaleString()}</>}
         </div>
       </div>
 
-      {/* Game area */}
-      <div className="flex-1 flex items-center justify-center relative overflow-hidden">
+      {/* Game area — fills remaining space */}
+      <div className="flex-1 flex items-center justify-center relative overflow-hidden min-h-0">
         {gameState === 'playing' && GameComponent && (
           <GameComponent key={level} onGameOver={handleGameOver} level={level} />
         )}
