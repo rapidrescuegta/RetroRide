@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useCallback, useState } from 'react';
+import { playSound, playBgm, stopBgm } from '@/lib/audio';
 
 interface FroggerGameProps {
   onGameOver: (score: number) => void;
@@ -47,6 +48,7 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
     homes: HomeSpot[];
     gameOver: boolean;
     gameOverNotified: boolean;
+    bgmStarted: boolean;
     animFrame: number;
     lastTime: number;
     deathTimer: number;
@@ -108,6 +110,7 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
       homes,
       gameOver: false,
       gameOverNotified: false,
+      bgmStarted: false,
       animFrame: 0,
       lastTime: 0,
       deathTimer: 0,
@@ -142,6 +145,8 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
 
     s.frogX = newX;
     s.frogY = newY;
+    playSound('frogger_hop');
+    if (!s.bgmStarted) { s.bgmStarted = true; playBgm('bgm_frogger.wav'); }
 
     // Score for moving forward
     const row = Math.floor(newY / CELL);
@@ -673,6 +678,8 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
           setDisplayLives(s.lives);
           if (s.lives <= 0) {
             s.gameOver = true;
+            playSound('frogger_game_over');
+            stopBgm();
             if (!s.gameOverNotified) {
               s.gameOverNotified = true;
               setTimeout(() => onGameOver(s.score), 2500);
@@ -746,6 +753,8 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
               s.score += 100;
               setDisplayScore(s.score);
               s.gameOver = true;
+              playSound('frogger_win');
+              stopBgm();
               setTimeout(() => onGameOver(s.score), 1000);
             }
             break;
@@ -768,6 +777,7 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
             s.deathTimer = 30;
             s.deathX = s.frogX;
             s.deathY = s.frogY;
+            playSound('frogger_hit');
             break;
           }
         }
@@ -787,6 +797,7 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
               s.deathTimer = 30;
               s.deathX = s.frogX;
               s.deathY = s.frogY;
+              playSound('frogger_splash');
               spawnSplash(s.frogX, s.frogY);
             }
             break;
@@ -796,6 +807,7 @@ export default function FroggerGame({ onGameOver, level }: FroggerGameProps) {
           s.deathTimer = 30;
           s.deathX = s.frogX;
           s.deathY = s.frogY;
+          playSound('frogger_splash');
           spawnSplash(s.frogX, s.frogY);
         }
       }

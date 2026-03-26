@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { playSound } from '@/lib/audio';
 
 interface MinesweeperGameProps {
   onGameOver: (score: number) => void;

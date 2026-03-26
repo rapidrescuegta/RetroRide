@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { playSound } from '@/lib/audio';
 import type { Card, Suit } from '@/lib/card-engine'
 import { SUIT_SYMBOLS, SUIT_COLORS, sortHand } from '@/lib/card-engine'
 import {
@@ -411,6 +412,7 @@ export default function RummyGame({ onGameOver, level }: RummyGameProps) {
     const newState = discard(gameState, PLAYER_ID, selectedCards[0])
     setGameState(newState)
     setSelectedCards([])
+    playSound('rummy_play');
     if (newState.roundOver) {
       setMessage('You went out!')
       setTimeout(() => setShowRoundOver(true), 600)

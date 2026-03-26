@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { playSound } from '@/lib/audio';
 
 interface WhackAMoleGameProps {
   onGameOver: (score: number) => void;
@@ -63,6 +64,7 @@ export default function WhackAMoleGame({ onGameOver, level }: WhackAMoleGameProp
     const isDecoy = hasDecoys && Math.random() < 0.25;
     holesRef.current[idx] = isDecoy ? 'decoy' : 'mole';
     setHoles([...holesRef.current]);
+    if (!isDecoy) playSound('whack_mole_up');
 
     const timer = setTimeout(() => {
       if (holesRef.current[idx] === 'mole' || holesRef.current[idx] === 'decoy') {
@@ -78,6 +80,7 @@ export default function WhackAMoleGame({ onGameOver, level }: WhackAMoleGameProp
   const endGame = useCallback(() => {
     cleanup();
     setGameOver(true);
+    playSound('whack_game_over');
     onGameOver(scoreRef.current);
   }, [cleanup, onGameOver]);
 
@@ -134,6 +137,7 @@ export default function WhackAMoleGame({ onGameOver, level }: WhackAMoleGameProp
       setHoles([...holesRef.current]);
       scoreRef.current += SCORE_PER_WHACK;
       setScore(scoreRef.current);
+      playSound('whack_hit');
     }
 
     // Show whacked state briefly then clear

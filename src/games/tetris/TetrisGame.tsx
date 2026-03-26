@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useCallback } from 'react';
+import { playSound, playBgm, stopBgm } from '@/lib/audio';
 
 interface TetrisGameProps {
   onGameOver: (score: number) => void;
@@ -143,6 +144,8 @@ export default function TetrisGame({ onGameOver, level }: TetrisGameProps) {
 
     if (collides(s.board, s.current.blocks, s.current.x, s.current.y)) {
       s.gameOver = true;
+      playSound('tetris_game_over');
+      stopBgm();
       if (!s.gameOverNotified) {
         s.gameOverNotified = true;
         setTimeout(() => onGameOver(s.score), 2500);
@@ -167,6 +170,7 @@ export default function TetrisGame({ onGameOver, level }: TetrisGameProps) {
         s.board[ny][nx] = s.current.type;
       }
     }
+    playSound('tetris_place');
     clearLines(s);
     spawnPiece(s);
   }
@@ -202,6 +206,7 @@ export default function TetrisGame({ onGameOver, level }: TetrisGameProps) {
       }
     }
     if (cleared > 0) {
+      playSound('tetris_line_clear');
       s.lineClearFlash = 1;
       const points = [0, 100, 200, 400, 800];
       s.score += points[cleared] || 800;
@@ -625,6 +630,7 @@ export default function TetrisGame({ onGameOver, level }: TetrisGameProps) {
       if (s.gameOver) return;
       if (!s.started) {
         s.started = true;
+        playBgm('bgm_tetris.wav');
         return;
       }
       switch (e.key) {
@@ -649,6 +655,7 @@ export default function TetrisGame({ onGameOver, level }: TetrisGameProps) {
       if (s.gameOver) return;
       if (!s.started) {
         s.started = true;
+        playBgm('bgm_tetris.wav');
         return;
       }
       const touch = e.touches[0];

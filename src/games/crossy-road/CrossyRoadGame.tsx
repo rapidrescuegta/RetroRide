@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useCallback, useState } from 'react';
+import { playSound, playBgm, stopBgm } from '@/lib/audio';
 
 interface CrossyRoadGameProps {
   onGameOver: (score: number) => void;
@@ -42,6 +43,7 @@ interface GameState {
   score: number;
   highestRow: number;
   gameOver: boolean;
+  bgmStarted: boolean;
   cellSize: number;
   cols: number;
   lastTime: number;
@@ -187,6 +189,7 @@ export default function CrossyRoadGame({ onGameOver, level }: CrossyRoadGameProp
       score: 0,
       highestRow: 0,
       gameOver: false,
+      bgmStarted: false,
       cellSize,
       cols: COLS,
       lastTime: 0,
@@ -229,6 +232,8 @@ export default function CrossyRoadGame({ onGameOver, level }: CrossyRoadGameProp
     g.isHopping = true;
     g.animProgress = 0;
     g.onLogIndex = -1;
+    if (!g.bgmStarted) { g.bgmStarted = true; playBgm('bgm_crossy_road.wav'); }
+    playSound('crossy_hop');
   }, []);
 
   const getLane = useCallback((row: number): Lane | undefined => {
@@ -389,6 +394,8 @@ export default function CrossyRoadGame({ onGameOver, level }: CrossyRoadGameProp
               // Fell in water - spawn splash particles
               g.gameOver = true;
               g.deathType = 'water';
+              playSound('crossy_game_over');
+              stopBgm();
               const { screenY: sy } = worldToScreen(0, g.playerY, g, canvas.height);
               for (let i = 0; i < 20; i++) {
                 g.particles.push({
@@ -411,6 +418,9 @@ export default function CrossyRoadGame({ onGameOver, level }: CrossyRoadGameProp
               if (px + pHalf > car.x && px - pHalf < car.x + car.width) {
                 g.gameOver = true;
                 g.deathType = 'car';
+                playSound('crossy_car');
+                playSound('crossy_game_over');
+                stopBgm();
                 break;
               }
             }
@@ -419,11 +429,15 @@ export default function CrossyRoadGame({ onGameOver, level }: CrossyRoadGameProp
           // Check if player went off screen horizontally
           if (g.playerPixelX < -g.cellSize || g.playerPixelX > totalWidth + g.cellSize) {
             g.gameOver = true;
+            playSound('crossy_game_over');
+            stopBgm();
           }
 
           // Check too far below camera
           if (g.playerY < g.cameraY - 5) {
             g.gameOver = true;
+            playSound('crossy_game_over');
+            stopBgm();
           }
         }
 

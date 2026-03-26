@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { playSound } from '@/lib/audio';
 
 interface ConnectFourGameProps {
   onGameOver: (score: number) => void;
@@ -260,12 +261,15 @@ export default function ConnectFourGame({ onGameOver, level }: ConnectFourGamePr
       setBoard(newBoard);
       setDroppingCol(null);
       setDroppingRow(-1);
+      playSound('cf_drop');
 
       const win = checkWin(newBoard, player);
       if (win) {
         setWinCells(win);
         setWinner(player);
         setGameOver(true);
+        if (player === 1) playSound('cf_win');
+        else playSound('cf_game_over');
         onGameOver(player === 1 ? 100 : 0);
         return;
       }
@@ -273,6 +277,7 @@ export default function ConnectFourGame({ onGameOver, level }: ConnectFourGamePr
       if (isBoardFull(newBoard)) {
         setWinner(0);
         setGameOver(true);
+        playSound('cf_game_over');
         onGameOver(50);
         return;
       }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { playSound } from '@/lib/audio';
 
 interface ChessGameProps {
   onGameOver: (score: number) => void;

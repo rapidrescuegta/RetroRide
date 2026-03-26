@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { playSound } from '@/lib/audio';
+
+const COLOR_SOUNDS = ['simon_red', 'simon_green', 'simon_yellow', 'simon_blue'];
 
 interface Props {
   onGameOver: (score: number) => void;
@@ -52,6 +55,7 @@ export default function SimonGame({ onGameOver, level }: Props) {
       const interval = setInterval(() => {
         if (i < sequence.length) {
           setActiveButton(sequence[i]);
+          playSound(COLOR_SOUNDS[sequence[i]]);
           const offTimer = setTimeout(() => setActiveButton(null), playbackDuration);
           timers.push(offTimer);
           i++;
@@ -75,6 +79,7 @@ export default function SimonGame({ onGameOver, level }: Props) {
       // Visual feedback
       setActiveButton(colorIndex);
       setPulseButton(colorIndex);
+      playSound(COLOR_SOUNDS[colorIndex]);
       setTimeout(() => {
         setActiveButton(null);
         setPulseButton(null);
@@ -83,6 +88,7 @@ export default function SimonGame({ onGameOver, level }: Props) {
       if (colorIndex !== sequence[playerIndex]) {
         // Wrong button - game over
         setPhase('gameover');
+        playSound('simon_game_over');
         const score = round - 1; // rounds completed (not counting current failed round)
         if (!gameOverCalled.current) {
           gameOverCalled.current = true;

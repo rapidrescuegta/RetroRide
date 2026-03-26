@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { playSound, playBgm, stopBgm } from '@/lib/audio';
 
 interface PacManGameProps {
   onGameOver: (score: number) => void;
@@ -222,7 +223,9 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
     const handleKey = (e: KeyboardEvent) => {
       const gs = gameStateRef.current;
       if (!gs || gs.gameOver) return;
+      const wasStarted = gs.started;
       gs.started = true;
+      if (!wasStarted) playBgm('bgm_pacman.wav');
       if (e.key === 'ArrowLeft' || e.key === 'a') { gs.nextDir = 'left'; e.preventDefault(); }
       if (e.key === 'ArrowRight' || e.key === 'd') { gs.nextDir = 'right'; e.preventDefault(); }
       if (e.key === 'ArrowUp' || e.key === 'w') { gs.nextDir = 'up'; e.preventDefault(); }
@@ -251,7 +254,9 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
       const dy = touch.clientY - touchStartRef.current.y;
       const gs = gameStateRef.current;
       if (!gs || gs.gameOver) return;
+      const wasStarted = gs.started;
       gs.started = true;
+      if (!wasStarted) playBgm('bgm_pacman.wav');
 
       if (Math.abs(dx) > Math.abs(dy)) {
         gs.nextDir = dx > 0 ? 'right' : 'left';
@@ -678,12 +683,14 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
             gs.maze[ny][nx] = 4;
             gs.score += 10;
             gs.dotsEaten++;
+            playSound('pacman_waka');
           } else if (cell === 3) {
             gs.maze[ny][nx] = 4;
             gs.score += 50;
             gs.dotsEaten++;
             gs.powerTimer = difficultyConfig.powerDuration;
             gs.ghosts.forEach(g => { if (!g.eaten) g.scared = true; });
+            playSound('pacman_power');
           }
 
           setScore(gs.score);
@@ -698,6 +705,7 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
 
           if (gs.dotsEaten >= gs.totalDots) {
             gs.levelComplete = true;
+            playSound('pacman_win');
             gs.frameCount = 0;
           }
         }
@@ -727,6 +735,7 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
           if (ghost.scared) {
             ghost.eaten = true;
             gs.score += 200;
+            playSound('pacman_eat_ghost');
             setScore(gs.score);
             // Extra life check
             if (gs.score >= gs.nextExtraLife && gs.lives < MAX_LIVES) {
@@ -738,8 +747,11 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
           } else {
             gs.lives--;
             setLives(gs.lives);
+            playSound('pacman_death');
             if (gs.lives <= 0) {
               gs.gameOver = true;
+              playSound('pacman_game_over');
+              stopBgm();
               finalScoreRef.current = gs.score;
               setScore(gs.score);
               setGameOver(true);

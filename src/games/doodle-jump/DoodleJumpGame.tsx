@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useCallback, useState } from 'react';
+import { playSound } from '@/lib/audio';
 
 interface DoodleJumpGameProps {
   onGameOver: (score: number) => void;
@@ -315,6 +316,7 @@ export default function DoodleJumpGame({ onGameOver, level }: DoodleJumpGameProp
               if (p.type === 'breaking') {
                 p.broken = true;
                 p.breakAnim = 0;
+                playSound('dj_bounce');
                 // Spawn crumble particles
                 for (let i = 0; i < 12; i++) {
                   g.particles.push({
@@ -331,6 +333,7 @@ export default function DoodleJumpGame({ onGameOver, level }: DoodleJumpGameProp
               } else {
                 g.playerY = platTop;
                 g.velocityY = JUMP_VELOCITY;
+                playSound('dj_jump');
                 // Bounce particles
                 for (let i = 0; i < 5; i++) {
                   g.particles.push({
@@ -397,6 +400,7 @@ export default function DoodleJumpGame({ onGameOver, level }: DoodleJumpGameProp
         // Game over - fell below screen
         if (g.playerY < g.cameraY - PLAYER_HEIGHT * 2) {
           g.gameOver = true;
+          playSound('dj_game_over');
           if (!gameOverCalledRef.current) {
             gameOverCalledRef.current = true;
             setTimeout(() => onGameOver(g.score), 800);

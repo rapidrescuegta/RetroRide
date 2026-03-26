@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useCallback, useState } from 'react';
+import { playSound } from '@/lib/audio';
 
 interface PongGameProps {
   onGameOver: (score: number) => void;
@@ -364,6 +365,7 @@ export default function PongGame({ onGameOver, level }: PongGameProps) {
       s.ballVY *= -1;
       s.ballY = s.ballY - s.ballR <= 0 ? s.ballR : s.h - s.ballR;
       spawnParticles(s.ballX, s.ballY, '#ffffff44', 5);
+      playSound('pong_wall');
     }
 
     // Player paddle collision
@@ -382,6 +384,7 @@ export default function PongGame({ onGameOver, level }: PongGameProps) {
       s.ballVY = Math.sin(angle) * speed;
       s.ballX = playerPaddleRight + s.ballR;
       spawnParticles(s.ballX, s.ballY, '#4488ff', 10);
+      playSound('pong_paddle');
     }
 
     // AI paddle collision
@@ -405,9 +408,11 @@ export default function PongGame({ onGameOver, level }: PongGameProps) {
     // Scoring
     if (s.ballX < 0) {
       s.aiScore++;
+      playSound('pong_score');
       spawnParticles(0, s.ballY, '#ff4444', 20);
       if (s.aiScore >= WINNING_SCORE) {
         s.gameOver = true;
+        playSound('pong_game_over');
         if (!s.gameOverNotified) {
           s.gameOverNotified = true;
           setTimeout(() => onGameOver(s.playerScore), 2500);
@@ -418,9 +423,11 @@ export default function PongGame({ onGameOver, level }: PongGameProps) {
     }
     if (s.ballX > s.w) {
       s.playerScore++;
+      playSound('pong_score');
       spawnParticles(s.w, s.ballY, '#4488ff', 20);
       if (s.playerScore >= WINNING_SCORE) {
         s.gameOver = true;
+        playSound('pong_win');
         if (!s.gameOverNotified) {
           s.gameOverNotified = true;
           setTimeout(() => onGameOver(s.playerScore), 2500);

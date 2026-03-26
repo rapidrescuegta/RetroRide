@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useCallback } from 'react';
+import { playSound, playBgm, stopBgm } from '@/lib/audio';
 
 interface SpaceInvadersGameProps {
   onGameOver: (score: number) => void;
@@ -101,6 +102,7 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
     if (now - s.lastShot < shootCooldown) return;
     s.lastShot = now;
     s.bullets.push({ x: s.playerX, y: H - 40, dy: -6 });
+    playSound('si_shoot');
   }, [shootCooldown]);
 
   useEffect(() => {
@@ -683,6 +685,7 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
           for (const a of s.aliens) {
             a.x += s.alienDir * s.alienSpeed * 8;
           }
+          playSound('si_march');
         }
 
         // Aliens reach bottom — lose a life and reset wave
@@ -695,9 +698,12 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
         }
         if (aliensReachedBottom) {
           s.lives--;
+          playSound('si_death');
           spawnExplosion(s, s.playerX, H - 30, '#ff4444');
           if (s.lives <= 0) {
             s.gameOver = true;
+            playSound('si_game_over');
+            stopBgm();
             s.gameOverTime = Date.now();
           } else {
             // Reset aliens and give brief invincibility
@@ -718,6 +724,7 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
             if (Math.abs(b.x - a.x) < ALIEN_W / 2 + 2 && Math.abs(b.y - a.y) < ALIEN_H / 2 + 4) {
               a.alive = false;
               s.score += ROW_POINTS[a.row] || 10;
+              playSound('si_hit');
               // Explosion particles
               const colors = ['#ff4444', '#ffaa00', '#44ff44'];
               spawnExplosion(s, a.x, a.y, colors[Math.min(Math.floor(a.row / 2), 2)]);
@@ -754,9 +761,12 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
               Math.abs(b.x - s.playerX) < PLAYER_W / 2 + 2 &&
               b.y >= H - 36 && b.y <= H - 20) {
             s.lives--;
+            playSound('si_death');
             spawnExplosion(s, s.playerX, H - 30, '#00ffff');
             if (s.lives <= 0) {
               s.gameOver = true;
+              playSound('si_game_over');
+              stopBgm();
               s.gameOverTime = Date.now();
             } else {
               s.invincibleUntil = Date.now() + 2000;
@@ -790,7 +800,7 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
       keys[e.key] = true;
       if (e.key === ' ' || e.key === 'ArrowUp') {
         e.preventDefault();
-        if (!s.started) { s.started = true; return; }
+        if (!s.started) { s.started = true; playBgm('bgm_space_invaders.wav'); return; }
         shoot();
       }
     }
@@ -803,7 +813,7 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
       const target = e.target as HTMLElement;
       if (target !== canvas && !canvas!.contains(target)) return;
       e.preventDefault();
-      if (!s.started) { s.started = true; return; }
+      if (!s.started) { s.started = true; playBgm('bgm_space_invaders.wav'); return; }
       s.touchX = e.touches[0].clientX;
       shoot();
     }
