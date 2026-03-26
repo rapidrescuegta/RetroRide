@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { playSound } from '@/lib/audio';
 import {
   type Card,
   SUIT_SYMBOLS,
@@ -277,6 +278,7 @@ export default function HeartsGame({ onGameOver, level }: HeartsGameProps) {
       const playerScore = state.cumulativeScores[PLAYER_ID] || 0
       // In hearts, lower is better. Convert to a positive score for leaderboard.
       // Max possible = 100, so score = 100 - playerScore
+      playSound('hearts_game_over');
       setTimeout(() => {
         onGameOver(Math.max(0, 100 - playerScore))
       }, 2000)
@@ -291,6 +293,7 @@ export default function HeartsGame({ onGameOver, level }: HeartsGameProps) {
     } else if (state.phase === 'playing' && state.currentPlayer === PLAYER_ID) {
       setState(prev => {
         const newState = playCard(prev, PLAYER_ID, cardId)
+        playSound('hearts_play');
         // Check if trick completed by player's play
         if (newState.completedTricks.length > prev.completedTricks.length) {
           const lastTrick = newState.completedTricks[newState.completedTricks.length - 1]

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { playSound } from '@/lib/audio';
 import {
-  type Card,
   type Suit,
   SUIT_SYMBOLS,
   SUIT_COLORS,
@@ -280,6 +280,7 @@ export default function CrazyEightsGame({ onGameOver, level }: Props) {
   useEffect(() => {
     if (state.phase === 'game-over') {
       const humanScore = state.players[0].score
+      playSound('ce_game_over');
       onGameOver(humanScore)
     }
   }, [state.phase, state.players, onGameOver])
@@ -301,12 +302,14 @@ export default function CrazyEightsGame({ onGameOver, level }: Props) {
     setTimeout(() => {
       setAnimatingCard(null)
       setState(prev => playCard(prev, cardId))
+      playSound('ce_play');
     }, 200)
   }, [isHumanTurn, humanPlayer, playableCards])
 
   const handleDraw = useCallback(() => {
     if (!canDraw) return
     setState(prev => drawCard(prev))
+    playSound('ce_draw');
   }, [canDraw])
 
   const handlePass = useCallback(() => {

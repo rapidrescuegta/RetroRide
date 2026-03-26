@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { playSound } from '@/lib/audio';
 import {
-  type Card,
   SUIT_SYMBOLS,
   SUIT_COLORS,
 } from '@/lib/card-engine'

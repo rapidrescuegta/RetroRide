@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { playSound } from '@/lib/audio';
 
 interface WordleGameProps {
   onGameOver: (score: number) => void;
@@ -587,11 +588,13 @@ export default function WordleGame({ onGameOver, level }: WordleGameProps) {
       if (isWin) {
         setWon(true);
         setGameOver(true);
+        playSound('wordle_win');
         const score = (MAX_GUESSES + 1 - newGuesses.length) * 20;
         showMessage(`Brilliant! +${score} pts`, 3000);
         setTimeout(() => onGameOver(score), 2500);
       } else if (isLoss) {
         setGameOver(true);
+        playSound('wordle_game_over');
         showMessage(`The word was ${answer}`, 4000);
         setTimeout(() => onGameOver(0), 3000);
       }
@@ -608,6 +611,7 @@ export default function WordleGame({ onGameOver, level }: WordleGameProps) {
       setCurrentGuess(prev => prev.slice(0, -1));
     } else if (/^[A-Z]$/.test(key) && currentGuess.length < WORD_LENGTH) {
       setCurrentGuess(prev => prev + key);
+      playSound('wordle_type');
     }
   }, [gameOver, revealingRow, currentGuess, submitGuess]);
 

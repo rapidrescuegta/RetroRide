@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useCallback, useState } from 'react';
+import { playSound } from '@/lib/audio';
 
 interface SnakeGameProps {
   onGameOver: (score: number) => void;
@@ -339,6 +340,7 @@ export default function SnakeGame({ onGameOver, level }: SnakeGameProps) {
       // Wall collision
       if (head.x < 0 || head.x >= state.cols || head.y < 0 || head.y >= state.rows) {
         state.gameOver = true;
+        playSound('snake_game_over');
         draw();
         if (!state.gameOverNotified) {
           state.gameOverNotified = true;
@@ -350,6 +352,7 @@ export default function SnakeGame({ onGameOver, level }: SnakeGameProps) {
       // Self collision
       if (state.snake.some(s => s.x === head.x && s.y === head.y)) {
         state.gameOver = true;
+        playSound('snake_game_over');
         draw();
         if (!state.gameOverNotified) {
           state.gameOverNotified = true;
@@ -365,6 +368,7 @@ export default function SnakeGame({ onGameOver, level }: SnakeGameProps) {
         state.score += 10;
         state.food = spawnFood(state.snake, state.cols, state.rows);
         state.speed = Math.max(MIN_SPEED, state.speed - 2);
+        playSound('snake_eat');
       } else {
         state.snake.pop();
       }

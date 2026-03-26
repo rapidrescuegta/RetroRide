@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { playSound } from '@/lib/audio';
 
 interface BrickBreakerGameProps {
   onGameOver: (score: number) => void;
@@ -353,6 +354,7 @@ export default function BrickBreakerGame({ onGameOver, level: difficulty }: Bric
               ball.vx = hitPos * totalSpeed;
               ball.vy = -Math.sqrt(totalSpeed * totalSpeed - ball.vx * ball.vx);
               if (ball.vy > -2) ball.vy = -2;
+              playSound('brick_paddle');
             }
           }
 
@@ -367,6 +369,7 @@ export default function BrickBreakerGame({ onGameOver, level: difficulty }: Bric
               brick.hp--;
               if (brick.hp <= 0) {
                 brick.alive = false;
+                playSound('brick_hit');
                 const pts = brick.maxHp === 3 ? 50 : brick.maxHp === 2 ? 25 : 10;
                 gs.score += pts;
                 setScore(gs.score);
@@ -431,6 +434,7 @@ export default function BrickBreakerGame({ onGameOver, level: difficulty }: Bric
           setLives(gs.lives);
           if (gs.lives <= 0) {
             gs.gameOver = true;
+            playSound('brick_game_over');
             finalScoreRef.current = gs.score;
             setGameOver(true);
           } else {

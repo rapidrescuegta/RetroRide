@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { playSound } from '@/lib/audio';
 
 interface Props {
   onGameOver: (score: number) => void;
@@ -112,12 +113,15 @@ export default function TicTacToeGame({ onGameOver, level }: Props) {
       if (winner === 'X') {
         score = 100;
         msg = 'You Win!';
+        playSound('ttt_win');
       } else if (winner === 'O') {
         score = 0;
         msg = 'AI Wins!';
+        playSound('ttt_lose');
       } else {
         score = 50;
         msg = "It's a Draw!";
+        playSound('ttt_draw');
       }
       setResult(msg);
       if (!gameOverCalled.current) {
@@ -152,6 +156,7 @@ export default function TicTacToeGame({ onGameOver, level }: Props) {
     const newBoard = [...board];
     newBoard[i] = 'X';
     setBoard(newBoard);
+    playSound('ttt_place');
 
     const { winner, line } = checkWinner(newBoard);
     if (winner || isFull(newBoard)) {

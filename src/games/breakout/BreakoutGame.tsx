@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useCallback, useState } from 'react';
+import { playSound, playBgm, stopBgm } from '@/lib/audio';
 
 interface BreakoutGameProps {
   onGameOver: (score: number) => void;
@@ -110,6 +111,7 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
     const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.6;
     s.ballVX = Math.cos(angle) * s.ballSpeed;
     s.ballVY = Math.sin(angle) * s.ballSpeed;
+    playBgm('bgm_breakout.wav');
   }, []);
 
   const initGame = useCallback(() => {
@@ -477,14 +479,17 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
     if (s.ballX - s.ballR <= 0) {
       s.ballX = s.ballR;
       s.ballVX = Math.abs(s.ballVX);
+      playSound('breakout_wall');
     }
     if (s.ballX + s.ballR >= s.w) {
       s.ballX = s.w - s.ballR;
       s.ballVX = -Math.abs(s.ballVX);
+      playSound('breakout_wall');
     }
     if (s.ballY - s.ballR <= 0) {
       s.ballY = s.ballR;
       s.ballVY = Math.abs(s.ballVY);
+      playSound('breakout_wall');
     }
 
     // Paddle collision
@@ -505,6 +510,7 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
       if (s.ballVY > 0) s.ballVY = -s.ballVY;
       s.ballY = paddleY - s.ballR;
       spawnParticles(s.ballX, s.ballY, '#00ccff', 6);
+      playSound('breakout_paddle');
     }
 
     // Brick collision
@@ -520,6 +526,7 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
       if (dist <= s.ballR) {
         brick.alive = false;
         s.score += 10;
+        playSound('breakout_brick');
         // Extra life check
         if (s.score >= s.nextExtraLife && s.lives < MAX_LIVES) {
           s.lives++;
@@ -542,6 +549,8 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
         if (s.bricks.every(b => !b.alive)) {
           s.gameOver = true;
           s.won = true;
+          playSound('breakout_level_complete');
+          stopBgm();
           if (!s.gameOverNotified) {
             s.gameOverNotified = true;
             setTimeout(() => onGameOver(s.score), 2500);
@@ -555,10 +564,12 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
     // Ball falls below
     if (s.ballY - s.ballR > s.h) {
       s.lives--;
+      playSound('breakout_game_over');
       spawnParticles(s.ballX, s.h, '#ff2255', 15);
       if (s.lives <= 0) {
         s.gameOver = true;
         s.won = false;
+        stopBgm();
         if (!s.gameOverNotified) {
           s.gameOverNotified = true;
           setTimeout(() => onGameOver(s.score), 2500);

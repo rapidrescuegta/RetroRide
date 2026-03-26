@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { playSound } from '@/lib/audio';
 import {
   type Card,
   type Rank,
@@ -380,6 +381,7 @@ export default function GoFishGame({ onGameOver, level }: Props) {
     if (state.phase === 'game-over') {
       // Score: human books * 10
       const humanBooks = state.players[0].books.length
+      playSound('gofish_game_over');
       onGameOver(humanBooks * 10)
     }
   }, [state.phase, state.players, onGameOver])
@@ -408,13 +410,17 @@ export default function GoFishGame({ onGameOver, level }: Props) {
 
       if (result.lastEvent?.type === 'go-fish') {
         setShowGoFish(true)
+        playSound('gofish_draw');
         setTimeout(() => setShowGoFish(false), 1500)
       } else if (result.lastEvent?.type === 'got-cards') {
+        playSound('gofish_match');
         setShowGotCards({
           count: result.lastEvent.count ?? 0,
           rank: state.selectedRank!,
         })
         setTimeout(() => setShowGotCards(null), 1200)
+      } else if (result.lastEvent?.type === 'ask') {
+        playSound('gofish_ask');
       }
 
       setSelectedCardRank(null)

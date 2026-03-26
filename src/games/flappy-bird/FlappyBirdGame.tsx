@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useCallback } from 'react';
+import { playSound, playBgm, stopBgm } from '@/lib/audio';
 
 interface FlappyBirdGameProps {
   onGameOver: (score: number) => void;
@@ -48,8 +49,10 @@ export default function FlappyBirdGame({ onGameOver, level }: FlappyBirdGameProp
     if (s.gameOver) return;
     if (!s.started) {
       s.started = true;
+      playBgm('bgm_flappy_bird.wav');
     }
     s.birdVy = FLAP_FORCE;
+    playSound('fb_flap');
     // Spawn flap particles
     for (let i = 0; i < 3; i++) {
       s.particles.push({
@@ -612,6 +615,7 @@ export default function FlappyBirdGame({ onGameOver, level }: FlappyBirdGameProp
           if (!p.scored && p.x + PIPE_W < BIRD_X) {
             p.scored = true;
             s.score++;
+            playSound('fb_score');
           }
           return true;
         });
@@ -625,6 +629,9 @@ export default function FlappyBirdGame({ onGameOver, level }: FlappyBirdGameProp
         // Ground / ceiling
         if (birdBot >= H - GROUND_H || birdTop <= 0) {
           s.gameOver = true;
+          playSound('fb_hit');
+          playSound('fb_game_over');
+          stopBgm();
           s.birdY = Math.min(s.birdY, H - GROUND_H - BIRD_SIZE * 0.6);
           if (!deathTriggered) { deathTriggered = true; spawnDeathParticles(); }
           if (!s.gameOverNotified) {
@@ -641,6 +648,9 @@ export default function FlappyBirdGame({ onGameOver, level }: FlappyBirdGameProp
               const botPipeTop = p.gapY + PIPE_GAP / 2;
               if (birdTop < topPipeBottom || birdBot > botPipeTop) {
                 s.gameOver = true;
+                playSound('fb_hit');
+                playSound('fb_game_over');
+                stopBgm();
                 if (!deathTriggered) { deathTriggered = true; spawnDeathParticles(); }
                 if (!s.gameOverNotified) {
                   s.gameOverNotified = true;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { playSound } from '@/lib/audio';
 
 interface HangmanGameProps {
   onGameOver: (score: number) => void;
@@ -134,12 +135,19 @@ export default function HangmanGame({ onGameOver, level }: HangmanGameProps) {
 
     const newWrong = Array.from(newGuessed).filter(l => !word.includes(l)).length;
 
+    if (newWrong > wrongCount) {
+      playSound('hangman_wrong');
+    } else {
+      playSound('hangman_letter');
+    }
+
     // Check win
     if (word.split('').every(l => newGuessed.has(l))) {
       const remaining = MAX_WRONG - newWrong;
       const score = remaining * 15 + 10;
       setWon(true);
       setGameOver(true);
+      playSound('hangman_win');
       setTimeout(() => onGameOver(score), 2000);
       return;
     }
@@ -147,9 +155,10 @@ export default function HangmanGame({ onGameOver, level }: HangmanGameProps) {
     // Check lose — longer delay so player can see the word
     if (newWrong >= MAX_WRONG) {
       setGameOver(true);
+      playSound('hangman_lose');
       setTimeout(() => onGameOver(0), 4000);
     }
-  }, [guessed, gameOver, word, onGameOver]);
+  }, [guessed, gameOver, word, onGameOver, wrongCount]);
 
   // Keyboard support
   useEffect(() => {

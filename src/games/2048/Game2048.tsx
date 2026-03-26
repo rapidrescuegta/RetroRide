@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { playSound } from '@/lib/audio';
 
 interface Game2048Props {
   onGameOver: (score: number) => void;
@@ -160,6 +161,7 @@ export default function Game2048({ onGameOver, level }: Game2048Props) {
       const withNew = addRandom(newBoard, fourSpawnChance);
       scoreRef.current += scored;
       setScore(scoreRef.current);
+      if (scored > 0) playSound('g2048_merge');
 
       // Find best tile
       let max = 0;
@@ -171,6 +173,7 @@ export default function Game2048({ onGameOver, level }: Game2048Props) {
 
       if (!canMove(withNew)) {
         setGameOver(true);
+        playSound('g2048_game_over');
         onGameOver(scoreRef.current);
       }
 

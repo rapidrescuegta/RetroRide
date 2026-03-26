@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { playSound, playBgm, stopBgm } from '@/lib/audio';
 
 interface GalagaGameProps {
   onGameOver: (score: number) => void;
@@ -536,12 +537,13 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
         // Input
         const keys = keysRef.current;
         const speed = 5;
-        if (keys.has('ArrowLeft') || keys.has('a')) { gs.playerX -= speed; gs.started = true; }
-        if (keys.has('ArrowRight') || keys.has('d')) { gs.playerX += speed; gs.started = true; }
+        if (keys.has('ArrowLeft') || keys.has('a')) { gs.playerX -= speed; if (!gs.started) { gs.started = true; playBgm('bgm_galaga.wav'); } }
+        if (keys.has('ArrowRight') || keys.has('d')) { gs.playerX += speed; if (!gs.started) { gs.started = true; playBgm('bgm_galaga.wav'); } }
         if (keys.has(' ') && gs.shootCooldown <= 0) {
           gs.bullets.push({ x: gs.playerX, y: H - 50, isEnemy: false });
           gs.shootCooldown = 12;
           gs.started = true;
+          playSound('galaga_shoot');
         }
 
         // Touch movement + auto-fire while touching
@@ -622,6 +624,7 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
               e.hp--;
               if (e.hp <= 0) {
                 e.alive = false;
+                playSound('galaga_hit');
                 const pts = e.type === 'boss' ? 40 : e.type === 'medium' ? 20 : 10;
                 gs.score += pts;
                 setScore(gs.score);
@@ -649,9 +652,12 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
               gs.invincible = 120;
               gs.deathFlash = 30;
               setLives(gs.lives);
+              playSound('galaga_player_hit');
               gs.explosions.push({ x: gs.playerX, y: H - 40, frame: 0, maxFrames: 30 });
               if (gs.lives <= 0) {
                 gs.gameOver = true;
+                playSound('galaga_game_over');
+                stopBgm();
                 finalScoreRef.current = gs.score;
                 setGameOver(true);
               }
@@ -669,10 +675,13 @@ export default function GalagaGame({ onGameOver, level }: GalagaGameProps) {
                 gs.invincible = 120;
                 gs.deathFlash = 30;
                 setLives(gs.lives);
+                playSound('galaga_player_hit');
                 gs.explosions.push({ x: gs.playerX, y: H - 40, frame: 0, maxFrames: 30 });
                 gs.explosions.push({ x: e.x, y: e.y, frame: 0, maxFrames: 20 });
                 if (gs.lives <= 0) {
                   gs.gameOver = true;
+                  playSound('galaga_game_over');
+                  stopBgm();
                   finalScoreRef.current = gs.score;
                   setGameOver(true);
                 }

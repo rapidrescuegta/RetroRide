@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState, useCallback } from 'react';
+import { playSound, playBgm, stopBgm } from '@/lib/audio';
 
 interface AsteroidsGameProps {
   onGameOver: (score: number) => void;
@@ -117,6 +118,7 @@ export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps)
     lives: number;
     wave: number;
     gameOver: boolean;
+    bgmStarted: boolean;
     animFrame: number;
     lastTime: number;
     shootCooldown: number;
@@ -166,6 +168,8 @@ export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps)
         e.preventDefault();
       }
       keysRef.current.add(e.key);
+      const s = stateRef.current;
+      if (s && !s.gameOver && !s.bgmStarted) { s.bgmStarted = true; playBgm('bgm_asteroids.wav'); }
     };
     const up = (e: KeyboardEvent) => {
       keysRef.current.delete(e.key);
@@ -216,6 +220,7 @@ export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps)
       lives: initialLives,
       wave: 0,
       gameOver: false,
+      bgmStarted: false,
       animFrame: 0,
       lastTime: 0,
       shootCooldown: 0,
@@ -657,6 +662,7 @@ export default function AsteroidsGame({ onGameOver, level }: AsteroidsGameProps)
 
             if (s.lives <= 0) {
               s.gameOver = true;
+              stopBgm();
               draw(ctx, s);
               setTimeout(() => onGameOver(s.score), 1500);
               return;

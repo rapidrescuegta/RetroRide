@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { playSound } from '@/lib/audio';
 
 interface Props {
   onGameOver: (score: number) => void;
@@ -45,6 +46,7 @@ export default function MemoryMatchGame({ onGameOver, level }: Props) {
 
       const newFlipped = [...flipped, index];
       setFlipped(newFlipped);
+      playSound('memory_flip');
 
       if (newFlipped.length === 2) {
         setMoves((m) => m + 1);
@@ -53,6 +55,7 @@ export default function MemoryMatchGame({ onGameOver, level }: Props) {
         const [a, b] = newFlipped;
         if (cards[a] === cards[b]) {
           // Match found
+          playSound('memory_match');
           const newMatched = new Set(matched);
           newMatched.add(a);
           newMatched.add(b);
@@ -63,11 +66,13 @@ export default function MemoryMatchGame({ onGameOver, level }: Props) {
           // Check win
           if (newMatched.size === cards.length) {
             setGameOver(true);
+            playSound('memory_game_over');
             const score = Math.max(100 - (moves + 1) * 5, 10);
             setTimeout(() => onGameOver(score), 1200);
           }
         } else {
           // No match — flip back
+          playSound('memory_no_match');
           setTimeout(() => {
             setFlipped([]);
             setLocked(false);
