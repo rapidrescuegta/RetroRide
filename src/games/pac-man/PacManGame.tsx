@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { playMove, playExplosion, playDeath, playOneUp, playGameOver } from '@/lib/sounds';
 
 interface PacManGameProps {
   onGameOver: (score: number) => void;
@@ -678,12 +679,14 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
             gs.maze[ny][nx] = 4;
             gs.score += 10;
             gs.dotsEaten++;
+            playMove();
           } else if (cell === 3) {
             gs.maze[ny][nx] = 4;
             gs.score += 50;
             gs.dotsEaten++;
             gs.powerTimer = difficultyConfig.powerDuration;
             gs.ghosts.forEach(g => { if (!g.eaten) g.scared = true; });
+            playMove();
           }
 
           setScore(gs.score);
@@ -694,6 +697,7 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
             gs.nextExtraLife += EXTRA_LIFE_INTERVAL;
             gs.extraLifeFlash = 60;
             setLives(gs.lives);
+            playOneUp();
           }
 
           if (gs.dotsEaten >= gs.totalDots) {
@@ -728,21 +732,25 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
             ghost.eaten = true;
             gs.score += 200;
             setScore(gs.score);
+            playExplosion();
             // Extra life check
             if (gs.score >= gs.nextExtraLife && gs.lives < MAX_LIVES) {
               gs.lives++;
               gs.nextExtraLife += EXTRA_LIFE_INTERVAL;
               gs.extraLifeFlash = 60;
               setLives(gs.lives);
+              playOneUp();
             }
           } else {
             gs.lives--;
             setLives(gs.lives);
+            playDeath();
             if (gs.lives <= 0) {
               gs.gameOver = true;
               finalScoreRef.current = gs.score;
               setScore(gs.score);
               setGameOver(true);
+              playGameOver();
             } else {
               gs.deathFlash = 30;
               gs.invincibleUntil = Date.now() + 2000;

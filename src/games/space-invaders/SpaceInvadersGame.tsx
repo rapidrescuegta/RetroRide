@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useCallback } from 'react';
+import { playShoot, playExplosion, playDeath, playOneUp, playGameOver } from '@/lib/sounds';
 
 interface SpaceInvadersGameProps {
   onGameOver: (score: number) => void;
@@ -101,6 +102,7 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
     if (now - s.lastShot < shootCooldown) return;
     s.lastShot = now;
     s.bullets.push({ x: s.playerX, y: H - 40, dy: -6 });
+    playShoot();
   }, [shootCooldown]);
 
   useEffect(() => {
@@ -696,9 +698,11 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
         if (aliensReachedBottom) {
           s.lives--;
           spawnExplosion(s, s.playerX, H - 30, '#ff4444');
+          playDeath();
           if (s.lives <= 0) {
             s.gameOver = true;
             s.gameOverTime = Date.now();
+            playGameOver();
           } else {
             // Reset aliens and give brief invincibility
             initAliens(s);
@@ -721,11 +725,13 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
               // Explosion particles
               const colors = ['#ff4444', '#ffaa00', '#44ff44'];
               spawnExplosion(s, a.x, a.y, colors[Math.min(Math.floor(a.row / 2), 2)]);
+              playExplosion();
               // Extra life check
               if (s.score >= s.nextExtraLife && s.lives < MAX_LIVES) {
                 s.lives++;
                 s.nextExtraLife += EXTRA_LIFE_INTERVAL;
                 s.extraLifeFlash = 60;
+                playOneUp();
               }
               // Speed up as aliens decrease
               const alive = s.aliens.filter(a => a.alive).length;
@@ -755,9 +761,11 @@ export default function SpaceInvadersGame({ onGameOver, level }: SpaceInvadersGa
               b.y >= H - 36 && b.y <= H - 20) {
             s.lives--;
             spawnExplosion(s, s.playerX, H - 30, '#00ffff');
+            playDeath();
             if (s.lives <= 0) {
               s.gameOver = true;
               s.gameOverTime = Date.now();
+              playGameOver();
             } else {
               s.invincibleUntil = Date.now() + 2000;
               s.deathFlash = 30;

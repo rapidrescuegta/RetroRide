@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useCallback } from 'react';
+import { playBounce, playPickup, playWin, playGameOver } from '@/lib/sounds';
 
 interface TetrisGameProps {
   onGameOver: (score: number) => void;
@@ -143,6 +144,7 @@ export default function TetrisGame({ onGameOver, level }: TetrisGameProps) {
 
     if (collides(s.board, s.current.blocks, s.current.x, s.current.y)) {
       s.gameOver = true;
+      playGameOver();
       if (!s.gameOverNotified) {
         s.gameOverNotified = true;
         setTimeout(() => onGameOver(s.score), 2500);
@@ -167,6 +169,7 @@ export default function TetrisGame({ onGameOver, level }: TetrisGameProps) {
         s.board[ny][nx] = s.current.type;
       }
     }
+    playBounce();
     clearLines(s);
     spawnPiece(s);
   }
@@ -207,6 +210,11 @@ export default function TetrisGame({ onGameOver, level }: TetrisGameProps) {
       s.score += points[cleared] || 800;
       s.lines += cleared;
       s.dropInterval = Math.max(minDropInterval, initialDropInterval - Math.floor(s.lines / 10) * speedIncrement);
+      if (cleared >= 4) {
+        playWin();
+      } else {
+        playPickup();
+      }
     }
   }
 

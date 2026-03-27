@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { playMove, playDeath, playGameOver } from '@/lib/sounds';
 
 interface Props {
   onGameOver: (score: number) => void;
@@ -61,6 +62,7 @@ export default function DinoRunGame({ onGameOver, level }: Props) {
     if (!g.isJumping) {
       g.dinoVY = JUMP_FORCE;
       g.isJumping = true;
+      playMove();
     }
   }, [JUMP_FORCE]);
 
@@ -519,6 +521,8 @@ export default function DinoRunGame({ onGameOver, level }: Props) {
         if (dinoRight > cLeft && dinoLeft < cRight && dinoBottom > cTop) {
           // Hit!
           g.running = false;
+          playDeath();
+          playGameOver();
           if (!g.gameOverNotified) {
             g.gameOverNotified = true;
             setTimeout(() => {

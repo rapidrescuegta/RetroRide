@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useCallback, useState } from 'react';
+import { playBounce, playDeath, playGameOver } from '@/lib/sounds';
 
 interface PongGameProps {
   onGameOver: (score: number) => void;
@@ -382,6 +383,7 @@ export default function PongGame({ onGameOver, level }: PongGameProps) {
       s.ballVY = Math.sin(angle) * speed;
       s.ballX = playerPaddleRight + s.ballR;
       spawnParticles(s.ballX, s.ballY, '#4488ff', 10);
+      playBounce();
     }
 
     // AI paddle collision
@@ -400,14 +402,17 @@ export default function PongGame({ onGameOver, level }: PongGameProps) {
       s.ballVY = Math.sin(angle) * speed;
       s.ballX = aiPaddleLeft - s.ballR;
       spawnParticles(s.ballX, s.ballY, '#ff4444', 10);
+      playBounce();
     }
 
     // Scoring
     if (s.ballX < 0) {
       s.aiScore++;
       spawnParticles(0, s.ballY, '#ff4444', 20);
+      playDeath();
       if (s.aiScore >= WINNING_SCORE) {
         s.gameOver = true;
+        playGameOver();
         if (!s.gameOverNotified) {
           s.gameOverNotified = true;
           setTimeout(() => onGameOver(s.playerScore), 2500);
@@ -419,8 +424,10 @@ export default function PongGame({ onGameOver, level }: PongGameProps) {
     if (s.ballX > s.w) {
       s.playerScore++;
       spawnParticles(s.w, s.ballY, '#4488ff', 20);
+      playBounce();
       if (s.playerScore >= WINNING_SCORE) {
         s.gameOver = true;
+        playGameOver();
         if (!s.gameOverNotified) {
           s.gameOverNotified = true;
           setTimeout(() => onGameOver(s.playerScore), 2500);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useCallback, useState } from 'react';
+import { playBounce, playPickup, playExplosion, playDeath, playOneUp, playGameOver } from '@/lib/sounds';
 
 interface BreakoutGameProps {
   onGameOver: (score: number) => void;
@@ -505,6 +506,7 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
       if (s.ballVY > 0) s.ballVY = -s.ballVY;
       s.ballY = paddleY - s.ballR;
       spawnParticles(s.ballX, s.ballY, '#00ccff', 6);
+      playBounce();
     }
 
     // Brick collision
@@ -525,8 +527,15 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
           s.lives++;
           s.nextExtraLife += EXTRA_LIFE_INTERVAL;
           s.extraLifeFlash = 60;
+          playOneUp();
         }
         spawnParticles(brick.x + brick.w / 2, brick.y + brick.h / 2, brick.color, 12);
+        // Sound: pickup for most bricks, explosion occasionally
+        if (Math.random() < 0.15) {
+          playExplosion();
+        } else {
+          playPickup();
+        }
 
         // Determine bounce direction
         const overlapX = s.ballR - Math.abs(s.ballX - (brick.x + brick.w / 2)) + brick.w / 2;
@@ -556,9 +565,11 @@ export default function BreakoutGame({ onGameOver, level }: BreakoutGameProps) {
     if (s.ballY - s.ballR > s.h) {
       s.lives--;
       spawnParticles(s.ballX, s.h, '#ff2255', 15);
+      playDeath();
       if (s.lives <= 0) {
         s.gameOver = true;
         s.won = false;
+        playGameOver();
         if (!s.gameOverNotified) {
           s.gameOverNotified = true;
           setTimeout(() => onGameOver(s.score), 2500);

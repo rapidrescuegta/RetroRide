@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { getGameById, LEVEL_LABELS, type GameLevel } from '@/lib/games'
 import { saveScore, getHighScore } from '@/lib/scores'
 import { useFamily } from '@/lib/family-context'
+import { isSoundEnabled, setSoundEnabled } from '@/lib/sounds'
 import EmailCapturePrompt, { shouldShowEmailCapture } from '@/components/EmailCapturePrompt'
 import GameController from '@/components/GameController'
 
@@ -107,6 +108,15 @@ export default function PlayClient({ gameId }: { gameId: string }) {
   const [isNewHigh, setIsNewHigh] = useState(false)
   const [showOverlay, setShowOverlay] = useState(false)
   const [showEmailCapture, setShowEmailCapture] = useState(false)
+  const [soundOn, setSoundOn] = useState(true)
+
+  useEffect(() => { setSoundOn(isSoundEnabled()) }, [])
+
+  const toggleSound = () => {
+    const newState = !soundOn
+    setSoundOn(newState)
+    setSoundEnabled(newState)
+  }
 
   // Restore last used level
   useEffect(() => {
@@ -253,14 +263,23 @@ export default function PlayClient({ gameId }: { gameId: string }) {
     <div className="h-dvh flex flex-col page-enter overflow-hidden">
       {/* Top bar — compact */}
       <div className="flex items-center justify-between px-3 py-1.5 bg-slate-900/80 border-b border-slate-800/50 flex-shrink-0">
-        <button
-          onClick={() => router.push('/')}
-          className="touch-btn text-slate-400 hover:text-white transition-colors p-1"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => router.push('/')}
+            className="touch-btn text-slate-400 hover:text-white transition-colors p-1"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <button
+            onClick={toggleSound}
+            className="touch-btn text-slate-400 hover:text-white transition-colors p-1 text-sm"
+            aria-label={soundOn ? 'Mute sounds' : 'Unmute sounds'}
+          >
+            {soundOn ? '\u{1F50A}' : '\u{1F507}'}
+          </button>
+        </div>
 
         <div className="text-center flex items-center gap-1">
           <span className="text-base">{game.icon}</span>
