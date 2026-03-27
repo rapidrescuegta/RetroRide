@@ -230,3 +230,170 @@ export function playWin() {
     osc.stop(c.currentTime + (i + 1) * dur)
   })
 }
+
+// ---------------------------------------------------------------------------
+// Background Music — Looping chiptune tracks
+// ---------------------------------------------------------------------------
+
+let musicNodes: { oscs: OscillatorNode[]; gains: GainNode[]; timer: ReturnType<typeof setTimeout> | null } | null = null
+let musicPlaying = false
+
+const MUSIC_KEY = 'retroride-music'
+export function isMusicEnabled(): boolean {
+  if (typeof window === 'undefined') return true
+  const stored = localStorage.getItem(MUSIC_KEY)
+  return stored !== 'off'
+}
+export function setMusicEnabled(on: boolean) {
+  localStorage.setItem(MUSIC_KEY, on ? 'on' : 'off')
+  if (!on) stopMusic()
+}
+
+// Note frequencies
+const N: Record<string, number> = {
+  C3: 131, D3: 147, E3: 165, F3: 175, G3: 196, A3: 220, B3: 247,
+  C4: 262, D4: 294, E4: 330, F4: 349, G4: 392, A4: 440, B4: 494,
+  C5: 523, D5: 587, E5: 659, F5: 698, G5: 784, A5: 880, B5: 988,
+  R: 0, // rest
+}
+
+type MusicTrack = { melody: [string, number][]; bass: [string, number][]; bpm: number }
+
+// Upbeat arcade theme — catchy, energetic
+const ARCADE_THEME: MusicTrack = {
+  bpm: 140,
+  melody: [
+    ['E4', 0.5], ['G4', 0.5], ['A4', 0.5], ['B4', 0.5],
+    ['C5', 1], ['B4', 0.5], ['A4', 0.5],
+    ['G4', 1], ['E4', 0.5], ['G4', 0.5],
+    ['A4', 1.5], ['R', 0.5],
+    ['A4', 0.5], ['B4', 0.5], ['C5', 0.5], ['D5', 0.5],
+    ['E5', 1], ['D5', 0.5], ['C5', 0.5],
+    ['B4', 0.5], ['A4', 0.5], ['G4', 0.5], ['A4', 0.5],
+    ['E4', 1.5], ['R', 0.5],
+    ['C5', 0.5], ['B4', 0.5], ['A4', 0.5], ['G4', 0.5],
+    ['A4', 1], ['E4', 1],
+    ['G4', 0.5], ['A4', 0.5], ['B4', 1],
+    ['C5', 1.5], ['R', 0.5],
+  ],
+  bass: [
+    ['A3', 1], ['A3', 1], ['C4', 1], ['C4', 1],
+    ['G3', 1], ['G3', 1], ['E3', 1], ['E3', 1],
+    ['F3', 1], ['F3', 1], ['C4', 1], ['C4', 1],
+    ['G3', 1], ['G3', 1], ['A3', 1], ['A3', 1],
+    ['A3', 1], ['A3', 1], ['C4', 1], ['C4', 1],
+    ['G3', 1], ['G3', 1], ['A3', 1], ['A3', 1],
+  ],
+}
+
+// Chill puzzle theme — slower, mellow
+const PUZZLE_THEME: MusicTrack = {
+  bpm: 100,
+  melody: [
+    ['C4', 1], ['E4', 1], ['G4', 1], ['E4', 1],
+    ['F4', 1], ['A4', 1], ['G4', 2],
+    ['E4', 1], ['D4', 1], ['C4', 1], ['E4', 1],
+    ['D4', 2], ['R', 2],
+    ['C4', 1], ['E4', 0.5], ['F4', 0.5], ['G4', 1], ['E4', 1],
+    ['A4', 1], ['G4', 1], ['F4', 1], ['E4', 1],
+    ['D4', 1], ['E4', 1], ['C4', 2],
+    ['R', 2], ['R', 2],
+  ],
+  bass: [
+    ['C3', 2], ['C3', 2], ['F3', 2], ['F3', 2],
+    ['G3', 2], ['G3', 2], ['C3', 2], ['C3', 2],
+    ['C3', 2], ['C3', 2], ['F3', 2], ['F3', 2],
+    ['G3', 2], ['G3', 2], ['C3', 2], ['C3', 2],
+  ],
+}
+
+function scheduleTrack(track: MusicTrack) {
+  const c = getCtx()
+  if (!c || !enabled || !isMusicEnabled()) return
+
+  const beatDur = 60 / track.bpm
+  const melodyGain = c.createGain()
+  melodyGain.gain.setValueAtTime(0.06, c.currentTime)
+  melodyGain.connect(c.destination)
+
+  const bassGain = c.createGain()
+  bassGain.gain.setValueAtTime(0.04, c.currentTime)
+  bassGain.connect(c.destination)
+
+  const oscs: OscillatorNode[] = []
+  const gains: GainNode[] = [melodyGain, bassGain]
+
+  // Schedule melody
+  let t = c.currentTime + 0.1
+  for (const [note, beats] of track.melody) {
+    const dur = beats * beatDur
+    if (note !== 'R' && N[note]) {
+      const osc = c.createOscillator()
+      const noteGain = c.createGain()
+      osc.type = 'square'
+      osc.frequency.setValueAtTime(N[note], t)
+      noteGain.gain.setValueAtTime(0.06, t)
+      noteGain.gain.setValueAtTime(0.06, t + dur * 0.8)
+      noteGain.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.95)
+      osc.connect(noteGain)
+      noteGain.connect(melodyGain)
+      osc.start(t)
+      osc.stop(t + dur)
+      oscs.push(osc)
+    }
+    t += dur
+  }
+  const melodyDuration = t - c.currentTime - 0.1
+
+  // Schedule bass
+  t = c.currentTime + 0.1
+  for (const [note, beats] of track.bass) {
+    const dur = beats * beatDur
+    if (note !== 'R' && N[note]) {
+      const osc = c.createOscillator()
+      const noteGain = c.createGain()
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(N[note], t)
+      noteGain.gain.setValueAtTime(0.04, t)
+      noteGain.gain.setValueAtTime(0.04, t + dur * 0.7)
+      noteGain.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.9)
+      osc.connect(noteGain)
+      noteGain.connect(bassGain)
+      osc.start(t)
+      osc.stop(t + dur)
+      oscs.push(osc)
+    }
+    t += dur
+  }
+
+  // Loop: schedule next iteration just before this one ends
+  const timer = setTimeout(() => {
+    if (musicPlaying) scheduleTrack(track)
+  }, (melodyDuration - 0.2) * 1000)
+
+  musicNodes = { oscs, gains, timer }
+}
+
+/** Start background music. type: 'arcade' (action games) or 'puzzle' (tetris, snake, etc.) */
+export function startMusic(type: 'arcade' | 'puzzle' = 'arcade') {
+  if (musicPlaying) stopMusic()
+  if (!isMusicEnabled() || !enabled) return
+  musicPlaying = true
+  const track = type === 'puzzle' ? PUZZLE_THEME : ARCADE_THEME
+  scheduleTrack(track)
+}
+
+/** Stop background music */
+export function stopMusic() {
+  musicPlaying = false
+  if (musicNodes) {
+    if (musicNodes.timer) clearTimeout(musicNodes.timer)
+    musicNodes.oscs.forEach(osc => { try { osc.stop() } catch {} })
+    musicNodes = null
+  }
+}
+
+/** Check if music is currently playing */
+export function isMusicPlaying(): boolean {
+  return musicPlaying
+}

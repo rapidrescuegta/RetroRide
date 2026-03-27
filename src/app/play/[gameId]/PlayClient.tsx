@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { getGameById, LEVEL_LABELS, type GameLevel } from '@/lib/games'
 import { saveScore, getHighScore } from '@/lib/scores'
 import { useFamily } from '@/lib/family-context'
-import { isSoundEnabled, setSoundEnabled } from '@/lib/sounds'
+import { isSoundEnabled, setSoundEnabled, isMusicEnabled, setMusicEnabled, startMusic, stopMusic } from '@/lib/sounds'
 import EmailCapturePrompt, { shouldShowEmailCapture } from '@/components/EmailCapturePrompt'
 import GameController from '@/components/GameController'
 
@@ -109,13 +109,38 @@ export default function PlayClient({ gameId }: { gameId: string }) {
   const [showOverlay, setShowOverlay] = useState(false)
   const [showEmailCapture, setShowEmailCapture] = useState(false)
   const [soundOn, setSoundOn] = useState(true)
+  const [musicOn, setMusicOn] = useState(true)
 
-  useEffect(() => { setSoundOn(isSoundEnabled()) }, [])
+  useEffect(() => {
+    setSoundOn(isSoundEnabled())
+    setMusicOn(isMusicEnabled())
+  }, [])
+
+  // Stop music on unmount
+  useEffect(() => {
+    return () => { stopMusic() }
+  }, [])
 
   const toggleSound = () => {
     const newState = !soundOn
     setSoundOn(newState)
     setSoundEnabled(newState)
+    if (!newState) { stopMusic(); setMusicOn(false); setMusicEnabled(false) }
+  }
+
+  const toggleMusic = () => {
+    const newState = !musicOn
+    setMusicOn(newState)
+    setMusicEnabled(newState)
+    if (newState && gameState === 'playing') {
+      const puzzleGames = ['tetris', 'snake', '2048', 'minesweeper', 'wordle', 'chess', 'checkers']
+      const noMusic = ['rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades']
+      if (!noMusic.includes(gameId)) {
+        startMusic(puzzleGames.includes(gameId) ? 'puzzle' : 'arcade')
+      }
+    } else {
+      stopMusic()
+    }
   }
 
   // Restore last used level
@@ -136,9 +161,16 @@ export default function PlayClient({ gameId }: { gameId: string }) {
     setLevel(selectedLevel)
     localStorage.setItem(LEVEL_STORAGE_KEY, selectedLevel)
     setGameState('playing')
+    // Start background music
+    const puzzleGames = ['tetris', 'snake', '2048', 'minesweeper', 'wordle', 'chess', 'checkers']
+    const noMusic = ['rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades']
+    if (!noMusic.includes(gameId)) {
+      startMusic(puzzleGames.includes(gameId) ? 'puzzle' : 'arcade')
+    }
   }
 
   const handleGameOver = useCallback((finalScore: number) => {
+    stopMusic()
     setScore(finalScore)
     // Submit to family leaderboard
     if (familyCtx?.isLoggedIn && game) {
@@ -165,6 +197,12 @@ export default function PlayClient({ gameId }: { gameId: string }) {
     setScore(0)
     setIsNewHigh(false)
     setShowOverlay(false)
+    // Restart music
+    const puzzleGames = ['tetris', 'snake', '2048', 'minesweeper', 'wordle', 'chess', 'checkers']
+    const noMusic = ['rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades']
+    if (!noMusic.includes(gameId)) {
+      startMusic(puzzleGames.includes(gameId) ? 'puzzle' : 'arcade')
+    }
     setShowEmailCapture(false)
   }
 
@@ -278,6 +316,13 @@ export default function PlayClient({ gameId }: { gameId: string }) {
             aria-label={soundOn ? 'Mute sounds' : 'Unmute sounds'}
           >
             {soundOn ? '\u{1F50A}' : '\u{1F507}'}
+          </button>
+          <button
+            onClick={toggleMusic}
+            className="touch-btn text-slate-400 hover:text-white transition-colors p-1 text-sm"
+            aria-label={musicOn ? 'Stop music' : 'Play music'}
+          >
+            {musicOn ? '\u{1F3B5}' : '\u{1F3B5}\u{FE0E}'}
           </button>
         </div>
 
