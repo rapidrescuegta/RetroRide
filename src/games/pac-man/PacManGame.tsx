@@ -297,8 +297,8 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
 
     let wallGlowPhase = 0;
 
-    const drawMaze = (maze: number[][], frameCount: number) => {
-      wallGlowPhase = Math.sin(frameCount * 0.03) * 0.15 + 0.85;
+    const drawMaze = (maze: number[][], frameCount: number, wallPulseIntensity: number = 0) => {
+      wallGlowPhase = Math.sin(frameCount * 0.03) * 0.15 + 0.85 + wallPulseIntensity;
 
       // Dark background with subtle radial gradient
       const bgGrad = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 50, canvas.width / 2, canvas.height / 2, canvas.width);
@@ -321,11 +321,13 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
             ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
 
             // Neon border on edges adjacent to non-wall
-            const glowAlpha = wallGlowPhase;
-            ctx.strokeStyle = `rgba(0, 120, 255, ${glowAlpha})`;
-            ctx.lineWidth = 1.5;
-            ctx.shadowColor = '#0088ff';
-            ctx.shadowBlur = 6;
+            const glowAlpha = Math.min(1, wallGlowPhase);
+            const pulseBlue = Math.min(255, 120 + Math.floor(wallPulseIntensity * 135));
+            const pulseGreen = Math.min(255, Math.floor(wallPulseIntensity * 200));
+            ctx.strokeStyle = `rgba(${pulseGreen}, ${pulseBlue}, 255, ${glowAlpha})`;
+            ctx.lineWidth = 1.5 + wallPulseIntensity * 1.5;
+            ctx.shadowColor = wallPulseIntensity > 0 ? `rgb(${pulseGreen}, ${pulseBlue}, 255)` : '#0088ff';
+            ctx.shadowBlur = 6 + wallPulseIntensity * 14;
 
             if (!isWall(r - 1, c)) { ctx.beginPath(); ctx.moveTo(x + 1, y + 1); ctx.lineTo(x + CELL - 1, y + 1); ctx.stroke(); }
             if (!isWall(r + 1, c)) { ctx.beginPath(); ctx.moveTo(x + 1, y + CELL - 1); ctx.lineTo(x + CELL - 1, y + CELL - 1); ctx.stroke(); }
@@ -589,8 +591,9 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
       const dt = timestamp - lastTime;
       lastTime = timestamp;
 
-      // Background drawn by drawMaze
-      drawMaze(gs.maze, gs.frameCount);
+      // Background drawn by drawMaze — pulse walls during death animation
+      const dyingPulse = gs.dying > 0 ? Math.sin(gs.dying * 0.2) * 0.3 + 0.3 : 0;
+      drawMaze(gs.maze, gs.frameCount, dyingPulse);
 
       if (gs.readyTimer > 0) {
         gs.readyTimer--;
@@ -608,18 +611,13 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
         return;
       }
 
-      // Death flash freeze
+      // Death flash — maze walls pulse bright instead of red overlay
       if (gs.deathFlash > 0) {
         gs.deathFlash--;
+        const pulseIntensity = gs.deathFlash / 20; // fades from 1 to 0
+        drawMaze(gs.maze, gs.frameCount, pulseIntensity);
         drawPacMan(gs.pacX, gs.pacY, gs.pacDir === 'none' ? 'right' : gs.pacDir, gs.mouthOpen);
         gs.ghosts.forEach(g => drawGhost(g, gs.frameCount));
-        const flashAlpha = (gs.deathFlash / 30) * 0.5;
-        if (gs.deathFlash > 20) {
-          ctx.fillStyle = `rgba(255,255,255,${flashAlpha * 0.6})`;
-        } else {
-          ctx.fillStyle = `rgba(255,0,0,${flashAlpha})`;
-        }
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
         animFrameRef.current = requestAnimationFrame(gameLoop);
         return;
       }
