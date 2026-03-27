@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
   })
 
   // Send invite email via Resend
-  const appUrl = process.env.NEXTAUTH_URL || 'https://retroride-production.up.railway.app'
+  const appUrl = process.env.NEXTAUTH_URL || 'https://gamebuddi.com'
   const familyCode = family.code
   const formattedCode = familyCode.slice(0, 4) + '-' + familyCode.slice(4)
 
@@ -79,16 +79,16 @@ export async function POST(req: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: process.env.EMAIL_FROM || 'RetroRide <noreply@retroride.app>',
+          from: process.env.EMAIL_FROM || 'GameBuddi <noreply@gamebuddi.com>',
           to: [normalizedEmail],
-          subject: `${inviter.name} invited you to join ${family.name} on RetroRide!`,
+          subject: `${inviter.name} invited you to join ${family.name} on GameBuddi!`,
           html: `
             <div style="font-family: 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; background: #0f0a1e; border-radius: 16px; overflow: hidden;">
               <!-- Header -->
               <div style="background: linear-gradient(135deg, #7c3aed 0%, #ec4899 50%, #06b6d4 100%); padding: 32px 24px; text-align: center;">
                 <div style="font-size: 48px; margin-bottom: 8px;">🕹️🎮🚀</div>
                 <h1 style="color: white; font-size: 28px; font-weight: 800; margin: 0; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-                  RetroRide
+                  GameBuddi
                 </h1>
                 <p style="color: rgba(255,255,255,0.85); font-size: 14px; margin: 6px 0 0;">
                   Family Arcade

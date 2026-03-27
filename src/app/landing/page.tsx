@@ -317,7 +317,7 @@ export default function LandingPage() {
               className="neon-text text-2xl sm:text-3xl md:text-4xl"
               style={{ fontFamily: "'Press Start 2P', monospace" }}
             >
-              RetroRide
+              GameBuddi
             </h1>
           </div>
 
@@ -726,7 +726,7 @@ export default function LandingPage() {
             className="neon-text text-xl sm:text-2xl mb-4"
             style={{ fontFamily: "'Press Start 2P', monospace" }}
           >
-            Families Love RetroRide
+            Families Love GameBuddi
           </h2>
         </div>
 
@@ -791,7 +791,7 @@ export default function LandingPage() {
               className="neon-text text-sm"
               style={{ fontFamily: "'Press Start 2P', monospace" }}
             >
-              RetroRide
+              GameBuddi
             </span>
           </div>
           <div className="flex items-center gap-6 text-sm text-[#64748b]">
@@ -811,7 +811,7 @@ export default function LandingPage() {
               Local Play
             </Link>
           </div>
-          <p className="text-xs text-[#475569]">&copy; {new Date().getFullYear()} RetroRide. All rights reserved.</p>
+          <p className="text-xs text-[#475569]">&copy; {new Date().getFullYear()} GameBuddi. All rights reserved.</p>
         </div>
       </footer>
     </div>

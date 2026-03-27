@@ -154,7 +154,7 @@ export default function Home() {
             className="text-3xl font-bold neon-text mb-1"
             style={{ fontFamily: "'Press Start 2P', monospace", fontSize: '20px' }}
           >
-            RetroRide
+            GameBuddi
           </h1>
           <p className="text-slate-400 text-sm mt-2">
             {GAMES.length} classic games — no wifi needed

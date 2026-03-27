@@ -4,13 +4,17 @@ import { FamilyProvider } from '@/lib/family-context'
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 
 export const metadata: Metadata = {
-  title: 'RetroRide — Classic Arcade Games',
+  title: 'GameBuddi — Classic Arcade Games',
   description: '25+ classic arcade games with family leaderboards. Perfect for road trips and flights!',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/icon-192.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'RetroRide',
+    title: 'GameBuddi',
   },
 }
 

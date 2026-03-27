@@ -1,7 +1,7 @@
 'use client'
 
 // ---------------------------------------------------------------------------
-// RetroRide Offline Queue
+// GameBuddi Offline Queue
 // Stores pending API actions in IndexedDB and replays them when back online.
 // ---------------------------------------------------------------------------
 

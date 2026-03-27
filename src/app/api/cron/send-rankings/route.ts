@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
 
   let emailsSent = 0
   const resendKey = process.env.RESEND_API_KEY
-  const emailFrom = process.env.EMAIL_FROM || 'RetroRide <noreply@retroride.app>'
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://retroride.app'
+  const emailFrom = process.env.EMAIL_FROM || 'GameBuddi <noreply@gamebuddi.com>'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gamebuddi.com'
 
   for (const family of families) {
     // Find members who want this type of ranking email
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
           body: JSON.stringify({
             from: emailFrom,
             to: [member.email],
-            subject: `${type === 'daily' ? 'Daily' : 'Weekly'} Rankings - ${family.name} | RetroRide`,
+            subject: `${type === 'daily' ? 'Daily' : 'Weekly'} Rankings - ${family.name} | GameBuddi`,
             html,
           }),
         })
@@ -163,7 +163,7 @@ function buildRankingEmail(
 
     <!-- Header -->
     <div style="text-align: center; padding: 24px 0;">
-      <div style="font-size: 12px; letter-spacing: 4px; color: #8b5cf6; text-transform: uppercase; margin-bottom: 8px;">RetroRide</div>
+      <div style="font-size: 12px; letter-spacing: 4px; color: #8b5cf6; text-transform: uppercase; margin-bottom: 8px;">GameBuddi</div>
       <h1 style="margin: 0; font-size: 22px; font-weight: bold; background: linear-gradient(135deg, #a855f7, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
         ${type === 'daily' ? 'Daily' : 'Weekly'} Rankings
       </h1>
@@ -210,7 +210,7 @@ function buildRankingEmail(
         You're receiving this because you have ${type} ranking emails enabled.
       </p>
       <p style="margin: 4px 0 0; font-size: 11px; color: #334155;">
-        Manage your preferences in the RetroRide app settings.
+        Manage your preferences in the GameBuddi app settings.
       </p>
     </div>
 

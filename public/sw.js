@@ -1,4 +1,4 @@
-// RetroRide Service Worker
+// GameBuddi Service Worker
 // Cache-first for static assets, network-first for pages, background sync for API actions
 
 const CACHE_NAME = 'retroride-v9'
