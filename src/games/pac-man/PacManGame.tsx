@@ -713,7 +713,43 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
         gs.ghostMoveTimer = 0;
 
         gs.ghosts.forEach(ghost => {
-          if (ghost.eaten) return;
+          if (ghost.eaten) {
+            // Eaten ghosts move toward the ghost house to respawn
+            const targetX = 9, targetY = 9; // center of ghost house
+            const dx = targetX - ghost.x;
+            const dy = targetY - ghost.y;
+            // Move toward target (simple pathfinding — prefer larger axis)
+            if (Math.abs(dx) >= Math.abs(dy)) {
+              ghost.dir = dx > 0 ? 'right' : 'left';
+            } else {
+              ghost.dir = dy > 0 ? 'down' : 'up';
+            }
+            if (canMove(gs.maze, ghost.x, ghost.y, ghost.dir)) {
+              const [nx, ny] = getNextPos(ghost.x, ghost.y, ghost.dir);
+              ghost.x = nx;
+              ghost.y = ny;
+            } else {
+              // Try alternate directions
+              const dirs: ('up' | 'down' | 'left' | 'right')[] = ['up', 'down', 'left', 'right'];
+              for (const d of dirs) {
+                if (canMove(gs.maze, ghost.x, ghost.y, d)) {
+                  const [nx, ny] = getNextPos(ghost.x, ghost.y, d);
+                  ghost.x = nx;
+                  ghost.y = ny;
+                  ghost.dir = d;
+                  break;
+                }
+              }
+            }
+            // Reached ghost house — respawn
+            if (Math.abs(ghost.x - targetX) <= 1 && Math.abs(ghost.y - targetY) <= 1) {
+              ghost.eaten = false;
+              ghost.scared = false;
+              ghost.x = targetX;
+              ghost.y = targetY;
+            }
+            return;
+          }
           ghostAI(ghost, gs.pacX, gs.pacY, gs.maze);
           if (canMove(gs.maze, ghost.x, ghost.y, ghost.dir)) {
             const [nx, ny] = getNextPos(ghost.x, ghost.y, ghost.dir);
