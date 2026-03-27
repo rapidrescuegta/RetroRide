@@ -714,33 +714,33 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
 
         gs.ghosts.forEach(ghost => {
           if (ghost.eaten) {
-            // Eaten ghosts move toward the ghost house to respawn
-            const targetX = 9, targetY = 9; // center of ghost house
-            const dx = targetX - ghost.x;
-            const dy = targetY - ghost.y;
-            // Move toward target (simple pathfinding — prefer larger axis)
-            if (Math.abs(dx) >= Math.abs(dy)) {
-              ghost.dir = dx > 0 ? 'right' : 'left';
-            } else {
-              ghost.dir = dy > 0 ? 'down' : 'up';
+            // Navigate back to ghost house using proper pathfinding (no reverse, pick closest to target)
+            const targetX = 9, targetY = 9;
+            const dirs: Direction[] = ['up', 'down', 'left', 'right'];
+            const opposite: Record<Direction, Direction> = { up: 'down', down: 'up', left: 'right', right: 'left', none: 'none' };
+            const validDirs = dirs.filter(d => d !== opposite[ghost.dir] && canMove(gs.maze, ghost.x, ghost.y, d));
+
+            if (validDirs.length > 0) {
+              // Pick direction closest to ghost house
+              let bestDir = validDirs[0];
+              let bestDist = Infinity;
+              for (const d of validDirs) {
+                const [nx, ny] = getNextPos(ghost.x, ghost.y, d);
+                const dist = Math.abs(nx - targetX) + Math.abs(ny - targetY);
+                if (dist < bestDist) { bestDist = dist; bestDir = d; }
+              }
+              ghost.dir = bestDir;
+            } else if (canMove(gs.maze, ghost.x, ghost.y, opposite[ghost.dir])) {
+              // Dead end — reverse
+              ghost.dir = opposite[ghost.dir];
             }
+
             if (canMove(gs.maze, ghost.x, ghost.y, ghost.dir)) {
               const [nx, ny] = getNextPos(ghost.x, ghost.y, ghost.dir);
               ghost.x = nx;
               ghost.y = ny;
-            } else {
-              // Try alternate directions
-              const dirs: ('up' | 'down' | 'left' | 'right')[] = ['up', 'down', 'left', 'right'];
-              for (const d of dirs) {
-                if (canMove(gs.maze, ghost.x, ghost.y, d)) {
-                  const [nx, ny] = getNextPos(ghost.x, ghost.y, d);
-                  ghost.x = nx;
-                  ghost.y = ny;
-                  ghost.dir = d;
-                  break;
-                }
-              }
             }
+
             // Reached ghost house — respawn
             if (Math.abs(ghost.x - targetX) <= 1 && Math.abs(ghost.y - targetY) <= 1) {
               ghost.eaten = false;
