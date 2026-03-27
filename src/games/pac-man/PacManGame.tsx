@@ -87,6 +87,9 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
     extraLifeFlash: number;
     deathFlash: number;
     invincibleUntil: number;
+    dying: number; // countdown frames for death animation (0 = not dying)
+    deathX: number; // position where pac-man died
+    deathY: number;
   } | null>(null);
   const animFrameRef = useRef<number>(0);
   const [score, setScore] = useState(0);
@@ -138,6 +141,9 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
       extraLifeFlash: 0,
       deathFlash: 0,
       invincibleUntil: 0,
+      dying: 0,
+      deathX: 0,
+      deathY: 0,
     };
     setScore(0);
     setLives(difficultyConfig.startLives);
@@ -618,6 +624,50 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
         return;
       }
 
+      // Death animation — pac-man shrinks and spins at death spot
+      if (gs.dying > 0) {
+        gs.dying--;
+        // Draw maze and ghosts frozen
+        gs.ghosts.forEach(g => drawGhost(g, gs.frameCount));
+        // Draw pac-man shrinking at death position
+        const progress = 1 - (gs.dying / 60); // 0 to 1
+        const cx = gs.deathX * CELL + CELL / 2;
+        const cy = gs.deathY * CELL + CELL / 2;
+        const r = (CELL / 2 - 1) * (1 - progress); // shrinks to 0
+        if (r > 0.5) {
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(progress * Math.PI * 4); // spin 2 full rotations
+          ctx.fillStyle = '#FFD700';
+          ctx.shadowColor = '#FFD700';
+          ctx.shadowBlur = 10 * (1 - progress);
+          ctx.beginPath();
+          // Open mouth wider as dying
+          const mouthAngle = progress * Math.PI * 0.9;
+          ctx.arc(0, 0, r, mouthAngle, Math.PI * 2 - mouthAngle);
+          ctx.lineTo(0, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+        // When animation ends, reset or game over
+        if (gs.dying === 0) {
+          if (gs.lives <= 0) {
+            gs.gameOver = true;
+            finalScoreRef.current = gs.score;
+            setScore(gs.score);
+            setGameOver(true);
+            playGameOver();
+          } else {
+            gs.deathFlash = 20;
+            gs.invincibleUntil = Date.now() + 2000;
+            resetPositions();
+          }
+        }
+        animFrameRef.current = requestAnimationFrame(gameLoop);
+        return;
+      }
+
       if (gs.gameOver || gs.levelComplete) {
         drawPacMan(gs.pacX, gs.pacY, gs.pacDir, 0.5);
         gs.ghosts.forEach(g => drawGhost(g, gs.frameCount));
@@ -777,21 +827,14 @@ export default function PacManGame({ onGameOver, level }: PacManGameProps) {
               setLives(gs.lives);
               playOneUp();
             }
-          } else {
+          } else if (gs.dying === 0) {
+            // Start death animation — freeze in place
+            gs.dying = 60; // ~1 second animation
+            gs.deathX = gs.pacX;
+            gs.deathY = gs.pacY;
             gs.lives--;
             setLives(gs.lives);
             playDeath();
-            if (gs.lives <= 0) {
-              gs.gameOver = true;
-              finalScoreRef.current = gs.score;
-              setScore(gs.score);
-              setGameOver(true);
-              playGameOver();
-            } else {
-              gs.deathFlash = 30;
-              gs.invincibleUntil = Date.now() + 2000;
-              resetPositions();
-            }
           }
         }
       });
