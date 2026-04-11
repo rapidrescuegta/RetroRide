@@ -72,18 +72,22 @@ Improvements made:
 - Added multi-size icon declarations in manifest for better cross-device support
 - Added 180x180 apple-touch-icon link tag (required size for iOS home screen)
 
+### Playoff Tournament (Elimination Bracket)
+**Status: Complete**
+
+Built an NHL-playoff-style elimination bracket system:
+- **Schema**: `BracketParticipant` (seed, elimination status) and `BracketMatch` (round, position, players, scores, room code) models. Tournament gains `format` field to distinguish `score-based` vs `elimination`.
+- **Bracket engine** (`src/lib/bracket.ts`): Standard tournament seeding (1v16, 8v9), automatic byes, winner advancement, round naming.
+- **Match lifecycle API**: Start match (generates room code), report result (advances winner, eliminates loser, completes tournament if final).
+- **EliminationBracket UI**: Visual bracket with round columns, match cards showing live/ready/pending status, click to play or spectate.
+- **TournamentMatchView**: Wraps existing multiplayer games in tournament context with auto-result reporting.
+- **SpectatorView**: Eliminated players can watch live matches — connects as read-only peer via WebRTC.
+- **Create flow**: Format chooser (Score-Based vs Playoff Bracket), single-game picker, participant selector.
+- Supports 2-16 players with automatic bye handling.
+
 ## What Was Skipped
 
 Nothing was skipped. All items were addressed.
-
-## Notes
-
-The GameBuddi codebase was already very mature when this work began. Most features requested in Items 4-6 were already fully implemented. The main contributions were:
-- Documentation (migration guide, DECISIONS.md)
-- Service configuration reporting (health endpoint)
-- Convenience modules (stripe.ts, resend.ts)
-- Minor gap filling (Rummy 500 in game picker, iOS icon metadata)
-- Verification that all systems are properly connected end-to-end
 
 ## Commits
 
