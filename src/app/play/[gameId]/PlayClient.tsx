@@ -8,6 +8,12 @@ import { useFamily } from '@/lib/family-context'
 import { isSoundEnabled, setSoundEnabled, isMusicEnabled, setMusicEnabled, startMusic, stopMusic } from '@/lib/sounds'
 import EmailCapturePrompt, { shouldShowEmailCapture } from '@/components/EmailCapturePrompt'
 import GameController from '@/components/GameController'
+import MultiplayerLobby from '@/components/MultiplayerLobby'
+import MultiplayerGameView from '@/components/MultiplayerGameView'
+import { isMultiplayerSupported, getPlayerCount, getCardMultiplayerConfig } from '@/lib/multiplayer-registry'
+import { getNetwork, setNetwork } from '@/lib/multiplayer-game'
+import type { NetworkAdapter } from '@/lib/network-adapter'
+import { autoSubmitTournamentScore } from '@/lib/tournament-auto-score'
 
 // Game imports
 import SnakeGame from '@/games/snake/SnakeGame'
@@ -40,6 +46,15 @@ import CrazyEightsGame from '@/games/crazy-eights/CrazyEightsGame'
 import GoFishGame from '@/games/go-fish/GoFishGame'
 import HeartsGame from '@/games/hearts/HeartsGame'
 import SpadesGame from '@/games/spades/SpadesGame'
+import SolitaireGame from '@/games/solitaire/SolitaireGame'
+import WarGame from '@/games/war/WarGame'
+import BlackjackGame from '@/games/blackjack/BlackjackGame'
+import OldMaidGame from '@/games/old-maid/OldMaidGame'
+import PokerGame from '@/games/poker/PokerGame'
+import ColorClashGame from '@/games/color-clash/ColorClashGame'
+import GinRummyGame from '@/games/gin-rummy/GinRummyGame'
+import EuchreGame from '@/games/euchre/EuchreGame'
+import CribbageGame from '@/games/cribbage/CribbageGame'
 
 function getControllerConfig(gameId: string): { dpad: boolean; buttons: ('A' | 'B')[]; buttonKeys: { A?: string; B?: string } } | null {
   const dpadAndShoot = ['space-invaders', 'asteroids', 'galaga']
@@ -49,7 +64,8 @@ function getControllerConfig(gameId: string): { dpad: boolean; buttons: ('A' | '
   const slideOnly = ['breakout', 'brick-breaker', 'pong']
   const noController = ['memory-match', 'tic-tac-toe', 'simon', 'whack-a-mole', 'connect-four',
     'hangman', 'wordle', 'minesweeper', '2048', 'checkers', 'chess', 'doodle-jump',
-    'rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades']
+    'rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades', 'war', 'blackjack', 'solitaire', 'old-maid',
+    'poker', 'color-clash', 'gin-rummy', 'euchre', 'cribbage']
 
   if (noController.includes(gameId) || slideOnly.includes(gameId)) return null
   if (dpadAndShoot.includes(gameId)) return { dpad: true, buttons: ['A'], buttonKeys: { A: ' ' } }
@@ -92,6 +108,15 @@ const GAME_COMPONENTS: Record<string, React.ComponentType<GameProps>> = {
   'go-fish': GoFishGame as React.ComponentType<GameProps>,
   'hearts': HeartsGame as React.ComponentType<GameProps>,
   'spades': SpadesGame as React.ComponentType<GameProps>,
+  'solitaire': SolitaireGame as React.ComponentType<GameProps>,
+  'war': WarGame as React.ComponentType<GameProps>,
+  'blackjack': BlackjackGame as React.ComponentType<GameProps>,
+  'old-maid': OldMaidGame as React.ComponentType<GameProps>,
+  'poker': PokerGame as React.ComponentType<GameProps>,
+  'color-clash': ColorClashGame as React.ComponentType<GameProps>,
+  'gin-rummy': GinRummyGame as React.ComponentType<GameProps>,
+  'euchre': EuchreGame as React.ComponentType<GameProps>,
+  'cribbage': CribbageGame as React.ComponentType<GameProps>,
 }
 
 const LEVEL_STORAGE_KEY = 'retroride-last-level'
@@ -101,15 +126,17 @@ export default function PlayClient({ gameId }: { gameId: string }) {
   const game = getGameById(gameId)
   const familyCtx = useFamily()
 
-  const [gameState, setGameState] = useState<'pick-level' | 'playing' | 'over'>('pick-level')
+  const [gameState, setGameState] = useState<'pick-level' | 'multiplayer-lobby' | 'multiplayer-playing' | 'playing' | 'over'>('pick-level')
   const [level, setLevel] = useState<GameLevel>('medium')
   const [score, setScore] = useState(0)
   const [highScore, setHighScore] = useState(0)
   const [isNewHigh, setIsNewHigh] = useState(false)
   const [showOverlay, setShowOverlay] = useState(false)
+  const [tournamentSubmitted, setTournamentSubmitted] = useState(0)
   const [showEmailCapture, setShowEmailCapture] = useState(false)
   const [soundOn, setSoundOn] = useState(true)
   const [musicOn, setMusicOn] = useState(true)
+  const [multiplayerAdapter, setMultiplayerAdapter] = useState<NetworkAdapter | null>(null)
 
   useEffect(() => {
     setSoundOn(isSoundEnabled())
@@ -134,7 +161,7 @@ export default function PlayClient({ gameId }: { gameId: string }) {
     setMusicEnabled(newState)
     if (newState && gameState === 'playing') {
       const puzzleGames = ['tetris', 'snake', '2048', 'minesweeper', 'wordle', 'chess', 'checkers']
-      const noMusic = ['rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades']
+      const noMusic = ['rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades', 'war', 'blackjack', 'solitaire', 'old-maid', 'poker', 'color-clash', 'gin-rummy', 'euchre', 'cribbage']
       if (!noMusic.includes(gameId)) {
         startMusic(puzzleGames.includes(gameId) ? 'puzzle' : 'arcade')
       }
@@ -163,7 +190,7 @@ export default function PlayClient({ gameId }: { gameId: string }) {
     setGameState('playing')
     // Start background music
     const puzzleGames = ['tetris', 'snake', '2048', 'minesweeper', 'wordle', 'chess', 'checkers']
-    const noMusic = ['rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades']
+    const noMusic = ['rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades', 'war', 'blackjack', 'solitaire', 'old-maid', 'poker', 'color-clash', 'gin-rummy', 'euchre', 'cribbage']
     if (!noMusic.includes(gameId)) {
       startMusic(puzzleGames.includes(gameId) ? 'puzzle' : 'arcade')
     }
@@ -185,6 +212,17 @@ export default function PlayClient({ gameId }: { gameId: string }) {
         setHighScore(finalScore)
       }
     }
+    // Auto-submit to active tournaments (background, non-blocking)
+    if (familyCtx?.isLoggedIn && familyCtx.family?.id && familyCtx.member?.id && game) {
+      autoSubmitTournamentScore(
+        familyCtx.family.id,
+        familyCtx.member.id,
+        game.id,
+        finalScore
+      ).then((count) => {
+        if (count > 0) setTournamentSubmitted(count)
+      }).catch(() => {})
+    }
     // Check if we should show email capture
     if (shouldShowEmailCapture()) {
       setShowEmailCapture(true)
@@ -197,9 +235,10 @@ export default function PlayClient({ gameId }: { gameId: string }) {
     setScore(0)
     setIsNewHigh(false)
     setShowOverlay(false)
+    setTournamentSubmitted(0)
     // Restart music
     const puzzleGames = ['tetris', 'snake', '2048', 'minesweeper', 'wordle', 'chess', 'checkers']
-    const noMusic = ['rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades']
+    const noMusic = ['rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades', 'war', 'blackjack', 'solitaire', 'old-maid', 'poker', 'color-clash', 'gin-rummy', 'euchre', 'cribbage']
     if (!noMusic.includes(gameId)) {
       startMusic(puzzleGames.includes(gameId) ? 'puzzle' : 'arcade')
     }
@@ -286,6 +325,38 @@ export default function PlayClient({ gameId }: { gameId: string }) {
               })}
             </div>
 
+            {/* Play Online button for multiplayer-capable games */}
+            {isMultiplayerSupported(gameId) && (
+              <button
+                onClick={() => setGameState('multiplayer-lobby')}
+                className="w-full mt-4 px-6 py-4 rounded-xl font-semibold text-left transition-all active:scale-[0.97] flex items-center justify-between"
+                style={{
+                  background: 'linear-gradient(135deg, #7c3aed15, #06b6d415)',
+                  border: '1px solid #7c3aed40',
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">{'\u{1F310}'}</span>
+                  <div>
+                    <span className="text-white text-base">Play Online</span>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {(() => {
+                        const pc = getPlayerCount(gameId)
+                        return pc
+                          ? pc.min === pc.max
+                            ? `${pc.min} players`
+                            : `${pc.min}-${pc.max} players`
+                          : 'Multiplayer'
+                      })()}
+                    </p>
+                  </div>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
+            )}
+
             {highScore > 0 && (
               <p className="text-xs text-slate-500 mt-6">
                 Your best: <span className="text-amber-400 font-semibold">{highScore.toLocaleString()}</span>
@@ -294,6 +365,53 @@ export default function PlayClient({ gameId }: { gameId: string }) {
           </div>
         </div>
       </div>
+    )
+  }
+
+  // Multiplayer lobby screen
+  if (gameState === 'multiplayer-lobby') {
+    return (
+      <MultiplayerLobby
+        gameId={gameId}
+        gameName={game.name}
+        gameIcon={game.icon}
+        gameColor={game.color}
+        onStart={() => {
+          // The lobby has already called setNetwork(adapter) at this point.
+          // Capture the adapter so we can pass it to MultiplayerGameView.
+          const net = getNetwork()
+          if (net) {
+            setMultiplayerAdapter(net as unknown as NetworkAdapter)
+            setGameState('multiplayer-playing')
+          } else {
+            // Fallback: no network available, go to single player
+            setGameState('playing')
+          }
+        }}
+        onCancel={() => setGameState('pick-level')}
+      />
+    )
+  }
+
+  // Multiplayer playing screen
+  if (gameState === 'multiplayer-playing' && multiplayerAdapter) {
+    const cardConfig = getCardMultiplayerConfig(gameId)
+    if (!cardConfig) {
+      // No card config found, fall back to single player
+      setGameState('playing')
+      return null
+    }
+
+    return (
+      <MultiplayerGameView
+        config={cardConfig}
+        adapter={multiplayerAdapter}
+        onLeave={() => {
+          setNetwork(null)
+          setMultiplayerAdapter(null)
+          setGameState('pick-level')
+        }}
+      />
     )
   }
 
@@ -379,9 +497,17 @@ export default function PlayClient({ gameId }: { gameId: string }) {
               <p className="text-slate-400 text-sm mb-1">
                 {score > 0 ? 'Great job!' : 'Game Over'}
               </p>
-              <p className="text-3xl font-bold text-white mb-6">
+              <p className="text-3xl font-bold text-white mb-4">
                 {score.toLocaleString()}
               </p>
+
+              {tournamentSubmitted > 0 && (
+                <div className="mb-4 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <p className="text-xs text-amber-400 font-medium">
+                    🏆 Score submitted to {tournamentSubmitted} tournament{tournamentSubmitted > 1 ? 's' : ''}!
+                  </p>
+                </div>
+              )}
 
               <div className="flex flex-col gap-3">
                 <button
