@@ -21,6 +21,15 @@ Decisions made during autonomous development sessions.
 - **Reason**: The codebase already has 13 card games with complete single-player and multiplayer implementations. War (`src/games/war/`), Go Fish (`src/games/go-fish/`), and Crazy Eights (`src/games/crazy-eights/`) each have ~300-650 line game components with animations, scoring, and AI.
 - **Tournament system status**: Fully built with 16 themed presets (Weekend Showdown, Plane Ride Challenge, Road Trip, etc.), create/join flow, bracket/standings views, score submission, winner celebration with confetti, and the points system (1st=3, 2nd=2, 3rd=1). Prominently featured on the main page and accessible at `/tournaments`.
 
+## Playoff Tournament (Elimination Bracket)
+
+- **Decision**: Built an NHL-playoff-style elimination bracket system alongside the existing score-based tournaments.
+- **Architecture**: Host-authoritative 1v1 matches via existing WebRTC P2P. Lower seed always hosts. Room codes generated server-side for reliable coordination.
+- **Schema**: Added `BracketParticipant` and `BracketMatch` models. Tournament gains `format`, `gameId`, `bracketSize`, `currentRound` fields.
+- **Bracket engine**: Standard tournament seeding (1v16, 8v9, etc.), automatic byes for non-power-of-2 counts, max 16 players.
+- **Spectator mode**: Eliminated players join match rooms as read-only peers, seeing live game state and scores.
+- **UI**: Full bracket visualization with round columns, live/ready/completed badges, player paths, match cards. "Play Now" button for ready matches.
+
 ## Item 6: PWA Improvements
 
 - **Decision**: PWA was already production-ready. Made minor improvements to icon declarations and apple-touch-icon metadata.

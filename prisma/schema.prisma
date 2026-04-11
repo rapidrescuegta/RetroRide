@@ -7,31 +7,37 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─── Core Models ────────────────────────────────────────────────────
+
 model Family {
   id                 String         @id @default(cuid())
   name               String
   code               String         @unique
-  stripeCustomerId   String?
+  stripeCustomerId   String?        @unique
   subscriptionStatus String?
   planType           String?
   planExpiresAt      DateTime?
   createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
   members            Member[]
   subscriptions      Subscription[]
+  tournaments        Tournament[]
 }
 
 model Subscription {
   id              String    @id @default(cuid())
   familyId        String
-  family          Family    @relation(fields: [familyId], references: [id])
+  family          Family    @relation(fields: [familyId], references: [id], onDelete: Cascade)
   stripeSessionId String?   @unique
   stripeSubId     String?   @unique
   planType        String
   status          String    @default("pending")
   expiresAt       DateTime?
   createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([familyId])
+  @@index([status, expiresAt])
 }
 
 model Member {
@@ -42,15 +48,21 @@ model Member {
   emailConsent  Boolean       @default(true)
   avatar        String        @default("😀")
   familyId      String
-  family        Family        @relation(fields: [familyId], references: [id])
+  family        Family        @relation(fields: [familyId], references: [id], onDelete: Cascade)
   createdAt     DateTime      @default(now())
   scores            Score[]
   presence          Presence?
   chatMessages      ChatMessage[]
   notificationPref  NotificationPreference?
+  pushSubscriptions PushSubscription[]
+
+  tournaments       Tournament[]
+  tournamentEntries TournamentEntry[]
+  bracketParticipations BracketParticipant[]
 
   @@unique([familyId, name])
   @@unique([email])
+  @@index([familyId])
 }
 
 model VerificationCode {
@@ -62,6 +74,8 @@ model VerificationCode {
   createdAt DateTime @default(now())
 
   @@index([email, code])
+  @@index([email, used, expiresAt])
+  @@index([expiresAt])
 }
 
 model Score {
@@ -69,43 +83,46 @@ model Score {
   gameId    String
   score     Int
   memberId  String
-  member    Member   @relation(fields: [memberId], references: [id])
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@index([gameId, score(sort: Desc)])
   @@index([memberId])
+  @@index([memberId, gameId])
+  @@index([createdAt(sort: Desc)])
 }
 
 model Presence {
   id       String   @id @default(cuid())
   memberId String   @unique
-  member   Member   @relation(fields: [memberId], references: [id])
+  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   lastSeen DateTime @default(now())
   isOnline Boolean  @default(true)
+
+  @@index([isOnline, lastSeen])
 }
 
 model ChatMessage {
   id        String   @id @default(cuid())
   familyId  String
   memberId  String
-  member    Member   @relation(fields: [memberId], references: [id])
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   text      String
   type      String   @default("message")
   createdAt DateTime @default(now())
 
   @@index([familyId, createdAt(sort: Desc)])
+  @@index([memberId])
 }
 
 model NotificationPreference {
   id              String   @id @default(cuid())
   memberId        String   @unique
-  member          Member   @relation(fields: [memberId], references: [id])
+  member          Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   rankingEmail    String   @default("weekly") // "daily", "weekly", "off"
   challengeEmail  Boolean  @default(true)
   newMemberEmail  Boolean  @default(true)
   updatedAt       DateTime @updatedAt
-
-  @@index([memberId])
 }
 
 model Invite {
@@ -119,6 +136,7 @@ model Invite {
 
   @@index([familyId])
   @@index([email])
+  @@index([status, expiresAt])
 }
 
 model Subscriber {
@@ -127,6 +145,129 @@ model Subscriber {
   emailVerified Boolean  @default(false)
   emailConsent  Boolean  @default(true)
   createdAt     DateTime @default(now())
+}
 
-  @@index([email])
+// ─── Push Subscriptions ─────────────────────────────────────────────
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([memberId])
+}
+
+// ─── Tournament System (Multi-Game) ─────────────────────────────────
+
+model Tournament {
+  id           String   @id @default(cuid())
+  name         String
+  familyId     String
+  family       Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  gameIds      String[]
+  format       String   @default("score-based") // "score-based" | "elimination"
+  gameId       String?  // For elimination: the single game played per matchup
+  bracketSize  Int?     // Next power of 2 >= participant count
+  currentRound Int      @default(1)
+  status       String   @default("active")
+  createdBy    String
+  creator      Member   @relation(fields: [createdBy], references: [id])
+  createdAt    DateTime @default(now())
+  completedAt  DateTime?
+  entries      TournamentEntry[]
+  participants BracketParticipant[]
+  matches      BracketMatch[]
+
+  @@index([familyId, status])
+  @@index([createdBy])
+  @@index([createdAt(sort: Desc)])
+}
+
+model TournamentEntry {
+  id            String     @id @default(cuid())
+  tournamentId  String
+  tournament    Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  memberId      String
+  member        Member     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  gameId        String
+  score         Int
+  placement     Int
+  points        Int        @default(0)
+  createdAt     DateTime   @default(now())
+
+  @@index([tournamentId])
+  @@index([memberId])
+  @@index([tournamentId, points(sort: Desc)])
+  @@unique([tournamentId, memberId, gameId])
+}
+
+// ─── Elimination Bracket ─────────────────────────────────────────────
+
+model BracketParticipant {
+  id           String    @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  memberId     String
+  member       Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  seed         Int       // 1-based seeding position
+  eliminated   Boolean   @default(false)
+  eliminatedAt DateTime?
+  eliminatedIn Int?      // Round number they were eliminated
+
+  @@unique([tournamentId, memberId])
+  @@unique([tournamentId, seed])
+  @@index([tournamentId, eliminated])
+}
+
+model BracketMatch {
+  id           String     @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  round        Int        // 1 = first round, 2 = quarterfinals, etc.
+  position     Int        // Position within the round (0-indexed)
+  player1Id    String?    // memberId — null means TBD
+  player2Id    String?    // memberId — null means TBD or bye
+  winnerId     String?
+  loserId      String?
+  player1Score Int?
+  player2Score Int?
+  status       String     @default("pending") // "pending" | "ready" | "in-progress" | "completed" | "bye"
+  roomCode     String?    // Signaling room code for the WebRTC match
+  startedAt    DateTime?
+  completedAt  DateTime?
+
+  @@unique([tournamentId, round, position])
+  @@index([tournamentId, round])
+  @@index([tournamentId, status])
+}
+
+// ─── Signaling (Internet Multiplayer) ───────────────────────────────
+
+model SignalingRoom {
+  id           String             @id @default(cuid())
+  code         String             @unique
+  hostMemberId String
+  gameId       String?
+  createdAt    DateTime           @default(now())
+  expiresAt    DateTime
+  messages     SignalingMessage[]
+
+  @@index([expiresAt])
+}
+
+model SignalingMessage {
+  id           String        @id @default(cuid())
+  roomCode     String
+  room         SignalingRoom @relation(fields: [roomCode], references: [code], onDelete: Cascade)
+  fromMemberId String
+  type         String        // "offer", "answer", "candidate", "join", "leave"
+  payload      String        // JSON-encoded SDP or ICE candidate
+  createdAt    DateTime      @default(now())
+
+  @@index([roomCode, createdAt])
+  @@index([roomCode, fromMemberId])
 }
