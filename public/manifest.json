@@ -1,25 +1,154 @@
 {
-  "name": "GameBuddi — Classic Arcade Games",
+  "name": "GameBuddi — Classic Arcade & Card Games",
   "short_name": "GameBuddi",
-  "description": "Play 20+ classic arcade games offline. Perfect for road trips and flights!",
+  "description": "Play 40+ classic arcade and card games offline. Snake, Pac-Man, Tetris, Chess, Poker, Solitaire, and more — perfect for road trips, flights, and family game nights!",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#0a0a1a",
   "theme_color": "#0a0a1a",
   "categories": ["games", "entertainment"],
+  "prefer_related_applications": false,
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/",
   "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "48x48 72x72 96x96 128x128 144x144 192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "256x256 384x384 512x512",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Play Snake",
+      "short_name": "Snake",
+      "description": "Classic Snake game",
+      "url": "/play/snake",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Play Pac-Man",
+      "short_name": "Pac-Man",
+      "description": "Classic Pac-Man arcade",
+      "url": "/play/pac-man",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Play Tetris",
+      "short_name": "Tetris",
+      "description": "Classic Tetris puzzle game",
+      "url": "/play/tetris",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Play 2048",
+      "short_name": "2048",
+      "description": "Slide and merge number tiles",
+      "url": "/play/2048",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Play Chess",
+      "short_name": "Chess",
+      "description": "Classic chess against AI",
+      "url": "/play/chess",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Play Solitaire",
+      "short_name": "Solitaire",
+      "description": "Classic Klondike Solitaire",
+      "url": "/play/solitaire",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Play Blackjack",
+      "short_name": "Blackjack",
+      "description": "Beat the dealer to 21",
+      "url": "/play/blackjack",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Play Poker",
+      "short_name": "Poker",
+      "description": "Texas Hold'em Poker",
+      "url": "/play/poker",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Tournaments",
+      "short_name": "Tournaments",
+      "description": "Join and compete in tournaments",
+      "url": "/tournaments",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Family Hub",
+      "short_name": "Family",
+      "description": "Manage your family group",
+      "url": "/family",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "GameBuddi home screen with 40+ classic games"
+    },
+    {
+      "src": "/screenshots/home-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "GameBuddi home screen on mobile"
+    },
+    {
+      "src": "/screenshots/gameplay-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Playing Snake on mobile"
+    }
+  ],
+  "share_target": {
+    "action": "/play",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "related_applications": [],
+  "handle_links": "preferred",
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
 }

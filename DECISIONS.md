@@ -20,3 +20,9 @@ Decisions made during autonomous development sessions.
 - **Decision**: No new card games needed — War, Go Fish, and Crazy Eights are already fully implemented with AI opponents, difficulty levels, multiplayer configs, and polished UIs.
 - **Reason**: The codebase already has 13 card games with complete single-player and multiplayer implementations. War (`src/games/war/`), Go Fish (`src/games/go-fish/`), and Crazy Eights (`src/games/crazy-eights/`) each have ~300-650 line game components with animations, scoring, and AI.
 - **Tournament system status**: Fully built with 16 themed presets (Weekend Showdown, Plane Ride Challenge, Road Trip, etc.), create/join flow, bracket/standings views, score submission, winner celebration with confetti, and the points system (1st=3, 2nd=2, 3rd=1). Prominently featured on the main page and accessible at `/tournaments`.
+
+## Item 6: PWA Improvements
+
+- **Decision**: PWA was already production-ready. Made minor improvements to icon declarations and apple-touch-icon metadata.
+- **What was already in place**: manifest.json with standalone display, theme colors, 10 app shortcuts, screenshots, share target, launch handler. Service worker v17 with multi-strategy caching (cache-first, stale-while-revalidate, network-first), navigation preload, offline fallback page, background sync for tournament scores, periodic sync, push notifications. InstallPrompt component with platform-specific prompts (iOS manual instructions, Android native prompt). OfflineIndicator with sync status. ServiceWorkerRegistration with lifecycle management and hourly update checks.
+- **What was added**: Multi-size icon declarations in manifest for better cross-device support. Added 180x180 apple-touch-icon link tag (the required size for iOS home screen icons).
