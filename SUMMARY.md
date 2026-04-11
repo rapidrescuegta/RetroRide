@@ -44,11 +44,16 @@ All three requested games (War, Go Fish, Crazy Eights) were already fully implem
 - Multiplayer configs for P2P play
 - Polished UIs with animations
 
-Tournament system was also already fully built:
+Tournament system was already built with UI, but **scores required manual entry**. Key improvement:
+- **Added auto-score submission** — when a player finishes any game, their score is automatically submitted to all active tournaments that include that game. No more manual entry.
+- Created `src/lib/tournament-auto-score.ts` with cached tournament lookups and smart submission (only submits if the new score improves on the existing entry)
+- Added tournament submission badge on game-over overlay
+- All 36 games now work seamlessly with tournaments
+
+Existing tournament features:
 - 16 themed presets (Weekend Showdown, Plane Ride Challenge, Road Trip, Card Shark, etc.)
-- Create/join flow with room codes
+- Create/join flow with custom game selection (all 36 games available)
 - Bracket and standings views with podium display
-- Score submission per game with placement tracking
 - Winner celebration with confetti animation
 - Points system (1st=3, 2nd=2, 3rd=1)
 - Prominently featured on the main page
