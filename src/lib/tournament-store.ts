@@ -257,10 +257,17 @@ export function calculateStandings(entries: TournamentEntryData[]): StandingEntr
   }
 
   return Array.from(memberMap.values()).sort((a, b) => {
+    // Primary: total tournament points
     if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints
+    // Tie-break 1: most first-place finishes
     const aFirsts = Object.values(a.placements).filter(p => p === 1).length
     const bFirsts = Object.values(b.placements).filter(p => p === 1).length
     if (bFirsts !== aFirsts) return bFirsts - aFirsts
-    return b.gamesPlayed - a.gamesPlayed
+    // Tie-break 2: games played (more = better consistency)
+    if (b.gamesPlayed !== a.gamesPlayed) return b.gamesPlayed - a.gamesPlayed
+    // Tie-break 3: total raw score across all games (head-to-head signal)
+    const aScore = Object.values(a.scores).reduce((s, v) => s + v, 0)
+    const bScore = Object.values(b.scores).reduce((s, v) => s + v, 0)
+    return bScore - aScore
   })
 }

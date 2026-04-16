@@ -55,6 +55,7 @@ import ColorClashGame from '@/games/color-clash/ColorClashGame'
 import GinRummyGame from '@/games/gin-rummy/GinRummyGame'
 import EuchreGame from '@/games/euchre/EuchreGame'
 import CribbageGame from '@/games/cribbage/CribbageGame'
+import SnapGame from '@/games/snap/SnapGame'
 
 function getControllerConfig(gameId: string): { dpad: boolean; buttons: ('A' | 'B')[]; buttonKeys: { A?: string; B?: string } } | null {
   const dpadAndShoot = ['space-invaders', 'asteroids', 'galaga']
@@ -65,7 +66,7 @@ function getControllerConfig(gameId: string): { dpad: boolean; buttons: ('A' | '
   const noController = ['memory-match', 'tic-tac-toe', 'simon', 'whack-a-mole', 'connect-four',
     'hangman', 'wordle', 'minesweeper', '2048', 'checkers', 'chess', 'doodle-jump',
     'rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades', 'war', 'blackjack', 'solitaire', 'old-maid',
-    'poker', 'color-clash', 'gin-rummy', 'euchre', 'cribbage']
+    'poker', 'color-clash', 'gin-rummy', 'euchre', 'cribbage', 'snap']
 
   if (noController.includes(gameId) || slideOnly.includes(gameId)) return null
   if (dpadAndShoot.includes(gameId)) return { dpad: true, buttons: ['A'], buttonKeys: { A: ' ' } }
@@ -117,6 +118,7 @@ const GAME_COMPONENTS: Record<string, React.ComponentType<GameProps>> = {
   'gin-rummy': GinRummyGame as React.ComponentType<GameProps>,
   'euchre': EuchreGame as React.ComponentType<GameProps>,
   'cribbage': CribbageGame as React.ComponentType<GameProps>,
+  'snap': SnapGame as React.ComponentType<GameProps>,
 }
 
 const LEVEL_STORAGE_KEY = 'retroride-last-level'
@@ -161,7 +163,7 @@ export default function PlayClient({ gameId }: { gameId: string }) {
     setMusicEnabled(newState)
     if (newState && gameState === 'playing') {
       const puzzleGames = ['tetris', 'snake', '2048', 'minesweeper', 'wordle', 'chess', 'checkers']
-      const noMusic = ['rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades', 'war', 'blackjack', 'solitaire', 'old-maid', 'poker', 'color-clash', 'gin-rummy', 'euchre', 'cribbage']
+      const noMusic = ['rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades', 'war', 'blackjack', 'solitaire', 'old-maid', 'poker', 'color-clash', 'gin-rummy', 'euchre', 'cribbage', 'snap']
       if (!noMusic.includes(gameId)) {
         startMusic(puzzleGames.includes(gameId) ? 'puzzle' : 'arcade')
       }
@@ -190,7 +192,7 @@ export default function PlayClient({ gameId }: { gameId: string }) {
     setGameState('playing')
     // Start background music
     const puzzleGames = ['tetris', 'snake', '2048', 'minesweeper', 'wordle', 'chess', 'checkers']
-    const noMusic = ['rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades', 'war', 'blackjack', 'solitaire', 'old-maid', 'poker', 'color-clash', 'gin-rummy', 'euchre', 'cribbage']
+    const noMusic = ['rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades', 'war', 'blackjack', 'solitaire', 'old-maid', 'poker', 'color-clash', 'gin-rummy', 'euchre', 'cribbage', 'snap']
     if (!noMusic.includes(gameId)) {
       startMusic(puzzleGames.includes(gameId) ? 'puzzle' : 'arcade')
     }
@@ -238,7 +240,7 @@ export default function PlayClient({ gameId }: { gameId: string }) {
     setTournamentSubmitted(0)
     // Restart music
     const puzzleGames = ['tetris', 'snake', '2048', 'minesweeper', 'wordle', 'chess', 'checkers']
-    const noMusic = ['rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades', 'war', 'blackjack', 'solitaire', 'old-maid', 'poker', 'color-clash', 'gin-rummy', 'euchre', 'cribbage']
+    const noMusic = ['rummy-500', 'crazy-eights', 'go-fish', 'hearts', 'spades', 'war', 'blackjack', 'solitaire', 'old-maid', 'poker', 'color-clash', 'gin-rummy', 'euchre', 'cribbage', 'snap']
     if (!noMusic.includes(gameId)) {
       startMusic(puzzleGames.includes(gameId) ? 'puzzle' : 'arcade')
     }

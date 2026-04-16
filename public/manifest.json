@@ -1,7 +1,7 @@
 {
   "name": "GameBuddi — Classic Arcade & Card Games",
   "short_name": "GameBuddi",
-  "description": "Play 40+ classic arcade and card games offline. Snake, Pac-Man, Tetris, Chess, Poker, Solitaire, and more — perfect for road trips, flights, and family game nights!",
+  "description": "Play 40+ classic arcade and card games offline. Snake, Pac-Man, Tetris, Chess, Poker, Solitaire, Snap, and more — perfect for road trips, flights, and family game nights!",
   "start_url": "/",
   "id": "/",
   "display": "standalone",
@@ -108,6 +108,13 @@
       "short_name": "Family",
       "description": "Manage your family group",
       "url": "/family",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Play Snap",
+      "short_name": "Snap",
+      "description": "Fast-paced card slapping game",
+      "url": "/play/snap",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ],
