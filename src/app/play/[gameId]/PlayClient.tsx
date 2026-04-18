@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { getGameById, LEVEL_LABELS, type GameLevel } from '@/lib/games'
 import { saveScore, getHighScore } from '@/lib/scores'
 import { useFamily } from '@/lib/family-context'
@@ -15,47 +16,24 @@ import { getNetwork, setNetwork } from '@/lib/multiplayer-game'
 import type { NetworkAdapter } from '@/lib/network-adapter'
 import { autoSubmitTournamentScore } from '@/lib/tournament-auto-score'
 
-// Game imports
-import SnakeGame from '@/games/snake/SnakeGame'
-import PongGame from '@/games/pong/PongGame'
-import TetrisGame from '@/games/tetris/TetrisGame'
-import BreakoutGame from '@/games/breakout/BreakoutGame'
-import MemoryMatchGame from '@/games/memory-match/MemoryMatchGame'
-import TicTacToeGame from '@/games/tic-tac-toe/TicTacToeGame'
-import SimonGame from '@/games/simon/SimonGame'
-import FlappyBirdGame from '@/games/flappy-bird/FlappyBirdGame'
-import DinoRunGame from '@/games/dino-run/DinoRunGame'
-import WhackAMoleGame from '@/games/whack-a-mole/WhackAMoleGame'
-import Game2048 from '@/games/2048/Game2048'
-import SpaceInvadersGame from '@/games/space-invaders/SpaceInvadersGame'
-import ConnectFourGame from '@/games/connect-four/ConnectFourGame'
-import HangmanGame from '@/games/hangman/HangmanGame'
-import WordleGame from '@/games/wordle/WordleGame'
-import MinesweeperGame from '@/games/minesweeper/MinesweeperGame'
-import FroggerGame from '@/games/frogger/FroggerGame'
-import AsteroidsGame from '@/games/asteroids/AsteroidsGame'
-import PacManGame from '@/games/pac-man/PacManGame'
-import GalagaGame from '@/games/galaga/GalagaGame'
-import CheckersGame from '@/games/checkers/CheckersGame'
-import BrickBreakerGame from '@/games/brick-breaker/BrickBreakerGame'
-import CrossyRoadGame from '@/games/crossy-road/CrossyRoadGame'
-import DoodleJumpGame from '@/games/doodle-jump/DoodleJumpGame'
-import ChessGame from '@/games/chess/ChessGame'
-import RummyGame from '@/games/rummy-500/RummyGame'
-import CrazyEightsGame from '@/games/crazy-eights/CrazyEightsGame'
-import GoFishGame from '@/games/go-fish/GoFishGame'
-import HeartsGame from '@/games/hearts/HeartsGame'
-import SpadesGame from '@/games/spades/SpadesGame'
-import SolitaireGame from '@/games/solitaire/SolitaireGame'
-import WarGame from '@/games/war/WarGame'
-import BlackjackGame from '@/games/blackjack/BlackjackGame'
-import OldMaidGame from '@/games/old-maid/OldMaidGame'
-import PokerGame from '@/games/poker/PokerGame'
-import ColorClashGame from '@/games/color-clash/ColorClashGame'
-import GinRummyGame from '@/games/gin-rummy/GinRummyGame'
-import EuchreGame from '@/games/euchre/EuchreGame'
-import CribbageGame from '@/games/cribbage/CribbageGame'
-import SnapGame from '@/games/snap/SnapGame'
+// ─── Lazy-loaded game bundles ────────────────────────────────────────────────
+// Each game ships as its own chunk. Visiting /play/wordle no longer pulls in
+// the Pac-Man, Chess, Euchre... bundles. Saves ~1–2 MB of JS per route on
+// first paint and keeps the app fast on 3G / plane Wi-Fi.
+//
+// ssr:false is safe because PlayClient itself is a client component and games
+// use canvas / localStorage, so they can't render on the server anyway.
+// `loading` renders inside the existing arcade frame, no layout shift.
+
+const GAME_LOADING = (
+  <div className="flex h-full w-full items-center justify-center bg-black/30 text-sm text-white/70">
+    Loading game…
+  </div>
+)
+
+function lazyGame(loader: () => Promise<{ default: React.ComponentType<GameProps> }>) {
+  return dynamic(loader, { ssr: false, loading: () => GAME_LOADING }) as React.ComponentType<GameProps>
+}
 
 function getControllerConfig(gameId: string): { dpad: boolean; buttons: ('A' | 'B')[]; buttonKeys: { A?: string; B?: string } } | null {
   const dpadAndShoot = ['space-invaders', 'asteroids', 'galaga']
@@ -79,46 +57,46 @@ function getControllerConfig(gameId: string): { dpad: boolean; buttons: ('A' | '
 type GameProps = { onGameOver: (score: number) => void; level: GameLevel }
 
 const GAME_COMPONENTS: Record<string, React.ComponentType<GameProps>> = {
-  'snake': SnakeGame as React.ComponentType<GameProps>,
-  'pong': PongGame as React.ComponentType<GameProps>,
-  'tetris': TetrisGame as React.ComponentType<GameProps>,
-  'breakout': BreakoutGame as React.ComponentType<GameProps>,
-  'memory-match': MemoryMatchGame as React.ComponentType<GameProps>,
-  'tic-tac-toe': TicTacToeGame as React.ComponentType<GameProps>,
-  'simon': SimonGame as React.ComponentType<GameProps>,
-  'flappy-bird': FlappyBirdGame as React.ComponentType<GameProps>,
-  'dino-run': DinoRunGame as React.ComponentType<GameProps>,
-  'whack-a-mole': WhackAMoleGame as React.ComponentType<GameProps>,
-  '2048': Game2048 as React.ComponentType<GameProps>,
-  'space-invaders': SpaceInvadersGame as React.ComponentType<GameProps>,
-  'connect-four': ConnectFourGame as React.ComponentType<GameProps>,
-  'hangman': HangmanGame as React.ComponentType<GameProps>,
-  'wordle': WordleGame as React.ComponentType<GameProps>,
-  'minesweeper': MinesweeperGame as React.ComponentType<GameProps>,
-  'frogger': FroggerGame as React.ComponentType<GameProps>,
-  'asteroids': AsteroidsGame as React.ComponentType<GameProps>,
-  'pac-man': PacManGame as React.ComponentType<GameProps>,
-  'galaga': GalagaGame as React.ComponentType<GameProps>,
-  'checkers': CheckersGame as React.ComponentType<GameProps>,
-  'brick-breaker': BrickBreakerGame as React.ComponentType<GameProps>,
-  'crossy-road': CrossyRoadGame as React.ComponentType<GameProps>,
-  'doodle-jump': DoodleJumpGame as React.ComponentType<GameProps>,
-  'chess': ChessGame as React.ComponentType<GameProps>,
-  'rummy-500': RummyGame as React.ComponentType<GameProps>,
-  'crazy-eights': CrazyEightsGame as React.ComponentType<GameProps>,
-  'go-fish': GoFishGame as React.ComponentType<GameProps>,
-  'hearts': HeartsGame as React.ComponentType<GameProps>,
-  'spades': SpadesGame as React.ComponentType<GameProps>,
-  'solitaire': SolitaireGame as React.ComponentType<GameProps>,
-  'war': WarGame as React.ComponentType<GameProps>,
-  'blackjack': BlackjackGame as React.ComponentType<GameProps>,
-  'old-maid': OldMaidGame as React.ComponentType<GameProps>,
-  'poker': PokerGame as React.ComponentType<GameProps>,
-  'color-clash': ColorClashGame as React.ComponentType<GameProps>,
-  'gin-rummy': GinRummyGame as React.ComponentType<GameProps>,
-  'euchre': EuchreGame as React.ComponentType<GameProps>,
-  'cribbage': CribbageGame as React.ComponentType<GameProps>,
-  'snap': SnapGame as React.ComponentType<GameProps>,
+  'snake': lazyGame(() => import('@/games/snake/SnakeGame')),
+  'pong': lazyGame(() => import('@/games/pong/PongGame')),
+  'tetris': lazyGame(() => import('@/games/tetris/TetrisGame')),
+  'breakout': lazyGame(() => import('@/games/breakout/BreakoutGame')),
+  'memory-match': lazyGame(() => import('@/games/memory-match/MemoryMatchGame')),
+  'tic-tac-toe': lazyGame(() => import('@/games/tic-tac-toe/TicTacToeGame')),
+  'simon': lazyGame(() => import('@/games/simon/SimonGame')),
+  'flappy-bird': lazyGame(() => import('@/games/flappy-bird/FlappyBirdGame')),
+  'dino-run': lazyGame(() => import('@/games/dino-run/DinoRunGame')),
+  'whack-a-mole': lazyGame(() => import('@/games/whack-a-mole/WhackAMoleGame')),
+  '2048': lazyGame(() => import('@/games/2048/Game2048')),
+  'space-invaders': lazyGame(() => import('@/games/space-invaders/SpaceInvadersGame')),
+  'connect-four': lazyGame(() => import('@/games/connect-four/ConnectFourGame')),
+  'hangman': lazyGame(() => import('@/games/hangman/HangmanGame')),
+  'wordle': lazyGame(() => import('@/games/wordle/WordleGame')),
+  'minesweeper': lazyGame(() => import('@/games/minesweeper/MinesweeperGame')),
+  'frogger': lazyGame(() => import('@/games/frogger/FroggerGame')),
+  'asteroids': lazyGame(() => import('@/games/asteroids/AsteroidsGame')),
+  'pac-man': lazyGame(() => import('@/games/pac-man/PacManGame')),
+  'galaga': lazyGame(() => import('@/games/galaga/GalagaGame')),
+  'checkers': lazyGame(() => import('@/games/checkers/CheckersGame')),
+  'brick-breaker': lazyGame(() => import('@/games/brick-breaker/BrickBreakerGame')),
+  'crossy-road': lazyGame(() => import('@/games/crossy-road/CrossyRoadGame')),
+  'doodle-jump': lazyGame(() => import('@/games/doodle-jump/DoodleJumpGame')),
+  'chess': lazyGame(() => import('@/games/chess/ChessGame')),
+  'rummy-500': lazyGame(() => import('@/games/rummy-500/RummyGame')),
+  'crazy-eights': lazyGame(() => import('@/games/crazy-eights/CrazyEightsGame')),
+  'go-fish': lazyGame(() => import('@/games/go-fish/GoFishGame')),
+  'hearts': lazyGame(() => import('@/games/hearts/HeartsGame')),
+  'spades': lazyGame(() => import('@/games/spades/SpadesGame')),
+  'solitaire': lazyGame(() => import('@/games/solitaire/SolitaireGame')),
+  'war': lazyGame(() => import('@/games/war/WarGame')),
+  'blackjack': lazyGame(() => import('@/games/blackjack/BlackjackGame')),
+  'old-maid': lazyGame(() => import('@/games/old-maid/OldMaidGame')),
+  'poker': lazyGame(() => import('@/games/poker/PokerGame')),
+  'color-clash': lazyGame(() => import('@/games/color-clash/ColorClashGame')),
+  'gin-rummy': lazyGame(() => import('@/games/gin-rummy/GinRummyGame')),
+  'euchre': lazyGame(() => import('@/games/euchre/EuchreGame')),
+  'cribbage': lazyGame(() => import('@/games/cribbage/CribbageGame')),
+  'snap': lazyGame(() => import('@/games/snap/SnapGame')),
 }
 
 const LEVEL_STORAGE_KEY = 'retroride-last-level'
