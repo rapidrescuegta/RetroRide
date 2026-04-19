@@ -6,7 +6,7 @@
 
 ## 👨‍👩‍👧 For the family playing (the easiest path)
 
-If a developer has already deployed RetroRide to a live URL (e.g. `https://retroride.app`), **this is all you need**:
+RetroRide is live at **https://gamebuddi.com** — **this is all you need**:
 
 ### On each phone
 
