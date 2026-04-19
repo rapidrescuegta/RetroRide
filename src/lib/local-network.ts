@@ -1,3 +1,8 @@
+// ─── P2P Network Layer ───────────────────────────────────────────────────────
+// Supports both local (QR-based) and remote (signaling-based) connections.
+// Uses Google STUN servers so WebRTC works over the internet, not just LAN.
+// ─────────────────────────────────────────────────────────────────────────────
+
 export interface PeerInfo {
   id: string
   name: string
@@ -14,6 +19,7 @@ export interface NetworkMessage {
 export type MessageHandler = (msg: NetworkMessage, fromPeerId: string) => void
 export type PeerHandler = (peer: PeerInfo) => void
 export type PeerLeftHandler = (peerId: string) => void
+export type ConnectionStateHandler = (state: 'connecting' | 'connected' | 'disconnected' | 'failed') => void
 
 interface CompactOffer {
   u: string    // ice-ufrag
@@ -37,7 +43,7 @@ interface CompactAnswer {
   avatar: string
 }
 
-function generateId(len = 6): string {
+export function generateId(len = 6): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
   let result = ''
   for (let i = 0; i < len; i++) {
@@ -67,7 +73,7 @@ function extractSdpParams(sdp: string): { ufrag: string; pwd: string; fingerprin
 
 /**
  * Build a minimal SDP from compact parameters.
- * This SDP is enough to establish a WebRTC data channel on a local network without STUN/TURN.
+ * Used for LAN-mode QR-based connections (backward compatible).
  */
 function buildSdp(params: { ufrag: string; pwd: string; fingerprint: string; ip: string; port: number }, role: 'offer' | 'answer'): string {
   const { ufrag, pwd, fingerprint, ip, port } = params
@@ -95,17 +101,76 @@ function buildSdp(params: { ufrag: string; pwd: string; fingerprint: string; ip:
   ].join('\r\n') + '\r\n'
 }
 
+// ─── ICE / STUN / TURN Configuration ─────────────────────────────────────────
+// STUN servers discover public IP addresses for NAT traversal.
+// TURN servers relay traffic when direct P2P is impossible (~15-20% of
+// connections behind symmetric NATs or strict corporate firewalls).
+// Without TURN, those users would get "Connection timed out" errors.
+
+// Custom TURN configuration can be injected at runtime.
+// Call `setTurnConfig(...)` before creating a LocalNetwork instance.
+let _customTurnConfig: RTCIceServer[] | null = null
+
+export function setTurnConfig(servers: RTCIceServer[]) {
+  _customTurnConfig = servers
+}
+
+function buildInternetRtcConfig(): RTCConfiguration {
+  const iceServers: RTCIceServer[] = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+  ]
+
+  if (_customTurnConfig && _customTurnConfig.length > 0) {
+    iceServers.push(..._customTurnConfig)
+  } else {
+    // Free public TURN servers as fallback for NAT traversal.
+    // These are rate-limited but reliable enough for casual gaming.
+    iceServers.push(
+      {
+        urls: 'turn:openrelay.metered.ca:80',
+        username: 'openrelayproject',
+        credential: 'openrelayproject',
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443',
+        username: 'openrelayproject',
+        credential: 'openrelayproject',
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+        username: 'openrelayproject',
+        credential: 'openrelayproject',
+      },
+    )
+  }
+
+  return {
+    iceTransportPolicy: 'all',
+    iceServers,
+  }
+}
+
+const LAN_RTC_CONFIG: RTCConfiguration = {
+  iceTransportPolicy: 'all',
+  iceServers: [], // Local network only — no STUN/TURN needed
+}
+
+export type ConnectionMode = 'lan' | 'internet'
+
 export class LocalNetwork {
   isHost: boolean = false
   roomId: string = ''
   peers: Map<string, PeerInfo> = new Map()
   localPeer: PeerInfo = { id: '', name: '', avatar: '' }
+  mode: ConnectionMode = 'internet'
 
   private connections: Map<string, RTCPeerConnection> = new Map()
   private channels: Map<string, RTCDataChannel> = new Map()
   private messageHandlers: MessageHandler[] = []
   private peerJoinedHandlers: PeerHandler[] = []
   private peerLeftHandlers: PeerLeftHandler[] = []
+  private connectionStateHandlers: ConnectionStateHandler[] = []
   private hostConnection: RTCPeerConnection | null = null
   private hostChannel: RTCDataChannel | null = null
 
@@ -113,10 +178,188 @@ export class LocalNetwork {
   private pendingPc: RTCPeerConnection | null = null
   private pendingPeerId: string = ''
 
-  private rtcConfig: RTCConfiguration = {
-    iceTransportPolicy: 'all',
-    iceServers: [], // Local network only — no STUN/TURN
+  private get rtcConfig(): RTCConfiguration {
+    return this.mode === 'internet' ? buildInternetRtcConfig() : LAN_RTC_CONFIG
   }
+
+  constructor(mode: ConnectionMode = 'internet') {
+    this.mode = mode
+  }
+
+  // ─── Internet Mode: Full SDP exchange via signaling server ─────────────────
+
+  /**
+   * HOST (internet mode): Create a room and return the full SDP offer.
+   * The offer should be posted to the signaling server under the room code.
+   */
+  async createRoomWithSignaling(localPeer: PeerInfo): Promise<{ roomId: string; offer: string }> {
+    this.isHost = true
+    this.roomId = generateId(6)
+    this.localPeer = { ...localPeer, id: localPeer.id || generateId(8) }
+
+    const pc = new RTCPeerConnection(this.rtcConfig)
+    const dc = pc.createDataChannel('gamebuddi', { ordered: true })
+
+    this.monitorConnection(pc, 'pending-joiner')
+
+    const offer = await pc.createOffer()
+    await pc.setLocalDescription(offer)
+
+    await this.waitForIceGathering(pc)
+
+    this.pendingPc = pc
+    this.setupHostDataChannel(dc, '')
+
+    const fullSdp = pc.localDescription!.sdp
+
+    return {
+      roomId: this.roomId,
+      offer: JSON.stringify({
+        type: 'offer',
+        sdp: fullSdp,
+        roomId: this.roomId,
+        host: {
+          id: this.localPeer.id,
+          name: this.localPeer.name,
+          avatar: this.localPeer.avatar,
+        },
+      }),
+    }
+  }
+
+  /**
+   * JOINER (internet mode): Process the host's full SDP offer from the signaling server.
+   * Returns the full SDP answer to post back.
+   */
+  async joinRoomWithSignaling(offerPayload: string, localPeer: PeerInfo): Promise<string> {
+    this.isHost = false
+    this.localPeer = { ...localPeer, id: localPeer.id || generateId(8) }
+
+    const parsed = JSON.parse(offerPayload)
+    this.roomId = parsed.roomId
+
+    // Add host to our peers list
+    const hostPeerInfo: PeerInfo = {
+      id: parsed.host.id,
+      name: parsed.host.name,
+      avatar: parsed.host.avatar,
+    }
+    this.peers.set('host', hostPeerInfo)
+
+    const pc = new RTCPeerConnection(this.rtcConfig)
+    this.hostConnection = pc
+
+    this.monitorConnection(pc, 'host')
+
+    // Set up incoming data channel handler
+    pc.ondatachannel = (event) => {
+      this.hostChannel = event.channel
+      this.setupJoinerDataChannel(event.channel)
+    }
+
+    // Set the full remote SDP offer
+    await pc.setRemoteDescription({ type: 'offer', sdp: parsed.sdp })
+
+    // Create and set answer
+    const answer = await pc.createAnswer()
+    await pc.setLocalDescription(answer)
+
+    await this.waitForIceGathering(pc)
+
+    const fullAnswerSdp = pc.localDescription!.sdp
+
+    return JSON.stringify({
+      type: 'answer',
+      sdp: fullAnswerSdp,
+      joiner: {
+        id: this.localPeer.id,
+        name: this.localPeer.name,
+        avatar: this.localPeer.avatar,
+      },
+    })
+  }
+
+  /**
+   * HOST (internet mode): Accept a joiner's full SDP answer from the signaling server.
+   */
+  async acceptJoinerWithSignaling(answerPayload: string): Promise<void> {
+    if (!this.isHost || !this.pendingPc) {
+      throw new Error('No pending connection to accept')
+    }
+
+    const parsed = JSON.parse(answerPayload)
+    const peerId = parsed.joiner.id
+
+    const peerInfo: PeerInfo = {
+      id: peerId,
+      name: parsed.joiner.name,
+      avatar: parsed.joiner.avatar,
+    }
+
+    const pc = this.pendingPc
+
+    // Set the full remote SDP answer
+    await pc.setRemoteDescription({ type: 'answer', sdp: parsed.sdp })
+
+    // Store the connection
+    this.connections.set(peerId, pc)
+    this.peers.set(peerId, peerInfo)
+    this.pendingPeerId = peerId
+
+    // Update the data channel mapping
+    const existingChannel = this.channels.get('')
+    if (existingChannel) {
+      this.channels.delete('')
+      this.channels.set(peerId, existingChannel)
+      this.setupHostDataChannel(existingChannel, peerId)
+    }
+
+    // Notify the new peer about existing peers
+    this.notifyPeerJoined(peerInfo)
+
+    // Broadcast peer list to all connected peers
+    this.broadcastPeerList()
+
+    // Clear pending -- ready for next joiner
+    this.pendingPc = null
+
+    // Prepare for next joiner
+    await this.prepareForNextJoinerWithSignaling()
+  }
+
+  /**
+   * HOST (internet mode): Prepare a new peer connection for the next joiner.
+   * Returns the new full SDP offer to post to signaling server.
+   */
+  async prepareForNextJoinerWithSignaling(): Promise<string> {
+    const pc = new RTCPeerConnection(this.rtcConfig)
+    const dc = pc.createDataChannel('gamebuddi', { ordered: true })
+
+    this.monitorConnection(pc, 'pending-joiner')
+
+    const offer = await pc.createOffer()
+    await pc.setLocalDescription(offer)
+
+    await this.waitForIceGathering(pc)
+
+    this.pendingPc = pc
+    this.setupHostDataChannel(dc, '')
+
+    const fullSdp = pc.localDescription!.sdp
+
+    return JSON.stringify({
+      type: 'offer',
+      sdp: fullSdp,
+      roomId: this.roomId,
+      host: {
+        id: this.localPeer.id,
+        name: this.localPeer.name,
+        avatar: this.localPeer.avatar,
+      },
+    })
+  }
+
+  // ─── LAN Mode: Compact QR-based exchange (backward compatible) ─────────────
 
   /**
    * HOST: Create a room and return compact offer string for QR encoding.
@@ -128,7 +371,7 @@ export class LocalNetwork {
 
     // Create a peer connection that will be used for the first joiner
     const pc = new RTCPeerConnection(this.rtcConfig)
-    const dc = pc.createDataChannel('retroride', { ordered: true })
+    const dc = pc.createDataChannel('gamebuddi', { ordered: true })
 
     // Wait for ICE gathering to complete
     const offer = await pc.createOffer()
@@ -279,7 +522,7 @@ export class LocalNetwork {
    */
   async prepareForNextJoiner(): Promise<string> {
     const pc = new RTCPeerConnection(this.rtcConfig)
-    const dc = pc.createDataChannel('retroride', { ordered: true })
+    const dc = pc.createDataChannel('gamebuddi', { ordered: true })
 
     const offer = await pc.createOffer()
     await pc.setLocalDescription(offer)
@@ -305,6 +548,8 @@ export class LocalNetwork {
 
     return JSON.stringify(compact)
   }
+
+  // ─── Common API ────────────────────────────────────────────────────────────
 
   /**
    * Send a message to all peers.
@@ -337,24 +582,43 @@ export class LocalNetwork {
   }
 
   /**
-   * Register a message handler.
+   * Register a message handler. Returns a cleanup function to remove it.
    */
-  onMessage(handler: MessageHandler): void {
+  onMessage(handler: MessageHandler): () => void {
     this.messageHandlers.push(handler)
+    return () => {
+      this.messageHandlers = this.messageHandlers.filter(h => h !== handler)
+    }
   }
 
   /**
-   * Register a handler for when a peer joins.
+   * Register a handler for when a peer joins. Returns a cleanup function.
    */
-  onPeerJoined(handler: PeerHandler): void {
+  onPeerJoined(handler: PeerHandler): () => void {
     this.peerJoinedHandlers.push(handler)
+    return () => {
+      this.peerJoinedHandlers = this.peerJoinedHandlers.filter(h => h !== handler)
+    }
   }
 
   /**
-   * Register a handler for when a peer leaves.
+   * Register a handler for when a peer leaves. Returns a cleanup function.
    */
-  onPeerLeft(handler: PeerLeftHandler): void {
+  onPeerLeft(handler: PeerLeftHandler): () => void {
     this.peerLeftHandlers.push(handler)
+    return () => {
+      this.peerLeftHandlers = this.peerLeftHandlers.filter(h => h !== handler)
+    }
+  }
+
+  /**
+   * Register a handler for connection state changes. Returns a cleanup function.
+   */
+  onConnectionStateChange(handler: ConnectionStateHandler): () => void {
+    this.connectionStateHandlers.push(handler)
+    return () => {
+      this.connectionStateHandlers = this.connectionStateHandlers.filter(h => h !== handler)
+    }
   }
 
   /**
@@ -388,6 +652,27 @@ export class LocalNetwork {
   }
 
   /**
+   * Get the current full SDP offer (for internet-mode signaling).
+   */
+  async getCurrentFullOffer(): Promise<string | null> {
+    if (!this.isHost || !this.pendingPc) return null
+
+    const sdp = this.pendingPc.localDescription?.sdp
+    if (!sdp) return null
+
+    return JSON.stringify({
+      type: 'offer',
+      sdp,
+      roomId: this.roomId,
+      host: {
+        id: this.localPeer.id,
+        name: this.localPeer.name,
+        avatar: this.localPeer.avatar,
+      },
+    })
+  }
+
+  /**
    * Clean up all connections.
    */
   close(): void {
@@ -412,6 +697,7 @@ export class LocalNetwork {
     this.messageHandlers = []
     this.peerJoinedHandlers = []
     this.peerLeftHandlers = []
+    this.connectionStateHandlers = []
   }
 
   // --- Private helpers ---
@@ -420,24 +706,70 @@ export class LocalNetwork {
     if (pc.iceGatheringState === 'complete') return
 
     return new Promise<void>((resolve) => {
-      const timeout = setTimeout(() => resolve(), 3000)
+      let resolved = false
+      const done = () => {
+        if (resolved) return
+        resolved = true
+        clearTimeout(timeout)
+        clearInterval(check)
+        pc.onicecandidate = null
+        resolve()
+      }
+
+      // Longer timeout for STUN/TURN (internet mode needs time for srflx/relay candidates)
+      const timeoutMs = this.mode === 'internet' ? 8000 : 3000
+      const timeout = setTimeout(done, timeoutMs)
 
       pc.onicecandidate = (event) => {
         if (event.candidate === null) {
-          clearTimeout(timeout)
-          resolve()
+          done()
         }
       }
 
       // Also check periodically
       const check = setInterval(() => {
         if (pc.iceGatheringState === 'complete') {
-          clearInterval(check)
-          clearTimeout(timeout)
-          resolve()
+          done()
         }
       }, 100)
     })
+  }
+
+  private monitorConnection(pc: RTCPeerConnection, label: string): void {
+    pc.onconnectionstatechange = () => {
+      const state = pc.connectionState
+      let mapped: 'connecting' | 'connected' | 'disconnected' | 'failed'
+      switch (state) {
+        case 'connecting':
+        case 'new':
+          mapped = 'connecting'
+          break
+        case 'connected':
+          mapped = 'connected'
+          break
+        case 'disconnected':
+        case 'closed':
+          mapped = 'disconnected'
+          break
+        case 'failed':
+          mapped = 'failed'
+          break
+        default:
+          return
+      }
+      for (const handler of this.connectionStateHandlers) {
+        handler(mapped)
+      }
+    }
+
+    pc.oniceconnectionstatechange = () => {
+      if (pc.iceConnectionState === 'failed') {
+        // Attempt ICE restart for internet connections
+        if (this.mode === 'internet' && this.isHost) {
+          pc.restartIce()
+        }
+      }
+    }
   }
 
   private setupHostDataChannel(dc: RTCDataChannel, peerId: string): void {

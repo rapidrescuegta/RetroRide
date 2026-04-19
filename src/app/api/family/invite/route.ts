@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
   })
 
   // Send invite email via Resend
-  const appUrl = process.env.NEXTAUTH_URL || 'https://gamebuddi.com'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gamebuddi.com'
   const familyCode = family.code
   const formattedCode = familyCode.slice(0, 4) + '-' + familyCode.slice(4)
 

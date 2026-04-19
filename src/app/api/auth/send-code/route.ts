@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { sendVerificationEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   const { email } = await req.json()
@@ -20,33 +21,11 @@ export async function POST(req: NextRequest) {
   })
 
   // Send email via Resend
-  const resendKey = process.env.RESEND_API_KEY
-  if (resendKey) {
+  if (process.env.RESEND_API_KEY) {
     try {
-      await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${resendKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: process.env.EMAIL_FROM || 'GameBuddi <noreply@gamebuddi.com>',
-          to: [normalizedEmail],
-          subject: `Your GameBuddi verification code: ${code}`,
-          html: `
-            <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 20px;">
-              <h2 style="color: #8b5cf6; text-align: center;">🎮 GameBuddi</h2>
-              <p style="text-align: center; color: #555;">Your verification code is:</p>
-              <div style="background: #1a1a3e; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0;">
-                <span style="font-size: 32px; font-weight: bold; color: #06b6d4; letter-spacing: 8px; font-family: monospace;">${code}</span>
-              </div>
-              <p style="text-align: center; color: #888; font-size: 13px;">This code expires in 10 minutes.</p>
-            </div>
-          `,
-        }),
-      })
+      await sendVerificationEmail(normalizedEmail, code)
     } catch (err) {
-      console.error('Failed to send email:', err)
+      console.error('Failed to send verification email:', err)
     }
   } else {
     // Dev mode: log the code

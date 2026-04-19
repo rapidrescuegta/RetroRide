@@ -6,7 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -p ${PORT:-8080}",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma generate",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "db:seed": "npx prisma db seed",
+    "db:setup": "./scripts/db-setup.sh",
+    "db:setup:prod": "./scripts/db-setup.sh --production"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.5.0",
@@ -22,6 +34,7 @@
     "qrcode": "^1.5.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "resend": "^6.10.0",
     "stripe": "^20.4.1",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3"

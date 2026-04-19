@@ -107,6 +107,12 @@ function FamilyBar() {
         </div>
         <div className="flex gap-2">
           <Link
+            href="/tournament"
+            className="px-3 py-1.5 bg-orange-600/20 hover:bg-orange-600/30 text-orange-400 text-xs font-semibold rounded-lg transition-all border border-orange-600/30"
+          >
+            ⚔️ Tournament
+          </Link>
+          <Link
             href="/leaderboard"
             className="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 text-xs font-semibold rounded-lg transition-all border border-amber-600/30"
           >
@@ -197,6 +203,46 @@ export default function Home() {
           </Link>
         </div>
       )}
+
+      {/* Tournament Featured Callouts */}
+      <div className="mx-4 mb-4 space-y-2">
+        <Link
+          href="/tournaments"
+          className="block w-full p-4 rounded-xl bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-500/30 hover:border-amber-400/50 transition-all group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-amber-300 group-hover:text-amber-200 transition-colors">
+                🏆 Tournament Mode
+              </p>
+              <p className="text-xs text-slate-400">
+                14 presets — weekends, plane rides, road trips & more
+              </p>
+            </div>
+            <span className="text-lg text-amber-400">&rarr;</span>
+          </div>
+        </Link>
+
+        {/* Quick-start callouts */}
+        <div className="grid grid-cols-2 gap-2">
+          <Link
+            href="/tournaments/create?preset=weekend-warrior"
+            className="block p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-pink-500/10 border border-orange-500/20 hover:border-orange-400/40 transition-all group"
+          >
+            <span className="text-xl block mb-1">🏖️</span>
+            <p className="text-xs font-semibold text-orange-300">Weekend Showdown</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">5 games, up to 8 players</p>
+          </Link>
+          <Link
+            href="/tournaments/create?preset=plane-ride-challenge"
+            className="block p-3 rounded-xl bg-gradient-to-br from-sky-500/10 to-indigo-500/10 border border-sky-500/20 hover:border-sky-400/40 transition-all group"
+          >
+            <span className="text-xl block mb-1">✈️</span>
+            <p className="text-xs font-semibold text-sky-300">Plane Ride</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">7 offline games, no wifi</p>
+          </Link>
+        </div>
+      </div>
 
       {/* Family Hub (chat + presence) */}
       {familyCtx?.isLoggedIn && (

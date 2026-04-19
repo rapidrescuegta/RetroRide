@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
+import { constructWebhookEvent, getPlans } from '@/lib/stripe-config'
 
 export const dynamic = 'force-dynamic'
-
-function getStripe() {
-  return new Stripe(process.env.STRIPE_SECRET_KEY!)
-}
-function getWebhookSecret() {
-  return process.env.STRIPE_WEBHOOK_SECRET!
-}
 
 const PLAN_DAYS: Record<string, number> = {
   weekend: 3,
@@ -26,7 +20,7 @@ export async function POST(req: NextRequest) {
 
   let event: Stripe.Event
   try {
-    event = getStripe().webhooks.constructEvent(body, signature, getWebhookSecret())
+    event = constructWebhookEvent(body, signature)
   } catch (err) {
     console.error('[webhook] Signature verification failed:', err)
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })

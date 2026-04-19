@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0a0a1a" />
+  <title>Offline — GameBuddi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a1a;
+      color: #e2e8f0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+      overflow-x: hidden;
+    }
+
+    /* Scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.03) 2px,
+        rgba(0, 0, 0, 0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Animated grid background */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image:
+        linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+      animation: grid-drift 20s linear infinite;
+    }
+
+    @keyframes grid-drift {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(40px, 40px); }
+    }
+
+    .content { position: relative; z-index: 1; width: 100%; max-width: 640px; display: flex; flex-direction: column; align-items: center; }
+
+    .header {
+      text-align: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .header h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #22d3ee, #a855f7, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 20px rgba(34, 211, 238, 0.3));
+      margin-bottom: 0.25rem;
+    }
+
+    .header .subtitle {
+      font-size: 0.75rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+
+    /* Arcade ghost animation */
+    .arcade-animation {
+      margin: 0.5rem 0 1rem;
+      height: 48px;
+      width: 200px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ghost {
+      position: absolute;
+      font-size: 1.75rem;
+      animation: ghost-float 4s ease-in-out infinite;
+      filter: drop-shadow(0 0 8px currentColor);
+    }
+    .ghost:nth-child(1) { left: 10%; color: #ef4444; animation-delay: 0s; }
+    .ghost:nth-child(2) { left: 35%; color: #ec4899; animation-delay: 0.5s; }
+    .ghost:nth-child(3) { left: 60%; color: #22d3ee; animation-delay: 1s; }
+    .ghost:nth-child(4) { left: 85%; color: #f97316; animation-delay: 1.5s; }
+
+    @keyframes ghost-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    .pac-dots {
+      position: absolute;
+      bottom: 8px;
+      left: 0; right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .pac-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #facc15;
+      opacity: 0.6;
+      animation: dot-blink 2s ease-in-out infinite;
+    }
+    .pac-dot:nth-child(2) { animation-delay: 0.2s; }
+    .pac-dot:nth-child(3) { animation-delay: 0.4s; }
+    .pac-dot:nth-child(4) { animation-delay: 0.6s; }
+    .pac-dot:nth-child(5) { animation-delay: 0.8s; }
+    .pac-dot:nth-child(6) { animation-delay: 1.0s; }
+    .pac-dot:nth-child(7) { animation-delay: 1.2s; }
+
+    @keyframes dot-blink {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.5); }
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1.25rem;
+      border-radius: 9999px;
+      background: rgba(234, 179, 8, 0.1);
+      border: 1px solid rgba(234, 179, 8, 0.25);
+      margin-bottom: 1rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #eab308;
+      box-shadow: 0 0 8px rgba(234, 179, 8, 0.6);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(234, 179, 8, 0.6); }
+      50% { opacity: 0.5; box-shadow: 0 0 4px rgba(234, 179, 8, 0.3); }
+    }
+
+    .status-badge span {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #eab308;
+    }
+
+    .message {
+      text-align: center;
+      max-width: 420px;
+      margin-bottom: 1.5rem;
+    }
+
+    .message p {
+      color: #94a3b8;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    .message .arcade-text {
+      font-size: 0.75rem;
+      color: #6366f1;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 0.5rem;
+      animation: text-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes text-glow {
+      0%, 100% { text-shadow: 0 0 4px rgba(99, 102, 241, 0.3); }
+      50% { text-shadow: 0 0 12px rgba(99, 102, 241, 0.6); }
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 1rem;
+      background: rgba(15, 15, 42, 0.8);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+    }
+
+    .stat { text-align: center; }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #22d3ee;
+      text-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
+    }
+
+    .stat-label {
+      font-size: 0.6875rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.125rem;
+    }
+
+    .games-section {
+      width: 100%;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .section-header h2 {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .section-header .count {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: #22d3ee;
+      background: rgba(34, 211, 238, 0.1);
+      border: 1px solid rgba(34, 211, 238, 0.2);
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 0.625rem;
+      width: 100%;
+    }
+
+    .game-card {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.75rem 0.875rem;
+      border-radius: 0.75rem;
+      background: rgba(15, 15, 42, 0.8);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      text-decoration: none;
+      color: #e2e8f0;
+      transition: all 0.2s ease;
+    }
+
+    .game-card:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      background: rgba(99, 102, 241, 0.08);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);
+    }
+
+    .game-card:active { transform: scale(0.98); }
+    .game-card .emoji { font-size: 1.25rem; flex-shrink: 0; }
+    .game-card .name { font-size: 0.8125rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .game-card.cached {
+      border-color: rgba(16, 185, 129, 0.25);
+    }
+    .game-card.cached::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+
+    .game-card.unavailable {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    .game-card.unavailable .name::after {
+      content: ' (not cached)';
+      font-weight: 400;
+      font-size: 0.6875rem;
+      color: #64748b;
+    }
+
+    .mp-notice {
+      margin-top: 1.25rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      background: rgba(234, 179, 8, 0.06);
+      border: 1px solid rgba(234, 179, 8, 0.15);
+      text-align: center;
+    }
+
+    .mp-notice p { font-size: 0.75rem; color: #94a3b8; line-height: 1.5; }
+    .mp-notice strong { color: #eab308; }
+
+    .actions {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .retry-btn {
+      padding: 0.75rem 2rem;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      font-weight: 600;
+      font-size: 0.875rem;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .retry-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(99, 102, 241, 0.4); }
+    .retry-btn:active { transform: scale(0.98); }
+    .retry-btn.checking { pointer-events: none; opacity: 0.8; }
+
+    .retry-btn .spinner {
+      display: none;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+
+    .retry-btn.checking .spinner { display: inline-block; }
+
+    .home-link {
+      color: #64748b;
+      font-size: 0.8125rem;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .home-link:hover { color: #94a3b8; }
+
+    .loading {
+      color: #64748b;
+      font-size: 0.8125rem;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(99, 102, 241, 0.3);
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Reconnected success banner */
+    .reconnected {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(34, 211, 238, 0.15));
+      border-bottom: 1px solid rgba(16, 185, 129, 0.3);
+      text-align: center;
+      z-index: 200;
+      animation: slide-down 0.3s ease-out;
+    }
+
+    .reconnected span {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #10b981;
+    }
+
+    @keyframes slide-down {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(0); }
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.6875rem;
+      color: #64748b;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .legend-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .legend-dot.cached { background: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.5); }
+    .legend-dot.unavailable { background: #475569; }
+  </style>
+</head>
+<body>
+  <div class="reconnected" id="reconnected">
+    <span>Back online! Redirecting...</span>
+  </div>
+
+  <div class="content">
+    <div class="header">
+      <h1>GameBuddi</h1>
+      <div class="subtitle">Arcade Classics</div>
+    </div>
+
+    <div class="arcade-animation">
+      <span class="ghost">&#x1F47E;</span>
+      <span class="ghost">&#x1F47E;</span>
+      <span class="ghost">&#x1F47E;</span>
+      <span class="ghost">&#x1F47E;</span>
+      <div class="pac-dots">
+        <div class="pac-dot"></div>
+        <div class="pac-dot"></div>
+        <div class="pac-dot"></div>
+        <div class="pac-dot"></div>
+        <div class="pac-dot"></div>
+        <div class="pac-dot"></div>
+        <div class="pac-dot"></div>
+      </div>
+    </div>
+
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      <span>You're offline</span>
+    </div>
+
+    <div class="message">
+      <p>No internet connection, but your cached games are still playable. Pick one below and keep playing!</p>
+      <p class="arcade-text">Insert coin to continue... just kidding, it's free</p>
+    </div>
+
+    <div class="stats-bar" id="stats-bar" style="display: none;">
+      <div class="stat">
+        <div class="stat-value" id="cached-count">0</div>
+        <div class="stat-label">Games Cached</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="total-cached">0</div>
+        <div class="stat-label">Total Files</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="cache-size">--</div>
+        <div class="stat-label">Storage Used</div>
+      </div>
+    </div>
+
+    <div class="games-section">
+      <div class="section-header">
+        <h2>Play Offline Now</h2>
+        <span class="count" id="available-count">--</span>
+      </div>
+      <div class="legend" id="legend" style="display: none;">
+        <div class="legend-item">
+          <div class="legend-dot cached"></div>
+          <span>Cached &amp; ready</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot unavailable"></div>
+          <span>Not cached</span>
+        </div>
+      </div>
+      <div class="games-grid" id="games-grid">
+        <div class="loading">Loading cached games</div>
+      </div>
+
+      <div class="mp-notice">
+        <p><strong>Note:</strong> All card games (Poker, Hearts, Spades, Crazy Eights, etc.) work offline against AI. <strong>Online multiplayer</strong> requires internet for matchmaking, but <strong>local multiplayer</strong> works over WiFi hotspot!</p>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="retry-btn" id="retry-btn" onclick="retryConnection()">
+        <span class="spinner"></span>
+        Try Reconnecting
+      </button>
+      <a href="/" class="home-link">Home</a>
+    </div>
+  </div>
+
+  <script>
+    var ALL_GAMES = [
+      { id: 'snake', name: 'Snake', emoji: '\uD83D\uDC0D', offline: true },
+      { id: 'whack-a-mole', name: 'Whack-a-Mole', emoji: '\uD83D\uDD28', offline: true },
+      { id: 'memory-match', name: 'Memory Match', emoji: '\uD83C\uDCCF', offline: true },
+      { id: 'tic-tac-toe', name: 'Tic-Tac-Toe', emoji: '\u274C', offline: true },
+      { id: 'simon', name: 'Simon Says', emoji: '\uD83D\uDD34', offline: true },
+      { id: 'dino-run', name: 'Dino Run', emoji: '\uD83E\uDD96', offline: true },
+      { id: 'pong', name: 'Pong', emoji: '\uD83C\uDFD3', offline: true },
+      { id: 'connect-four', name: 'Connect Four', emoji: '\uD83D\uDD34', offline: true },
+      { id: 'breakout', name: 'Breakout', emoji: '\uD83E\udDF1', offline: true },
+      { id: 'flappy-bird', name: 'Flappy Bird', emoji: '\uD83D\uDC26', offline: true },
+      { id: 'hangman', name: 'Hangman', emoji: '\uD83D\uDCDD', offline: true },
+      { id: '2048', name: '2048', emoji: '\uD83D\uDD22', offline: true },
+      { id: 'tetris', name: 'Tetris', emoji: '\uD83D\uDFE6', offline: true },
+      { id: 'space-invaders', name: 'Space Invaders', emoji: '\uD83D\uDC7E', offline: true },
+      { id: 'pac-man', name: 'Pac-Man', emoji: '\uD83D\uDFE1', offline: true },
+      { id: 'asteroids', name: 'Asteroids', emoji: '\u2604\uFE0F', offline: true },
+      { id: 'frogger', name: 'Frogger', emoji: '\uD83D\uDC38', offline: true },
+      { id: 'minesweeper', name: 'Minesweeper', emoji: '\uD83D\uDCA3', offline: true },
+      { id: 'wordle', name: 'Wordle', emoji: '\uD83D\uDFE9', offline: true },
+      { id: 'galaga', name: 'Galaga', emoji: '\uD83D\uDE80', offline: true },
+      { id: 'checkers', name: 'Checkers', emoji: '\u26AB', offline: true },
+      { id: 'brick-breaker', name: 'Brick Breaker', emoji: '\uD83D\uDCA5', offline: true },
+      { id: 'crossy-road', name: 'Crossy Road', emoji: '\uD83D\uDC14', offline: true },
+      { id: 'doodle-jump', name: 'Doodle Jump', emoji: '\u2B06\uFE0F', offline: true },
+      { id: 'chess', name: 'Chess', emoji: '\u265F\uFE0F', offline: true },
+      { id: 'solitaire', name: 'Solitaire', emoji: '\uD83C\uDCA1', offline: true },
+      { id: 'blackjack', name: 'Blackjack', emoji: '\uD83C\uDCCF', offline: true },
+      { id: 'war', name: 'War', emoji: '\u2694\uFE0F', offline: true },
+      { id: 'old-maid', name: 'Old Maid', emoji: '\uD83D\uDC75', offline: true },
+      { id: 'poker', name: 'Texas Hold\'em', emoji: '\uD83C\uDCCF', offline: true },
+      { id: 'color-clash', name: 'Color Clash', emoji: '\uD83C\uDF08', offline: true },
+      { id: 'gin-rummy', name: 'Gin Rummy', emoji: '\uD83C\uDCD1', offline: true },
+      { id: 'euchre', name: 'Euchre', emoji: '\uD83C\uDCA0', offline: true },
+      { id: 'cribbage', name: 'Cribbage', emoji: '\uD83C\uDFAF', offline: true },
+      { id: 'rummy-500', name: 'Rummy 500', emoji: '\uD83C\uDCD1', offline: true },
+      { id: 'crazy-eights', name: 'Crazy Eights', emoji: '8\uFE0F\u20E3', offline: true },
+      { id: 'go-fish', name: 'Go Fish', emoji: '\uD83D\uDC1F', offline: true },
+      { id: 'hearts', name: 'Hearts', emoji: '\u2665\uFE0F', offline: true },
+      { id: 'spades', name: 'Spades', emoji: '\u2660\uFE0F', offline: true },
+    ];
+
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return '0 B';
+      var k = 1024;
+      var sizes = ['B', 'KB', 'MB', 'GB'];
+      var i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    async function showCachedGames() {
+      var grid = document.getElementById('games-grid');
+      var statsBar = document.getElementById('stats-bar');
+      var cachedCountEl = document.getElementById('cached-count');
+      var totalCachedEl = document.getElementById('total-cached');
+      var cacheSizeEl = document.getElementById('cache-size');
+      var availableCountEl = document.getElementById('available-count');
+      var legendEl = document.getElementById('legend');
+
+      var cachedUrls = new Set();
+      var totalKeys = 0;
+
+      if ('caches' in window) {
+        try {
+          var cacheNames = await caches.keys();
+          for (var cn of cacheNames) {
+            var cache = await caches.open(cn);
+            var keys = await cache.keys();
+            totalKeys += keys.length;
+            keys.forEach(function(r) {
+              var pathname = new URL(r.url).pathname;
+              if (pathname.startsWith('/play/')) cachedUrls.add(pathname);
+            });
+          }
+        } catch(e) { /* ignore */ }
+      }
+
+      var offlineGames = ALL_GAMES.filter(function(g) { return g.offline; });
+      var cached = offlineGames.filter(function(g) { return cachedUrls.has('/play/' + g.id); });
+      var uncached = offlineGames.filter(function(g) { return !cachedUrls.has('/play/' + g.id); });
+      var availableGames = cached.length > 0 ? cached : offlineGames;
+
+      statsBar.style.display = 'flex';
+      cachedCountEl.textContent = cached.length || offlineGames.length;
+      totalCachedEl.textContent = totalKeys;
+      availableCountEl.textContent = availableGames.length + ' games';
+
+      if (cached.length > 0 && uncached.length > 0) {
+        legendEl.style.display = 'flex';
+      }
+
+      if (navigator.storage && navigator.storage.estimate) {
+        try {
+          var est = await navigator.storage.estimate();
+          cacheSizeEl.textContent = formatBytes(est.usage || 0);
+        } catch(e) {
+          cacheSizeEl.textContent = '--';
+        }
+      }
+
+      var html = '';
+      for (var i = 0; i < availableGames.length; i++) {
+        var g = availableGames[i];
+        var isCached = cachedUrls.has('/play/' + g.id);
+        html += '<a class="game-card' + (isCached ? ' cached' : '') + '" href="/play/' + g.id + '">' +
+          '<span class="emoji">' + g.emoji + '</span>' +
+          '<div class="info"><span class="name">' + g.name + '</span></div>' +
+          '</a>';
+      }
+
+      if (cached.length > 0) {
+        for (var j = 0; j < uncached.length; j++) {
+          var u = uncached[j];
+          html += '<a class="game-card unavailable" href="/play/' + u.id + '">' +
+            '<span class="emoji">' + u.emoji + '</span>' +
+            '<div class="info"><span class="name">' + u.name + '</span></div>' +
+            '</a>';
+        }
+      }
+
+      grid.innerHTML = html;
+    }
+
+    showCachedGames();
+
+    // Retry connection with visual feedback
+    var retryInProgress = false;
+    function retryConnection() {
+      if (retryInProgress) return;
+      retryInProgress = true;
+      var btn = document.getElementById('retry-btn');
+      btn.classList.add('checking');
+      btn.innerHTML = '<span class="spinner" style="display:inline-block"></span> Checking...';
+
+      fetch('/api/health', { method: 'GET', cache: 'no-store' })
+        .then(function(r) {
+          if (r.ok) {
+            var banner = document.getElementById('reconnected');
+            banner.style.display = 'block';
+            setTimeout(function() { window.location.href = '/'; }, 1200);
+          } else {
+            resetRetryBtn();
+          }
+        })
+        .catch(function() {
+          resetRetryBtn();
+        });
+    }
+
+    function resetRetryBtn() {
+      retryInProgress = false;
+      var btn = document.getElementById('retry-btn');
+      btn.classList.remove('checking');
+      btn.innerHTML = '<span class="spinner"></span> Still offline... try again';
+      setTimeout(function() {
+        btn.innerHTML = '<span class="spinner"></span> Try Reconnecting';
+      }, 2000);
+    }
+
+    // Auto-retry connection every 15s using health endpoint
+    setInterval(function() {
+      fetch('/api/health', { method: 'GET', cache: 'no-store' })
+        .then(function(r) {
+          if (r.ok) {
+            var banner = document.getElementById('reconnected');
+            banner.style.display = 'block';
+            setTimeout(function() { window.location.href = '/'; }, 1200);
+          }
+        })
+        .catch(function() {});
+    }, 15000);
+  </script>
+</body>
+</html>

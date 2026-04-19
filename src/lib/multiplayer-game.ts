@@ -126,10 +126,15 @@ export function useMultiplayerGame<TState = any>(
   // Host-only authoritative state (not exposed to React renders directly)
   const hostStateRef = useRef<TState | null>(null)
   const hostHandsRef = useRef<Record<string, Card[]>>({})
+  const playersRef = useRef<Player[]>([])
+  const processActionRef = useRef<((action: GameAction) => void) | null>(null)
 
   const network = _network
   const isHost = network?.isHost ?? false
   const myId = network?.myPeerId ?? ''
+
+  // Keep ref in sync so processActionOnHost always has latest players
+  playersRef.current = players
 
   // ── Sync players from network peers ──
   useEffect(() => {
@@ -159,6 +164,7 @@ export function useMultiplayerGame<TState = any>(
   }, [network])
 
   // ── Message handler ──
+  // Uses a ref to processActionOnHost so the handler always calls the latest version
   useEffect(() => {
     if (!network) return
 
@@ -188,9 +194,9 @@ export function useMultiplayerGame<TState = any>(
         }
 
         case 'game-action': {
-          // Only host processes actions
-          if (isHost && hostStateRef.current) {
-            processActionOnHost(msg.action)
+          // Only host processes actions — use ref to always call latest version
+          if (isHost && hostStateRef.current && processActionRef.current) {
+            processActionRef.current(msg.action)
           }
           break
         }
@@ -252,9 +258,10 @@ export function useMultiplayerGame<TState = any>(
         return
       }
 
-      // Build public state with player info
+      // Build public state with player info — use ref for latest players
+      const currentPlayers = playersRef.current
       const publicState = config.getPublicState(result.state)
-      const playersWithInfo: Player[] = players.map(p => ({
+      const playersWithInfo: Player[] = currentPlayers.map(p => ({
         ...p,
         handSize: (result.hands[p.id] ?? []).length,
       }))
@@ -281,8 +288,11 @@ export function useMultiplayerGame<TState = any>(
       setCurrentTurnPlayerId(publicState.currentTurnPlayerId ?? null)
       setLastAction(action)
     },
-    [config, network, players, myId]
+    [config, network, myId]
   )
+
+  // Keep ref in sync so the message handler always calls the latest version
+  processActionRef.current = processActionOnHost
 
   // ── Start Game (host only) ──
   const startGame = useCallback(() => {

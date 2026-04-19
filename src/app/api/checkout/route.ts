@@ -45,15 +45,15 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    const origin = req.headers.get('origin') || process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
     // Create Stripe Checkout Session
     const session = await getStripe().checkout.sessions.create({
       customer: customerId,
       line_items: [{ price: priceConfig.priceId, quantity: 1 }],
       mode: priceConfig.mode,
-      success_url: `${origin}/family?payment=success`,
-      cancel_url: `${origin}/family?payment=canceled`,
+      success_url: `${appUrl}/family?payment=success`,
+      cancel_url: `${appUrl}/family?payment=canceled`,
       metadata: { familyId, plan },
     })
 

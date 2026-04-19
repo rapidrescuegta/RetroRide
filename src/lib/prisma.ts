@@ -1,12 +1,7 @@
-import { PrismaClient } from '@/generated/prisma/client'
-import { PrismaPg } from '@prisma/adapter-pg'
-
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
-
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
-
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({ adapter })
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+/**
+ * Backward-compatibility re-export.
+ *
+ * All 23+ files import `prisma` from '@/lib/prisma'. Rather than updating
+ * every import, this module re-exports the singleton from the new db module.
+ */
+export { prisma } from '@/lib/db'
