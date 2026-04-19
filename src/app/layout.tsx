@@ -5,6 +5,7 @@ import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 import InstallPrompt from '@/components/InstallPrompt'
 import UpdateToast from '@/components/UpdateToast'
 import OfflineIndicator from '@/components/OfflineIndicator'
+import { FeedbackButton } from '@/components/feedback/FeedbackButton'
 
 export const metadata: Metadata = {
   title: 'GameBuddi — Classic Arcade Games',
@@ -56,6 +57,7 @@ export default function RootLayout({
       <body className="antialiased">
         <FamilyProvider>
           {children}
+          <FeedbackButton />
         </FamilyProvider>
         <ServiceWorkerRegistration />
         <UpdateToast />

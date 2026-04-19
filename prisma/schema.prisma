@@ -245,6 +245,29 @@ model BracketMatch {
   @@index([tournamentId, status])
 }
 
+// ─── Feedback / Bug Reports ─────────────────────────────────────────
+
+model Feedback {
+  id          String   @id @default(cuid())
+  memberId    String?
+  familyId    String?
+  userName    String?
+  userEmail   String?
+  pageUrl     String
+  comment     String
+  screenshot  String?
+  consoleLogs Json?
+  category    String   @default("bug")
+  status      String   @default("open")
+  userAgent   String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@index([familyId])
+}
+
 // ─── Signaling (Internet Multiplayer) ───────────────────────────────
 
 model SignalingRoom {

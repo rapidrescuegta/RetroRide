@@ -170,6 +170,91 @@ export async function sendWeeklyRankings(
   })
 }
 
+export interface FeedbackNotification {
+  category: string
+  comment: string
+  pageUrl: string
+  userName?: string | null
+  userEmail?: string | null
+  familyId?: string | null
+  userAgent?: string | null
+  ipAddress?: string | null
+  feedbackId: string
+  screenshot?: string | null
+  consoleLogCount?: number
+}
+
+export async function sendFeedbackNotification(notification: FeedbackNotification): Promise<void> {
+  const to = process.env.FEEDBACK_EMAIL_TO
+  if (!to) {
+    console.warn('[feedback] FEEDBACK_EMAIL_TO not set — skipping admin notification email')
+    return
+  }
+
+  const resend = getResend()
+  const {
+    category,
+    comment,
+    pageUrl,
+    userName,
+    userEmail,
+    familyId,
+    userAgent,
+    ipAddress,
+    feedbackId,
+    screenshot,
+    consoleLogCount,
+  } = notification
+
+  const categoryEmoji: Record<string, string> = {
+    bug: '\u{1F41B}',
+    suggestion: '\u{1F4A1}',
+    question: '\u{2753}',
+  }
+  const emoji = categoryEmoji[category] || '\u{1F4AC}'
+  const label = category.charAt(0).toUpperCase() + category.slice(1)
+
+  const bodyHtml = `
+    <div style="padding: 12px 0;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <div style="font-size: 44px; margin-bottom: 4px;">${emoji}</div>
+        <div style="font-size: 14px; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px;">${label}</div>
+      </div>
+
+      <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px;">
+        <p style="margin: 0 0 12px; color: #e2e8f0; font-size: 15px; line-height: 1.6; white-space: pre-wrap;">${comment
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')}</p>
+      </div>
+
+      <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 14px 18px; font-size: 13px; color: #94a3b8;">
+        <div style="margin: 4px 0;"><strong style="color: #cbd5e1;">From:</strong> ${userName || 'Anonymous'}${userEmail ? ` &lt;${userEmail}&gt;` : ''}</div>
+        ${familyId ? `<div style="margin: 4px 0;"><strong style="color: #cbd5e1;">Family:</strong> ${familyId}</div>` : ''}
+        <div style="margin: 4px 0; word-break: break-all;"><strong style="color: #cbd5e1;">Page:</strong> <a href="${pageUrl}" style="color: #06b6d4;">${pageUrl}</a></div>
+        ${typeof consoleLogCount === 'number' ? `<div style="margin: 4px 0;"><strong style="color: #cbd5e1;">Console logs:</strong> ${consoleLogCount} captured</div>` : ''}
+        ${userAgent ? `<div style="margin: 4px 0; word-break: break-all;"><strong style="color: #cbd5e1;">User-Agent:</strong> <span style="font-size: 11px;">${userAgent}</span></div>` : ''}
+        ${ipAddress ? `<div style="margin: 4px 0;"><strong style="color: #cbd5e1;">IP:</strong> ${ipAddress}</div>` : ''}
+        <div style="margin: 4px 0;"><strong style="color: #cbd5e1;">ID:</strong> <span style="font-family: monospace;">${feedbackId}</span></div>
+      </div>
+
+      ${screenshot
+        ? `<div style="margin-top: 20px; border: 1px solid #1e293b; border-radius: 12px; overflow: hidden;">
+            <img src="${screenshot}" alt="Screenshot" style="width: 100%; display: block;" />
+          </div>`
+        : ''}
+    </div>`
+
+  const html = emailShell(`${label} Report`, bodyHtml)
+
+  await resend.emails.send({
+    from: getFrom(),
+    to: [to],
+    subject: `[GameBuddi ${label}] ${comment.slice(0, 60)}${comment.length > 60 ? '...' : ''}`,
+    html,
+  })
+}
+
 export async function sendTournamentInvite(
   to: string,
   tournamentName: string,
