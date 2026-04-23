@@ -24,13 +24,23 @@ type LogLevel = 'query' | 'info' | 'warn' | 'error'
 
 const isDev = process.env.NODE_ENV !== 'production'
 
+// During `next build`'s static page-data collection phase, Next.js imports
+// every route module. Railway (and most CI builders) do not inject runtime
+// service env vars into the Docker build stage, so DATABASE_URL is legitimately
+// missing here. Allow a placeholder so the build completes; the real value
+// is injected at container startup.
+const isNextBuildPhase = process.env.NEXT_PHASE === 'phase-production-build'
+
 const DATABASE_URL = process.env.DATABASE_URL
-if (!DATABASE_URL) {
+if (!DATABASE_URL && !isNextBuildPhase) {
   throw new Error(
     'DATABASE_URL is not set. Add it to your .env file.\n' +
       'See .env.example for the expected format.'
   )
 }
+
+const effectiveDatabaseUrl =
+  DATABASE_URL || 'postgresql://build-placeholder:build@localhost:5432/build'
 
 // Log levels: verbose in dev, warnings + errors only in production
 const logLevels: LogLevel[] = isDev
@@ -71,7 +81,7 @@ function buildConnectionUrl(baseUrl: string): string {
   return url.toString()
 }
 
-const pooledDatabaseUrl = buildConnectionUrl(DATABASE_URL)
+const pooledDatabaseUrl = buildConnectionUrl(effectiveDatabaseUrl)
 
 // ---------------------------------------------------------------------------
 // Singleton
