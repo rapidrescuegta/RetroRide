@@ -7,11 +7,11 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 # Keep a full copy for building (includes devDependencies)
 COPY package*.json /tmp/build/
-RUN cd /tmp/build && npm ci
+RUN cd /tmp/build && npm ci --ignore-scripts
 
 # ── Stage 2: Build ────────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
