@@ -9,6 +9,13 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
+# Copy prisma schema + generate so @prisma/engines + the client land in
+# node_modules at build time (as root). Without this, `prisma migrate deploy`
+# at container startup tries to download the engines and fails because the
+# non-root runner user can't write to /app/node_modules.
+COPY prisma ./prisma
+RUN npx prisma generate
+
 # Keep a full copy for building (includes devDependencies)
 COPY package*.json /tmp/build/
 RUN cd /tmp/build && npm ci --ignore-scripts
