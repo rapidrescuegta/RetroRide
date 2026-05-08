@@ -5,3 +5,6 @@ out
 .env.local
 
 /src/generated/prisma
+
+# TypeScript incremental build cache — never commit
+*.tsbuildinfo
