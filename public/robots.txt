@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /settings/
+Disallow: /play/
+Disallow: /local/
+
+Sitemap: https://www.gamebuddi.com/sitemap.xml
+Host: https://www.gamebuddi.com
