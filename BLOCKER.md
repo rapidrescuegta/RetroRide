@@ -1,10 +1,13 @@
 # 🚨 DEPLOY PIPELINE STALLED — Railway auto-deploy disconnected
 
-**Status (2026-05-21):** Last successful deploy was **2026-05-14 or earlier**.
-Two commits sit on `origin/main` with no Railway redeploy triggered:
+**Status (2026-05-28 recheck):** 14 days stalled. Last successful deploy was **2026-05-14 or earlier**.
+Three commits sit on `origin/main` with no Railway redeploy triggered:
 
+- `bfd61d7` — docs: add BLOCKER.md
 - `0e662ec` — Remove dynamic sitemap/robots routes (prerendering as 404)
 - `431c790` — Add static `public/sitemap.xml` + `public/robots.txt` fallback
+
+**Recheck 2026-05-28:** `curl https://gamebuddi.com/sitemap.xml` → still HTTP 404. `railway status` → `Unauthorized` (CLI token expired — agent cannot trigger redeploy from this side either). 16 open next-steps remain blocked. Highest-severity item on RetroRide; everything else is pause-deferred until Giuseppe clicks Redeploy.
 
 ## Evidence
 
