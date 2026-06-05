@@ -1,5 +1,7 @@
 # 🚨 DEPLOY PIPELINE STALLED — Railway auto-deploy disconnected
 
+**Status (2026-06-04 recheck — ROOT CAUSE CONFIRMED):** ~21 days stalled. The GitHub webhook that triggers Railway deploys **has been removed from the repo** — `gh api repos/rapidrescuegta/RetroRide/hooks` returns `[]` (zero webhooks). This is the definitive cause: pushes to `main` reach GitHub but nothing notifies Railway, so no build runs. Agent cannot fix this from its side — re-adding the webhook requires Railway's GitHub-App connection (its URL + secret live in the Railway dashboard), and the Railway CLI token is also expired (`railway whoami` → `Unauthorized`). **Both remediation paths require Giuseppe.** All 16 open RetroRide next-steps are paused/deferred until the reconnect.
+
 **Status (2026-05-28 recheck):** 14 days stalled. Last successful deploy was **2026-05-14 or earlier**.
 Three commits sit on `origin/main` with no Railway redeploy triggered:
 
@@ -20,12 +22,24 @@ x-nextjs-cache: HIT          ← serving stale prerender of a route that no long
 
 The site root and other `public/` assets (`manifest.json`, `sw.js`, `favicon.ico`) return 200 — app is healthy. **Only the build is frozen.**
 
-## Fix (Giuseppe, ~60 sec)
+## Confirmation evidence (2026-06-04)
 
-1. Open Railway → `retroride` service → **Settings → GitHub**
-2. Verify the repo connection is still active. If not, reconnect to `rapidrescuegta/RetroRide` on `main`.
-3. Hit **Deploy → Redeploy latest commit** (or push any trivial commit).
+```
+$ gh api repos/rapidrescuegta/RetroRide/hooks
+[]                                ← Railway's deploy webhook is GONE from the repo
+$ railway whoami
+Unauthorized. Please run `railway login` again.   ← CLI token expired too
+$ curl -sI https://www.gamebuddi.com/sitemap.xml
+HTTP/2 405                        ← still no static fallback served; build frozen
+```
+
+## Fix (Giuseppe, ~60 sec) — only Giuseppe can do this
+
+1. Open Railway → `retroride` service → **Settings → Source / GitHub**.
+2. The GitHub connection has dropped (repo shows 0 webhooks). Click **Connect / Reconnect** and re-select `rapidrescuegta/RetroRide` on branch `main`. This re-installs the deploy webhook.
+3. Hit **Deploy → Redeploy** (or push any trivial commit — it will now trigger).
 4. Verify: `curl -sI https://www.gamebuddi.com/sitemap.xml` → expect `HTTP/2 200`.
+5. (Optional, lets the agent self-recover next time) run `railway login` on the agent host, or set a `RAILWAY_TOKEN` project token in the agent env so the CLI can trigger redeploys without the dashboard.
 
 ## What this unblocks (16 open next-steps)
 
