@@ -42,25 +42,15 @@ function loadServerEnv() {
         )
       : read('DATABASE_URL') ?? '',
 
-    // Stripe — required in production, optional in development
-    STRIPE_SECRET_KEY: isProd
-      ? required('STRIPE_SECRET_KEY', 'Stripe secret API key (starts with sk_)')
-      : read('STRIPE_SECRET_KEY') ?? '',
-    STRIPE_WEBHOOK_SECRET: isProd
-      ? required('STRIPE_WEBHOOK_SECRET', 'Stripe webhook signing secret (starts with whsec_)')
-      : read('STRIPE_WEBHOOK_SECRET') ?? '',
-    STRIPE_PRICE_WEEKEND: isProd
-      ? required('STRIPE_PRICE_WEEKEND', 'Stripe Price ID for the weekend pass (starts with price_)')
-      : read('STRIPE_PRICE_WEEKEND') ?? '',
-    STRIPE_PRICE_WEEKLY: isProd
-      ? required('STRIPE_PRICE_WEEKLY', 'Stripe Price ID for the weekly pass (starts with price_)')
-      : read('STRIPE_PRICE_WEEKLY') ?? '',
-    STRIPE_PRICE_MONTHLY: isProd
-      ? required('STRIPE_PRICE_MONTHLY', 'Stripe Price ID for the monthly subscription (starts with price_)')
-      : read('STRIPE_PRICE_MONTHLY') ?? '',
-    STRIPE_PRICE_ANNUAL: isProd
-      ? required('STRIPE_PRICE_ANNUAL', 'Stripe Price ID for the annual subscription (starts with price_)')
-      : read('STRIPE_PRICE_ANNUAL') ?? '',
+    // Stripe — optional until payments launch. Empty string means "not
+    // configured"; checkout/subscription code must guard on these before use
+    // so the app boots and serves games even when Stripe is unset.
+    STRIPE_SECRET_KEY: read('STRIPE_SECRET_KEY') ?? '',
+    STRIPE_WEBHOOK_SECRET: read('STRIPE_WEBHOOK_SECRET') ?? '',
+    STRIPE_PRICE_WEEKEND: read('STRIPE_PRICE_WEEKEND') ?? '',
+    STRIPE_PRICE_WEEKLY: read('STRIPE_PRICE_WEEKLY') ?? '',
+    STRIPE_PRICE_MONTHLY: read('STRIPE_PRICE_MONTHLY') ?? '',
+    STRIPE_PRICE_ANNUAL: read('STRIPE_PRICE_ANNUAL') ?? '',
 
     // Email
     RESEND_API_KEY: read('RESEND_API_KEY') ?? '',
@@ -84,12 +74,8 @@ function loadServerEnv() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function loadPublicEnv() {
-  const isProd = process.env.NODE_ENV === 'production'
-
   return {
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: isProd
-      ? required('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY', 'Stripe publishable API key (starts with pk_)')
-      : read('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY') ?? '',
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: read('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY') ?? '',
     NEXT_PUBLIC_APP_URL: read('NEXT_PUBLIC_APP_URL') ?? 'http://localhost:3000',
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: read('NEXT_PUBLIC_VAPID_PUBLIC_KEY') ?? '',
   } as const
@@ -138,23 +124,17 @@ export function validateEnv(): void {
   const requiredServerVars: [string, string][] = []
 
   if (isProd) {
+    // DATABASE_URL is the only hard requirement to boot in production.
+    // Stripe (payments) is an optional, not-yet-launched feature: if its
+    // vars are absent the app must still boot and serve games, multiplayer,
+    // and SEO assets — checkout simply stays disabled until keys are added.
+    // Hard-requiring Stripe here previously crashed every deploy at startup.
     requiredServerVars.push(
       ['DATABASE_URL', 'PostgreSQL connection string'],
-      ['STRIPE_SECRET_KEY', 'Stripe secret API key'],
-      ['STRIPE_WEBHOOK_SECRET', 'Stripe webhook signing secret'],
-      ['STRIPE_PRICE_WEEKEND', 'Stripe Price ID for weekend pass'],
-      ['STRIPE_PRICE_WEEKLY', 'Stripe Price ID for weekly pass'],
-      ['STRIPE_PRICE_MONTHLY', 'Stripe Price ID for monthly subscription'],
-      ['STRIPE_PRICE_ANNUAL', 'Stripe Price ID for annual subscription'],
     )
   }
 
-  const requiredPublicVars: [string, string][] = isProd
-    ? [
-        ['NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY', 'Stripe publishable API key'],
-        ['NEXT_PUBLIC_APP_URL', 'Public-facing app URL (e.g. https://gamebuddi.com)'],
-      ]
-    : []
+  const requiredPublicVars: [string, string][] = []
 
   for (const [key, desc] of [...requiredServerVars, ...requiredPublicVars]) {
     if (!read(key)) {
@@ -172,6 +152,14 @@ export function validateEnv(): void {
   // Warn about optional vars that are not set
   const optionalVars: [string, string][] = [
     ...(isProd ? [] : [['DATABASE_URL', 'No Postgres — signaling will use in-memory store; family/leaderboard features disabled'] as [string, string]]),
+    ['STRIPE_SECRET_KEY', 'Payments disabled — checkout/subscriptions unavailable until Stripe keys are added'],
+    ['STRIPE_WEBHOOK_SECRET', 'Stripe webhook verification disabled'],
+    ['STRIPE_PRICE_WEEKEND', 'Weekend pass not purchasable'],
+    ['STRIPE_PRICE_WEEKLY', 'Weekly pass not purchasable'],
+    ['STRIPE_PRICE_MONTHLY', 'Monthly subscription not purchasable'],
+    ['STRIPE_PRICE_ANNUAL', 'Annual subscription not purchasable'],
+    ['NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY', 'Stripe.js disabled on the client'],
+    ['NEXT_PUBLIC_APP_URL', 'Using default origin — set to https://gamebuddi.com in production'],
     ['RESEND_API_KEY', 'Email sending disabled — verification codes will be logged to console'],
     ['CRON_SECRET', 'Cron endpoints will be unprotected'],
     ['EMAIL_FROM', 'Using default: GameBuddi <noreply@gamebuddi.com>'],
