@@ -1,48 +1,46 @@
-# 🚨 DEPLOY PIPELINE STALLED — Railway auto-deploy disconnected
+# ✅ RESOLVED (2026-06-12) — Deploy freeze fixed
 
-**Status (2026-06-04 recheck — ROOT CAUSE CONFIRMED):** ~21 days stalled. The GitHub webhook that triggers Railway deploys **has been removed from the repo** — `gh api repos/rapidrescuegta/RetroRide/hooks` returns `[]` (zero webhooks). This is the definitive cause: pushes to `main` reach GitHub but nothing notifies Railway, so no build runs. Agent cannot fix this from its side — re-adding the webhook requires Railway's GitHub-App connection (its URL + secret live in the Railway dashboard), and the Railway CLI token is also expired (`railway whoami` → `Unauthorized`). **Both remediation paths require Giuseppe.** All 16 open RetroRide next-steps are paused/deferred until the reconnect.
+**Production is deploying again.** `/sitemap.xml`, `/robots.txt`, and
+`/api/health` all return HTTP 200; `database.ok: true`. First successful
+deploy since 2026-04-23.
 
-**Status (2026-05-28 recheck):** 14 days stalled. Last successful deploy was **2026-05-14 or earlier**.
-Three commits sit on `origin/main` with no Railway redeploy triggered:
+## Actual root cause (the webhook theory was a red herring)
 
-- `bfd61d7` — docs: add BLOCKER.md
-- `0e662ec` — Remove dynamic sitemap/robots routes (prerendering as 404)
-- `431c790` — Add static `public/sitemap.xml` + `public/robots.txt` fallback
+Deploys were not merely *un-triggered* — every deploy since 2026-04-23 was
+**FAILING** the Railway healthcheck (`service unavailable`). Two compounding
+problems, both server-side config, neither visible from `git`:
 
-**Recheck 2026-05-28:** `curl https://gamebuddi.com/sitemap.xml` → still HTTP 404. `railway status` → `Unauthorized` (CLI token expired — agent cannot trigger redeploy from this side either). 16 open next-steps remain blocked. Highest-severity item on RetroRide; everything else is pause-deferred until Giuseppe clicks Redeploy.
+1. **`src/lib/env.ts` → `validateEnv()` hard-required all Stripe vars in
+   production.** The Next.js instrumentation hook (`src/instrumentation.ts`)
+   calls it on boot, so the server **threw at startup** whenever the Stripe
+   keys were unset — which they always were, because payments never launched.
+   Result: container never bound its port → healthcheck failed → deploy
+   rejected → the old (pre-2026-04-23) container kept serving, masking it.
 
-## Evidence
+2. **The retroride Railway service had lost its `DATABASE_URL`** reference to
+   the in-project Postgres service (`Postgres-6v0z`, alive and healthy). A
+   fresh container also crashed on the eager DB connect in instrumentation.
 
-```
-$ curl -sI https://www.gamebuddi.com/sitemap.xml
-HTTP/2 404
-etag: "nlao1hgvr28hf"        ← unchanged across 7 days + 2 pushes
-x-nextjs-cache: HIT          ← serving stale prerender of a route that no longer exists in source
-```
+## Fixes applied
 
-The site root and other `public/` assets (`manifest.json`, `sw.js`, `favicon.ico`) return 200 — app is healthy. **Only the build is frozen.**
+- **Code** (commit `5d0d184`): `validateEnv()` now hard-requires only
+  `DATABASE_URL` in production. Stripe vars + `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+  + `NEXT_PUBLIC_APP_URL` are non-fatal warnings; the lazy `serverEnv()`/
+  `publicEnv()` loaders return `''` instead of throwing. App boots and serves
+  games/multiplayer/SEO with payments cleanly disabled until keys are added.
+- **Railway env**: restored `DATABASE_URL=${{Postgres-6v0z.DATABASE_URL}}`
+  and set `NEXT_PUBLIC_APP_URL=https://gamebuddi.com` on the retroride service.
+- **Deploy**: triggered manually via `railway up` (CLI re-authenticated).
 
-## Confirmation evidence (2026-06-04)
+## ⚠️ Still needs Giuseppe (does NOT block deploys, but should be done)
 
-```
-$ gh api repos/rapidrescuegta/RetroRide/hooks
-[]                                ← Railway's deploy webhook is GONE from the repo
-$ railway whoami
-Unauthorized. Please run `railway login` again.   ← CLI token expired too
-$ curl -sI https://www.gamebuddi.com/sitemap.xml
-HTTP/2 405                        ← still no static fallback served; build frozen
-```
-
-## Fix (Giuseppe, ~60 sec) — only Giuseppe can do this
-
-1. Open Railway → `retroride` service → **Settings → Source / GitHub**.
-2. The GitHub connection has dropped (repo shows 0 webhooks). Click **Connect / Reconnect** and re-select `rapidrescuegta/RetroRide` on branch `main`. This re-installs the deploy webhook.
-3. Hit **Deploy → Redeploy** (or push any trivial commit — it will now trigger).
-4. Verify: `curl -sI https://www.gamebuddi.com/sitemap.xml` → expect `HTTP/2 200`.
-5. (Optional, lets the agent self-recover next time) run `railway login` on the agent host, or set a `RAILWAY_TOKEN` project token in the agent env so the CLI can trigger redeploys without the dashboard.
-
-## What this unblocks (16 open next-steps)
-
-Every queued cycle proposal — pricing-refactor (106), pricing-page (108), persona pages (109), GA4 injection (105), email/contact updates (120), SEO fundamentals (95), Cribbage pillar — is gated on shipping code through Railway. Until this is fixed, agent work on RetroRide is paused.
-
-Tracked in Osminog as next-step `2e86b197-e0c5-4c2b-8fac-3ddde9c21b7f`.
+1. **Re-add the GitHub deploy webhook** so pushes to `main` auto-deploy again.
+   `gh api repos/rapidrescuegta/RetroRide/hooks` still returns `[]`. Until
+   fixed, ship with `railway up` from `~/retroride`. Reconnect in Railway →
+   retroride service → Settings → Source → connect `rapidrescuegta/RetroRide`
+   branch `main`.
+2. **Restore missing secrets** on the Railway service (they were wiped along
+   with `DATABASE_URL`): `NEXTAUTH_SECRET` (auth is broken without it),
+   `RESEND_API_KEY` (email/verification codes only logged to console), and —
+   when payments launch — the Stripe keys/price IDs (see the pricing-* growth
+   proposals). These are secrets the agent cannot generate.
