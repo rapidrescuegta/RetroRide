@@ -44,3 +44,17 @@ problems, both server-side config, neither visible from `git`:
    `RESEND_API_KEY` (email/verification codes only logged to console), and —
    when payments launch — the Stripe keys/price IDs (see the pricing-* growth
    proposals). These are secrets the agent cannot generate.
+3. **Fix apex `gamebuddi.com` DNS (2026-06-19).** Canonical `www.gamebuddi.com`
+   serves 200 (home/sitemap/robots/health all healthy), but the apex
+   `gamebuddi.com` returns 404/405 from `awselb/2.0` — its A-records
+   (`3.33.251.168`, `15.197.225.128`) still point at an old AWS ELB, not
+   Railway. Railway already has BOTH `gamebuddi.com` and `www.gamebuddi.com`
+   bound to the service. Fix is at GoDaddy DNS only (no registrar API in our
+   stack): either repoint apex to Railway's target or set apex→www forwarding.
+   The static sitemap lists `www.` URLs, so **www is canonical** — submit the
+   `www.gamebuddi.com` property in GSC.
+
+## Shipped since resolve
+- `220e8ef` (2026-06-19): GA4 + GSC verification injected into root layout,
+  env-gated (`NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`).
+  Deployed via `railway up`. No-ops until Giuseppe sets those env vars.
