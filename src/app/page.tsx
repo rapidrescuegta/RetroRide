@@ -152,6 +152,25 @@ export default function Home() {
 
   return (
     <div className="min-h-screen pb-8 page-enter">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'GameBuddi',
+            applicationCategory: 'GameApplication',
+            operatingSystem: 'Web, iOS, Android',
+            description:
+              '35+ classic arcade and card games playable offline with family leaderboards.',
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'USD',
+            },
+          }),
+        }}
+      />
       {/* Header */}
       <header className="relative px-4 pt-8 pb-6 text-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-purple-900/20 to-transparent" />

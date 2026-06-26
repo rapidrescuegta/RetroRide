@@ -22,7 +22,30 @@ export const metadata: Metadata = {
     startupImage: '/icon-512.png',
   },
   applicationName: 'GameBuddi',
+  metadataBase: new URL('https://www.gamebuddi.com'),
   keywords: ['games', 'arcade', 'offline', 'pwa', 'retro', 'classic', 'snake', 'tetris', 'pac-man', 'chess', 'card games'],
+  openGraph: {
+    title: 'GameBuddi — Classic Arcade Games',
+    description: '35+ classic arcade and card games playable offline. Perfect for road trips, flights, and family game nights!',
+    url: 'https://www.gamebuddi.com',
+    siteName: 'GameBuddi',
+    images: [
+      {
+        url: '/og-default.png',
+        width: 1200,
+        height: 630,
+        alt: 'GameBuddi — Classic Arcade Games for Family & Friends',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'GameBuddi — Classic Arcade Games',
+    description: '35+ classic arcade and card games playable offline. Perfect for road trips, flights, and family game nights!',
+    images: ['/og-default.png'],
+  },
   other: {
     'mobile-web-app-capable': 'yes',
     'msapplication-TileColor': '#0a0a1a',
@@ -50,6 +73,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'GameBuddi',
+              url: 'https://www.gamebuddi.com',
+              logo: 'https://www.gamebuddi.com/icon-512.png',
+              description:
+                'Classic arcade and card games with family leaderboards. Offline-first, 35+ games, perfect for road trips and flights.',
+            }),
+          }}
+        />
         {gscVerification && (
           <meta name="google-site-verification" content={gscVerification} />
         )}
