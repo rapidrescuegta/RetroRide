@@ -307,7 +307,14 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="text-center text-xs text-slate-600 mt-8 px-4">
-        Free to play solo • Works offline • No ads
+        Free to play solo • Works offline • No ads •{' '}
+        <a href="/pricing" className="text-slate-400 hover:text-cyan-400 transition-colors">
+          Pricing
+        </a>{' '}
+        •{' '}
+        <a href="/contact" className="text-slate-400 hover:text-cyan-400 transition-colors">
+          Contact
+        </a>
       </footer>
     </div>
   )

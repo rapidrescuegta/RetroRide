@@ -88,7 +88,7 @@ Copy `.env.example` to `.env` and fill these in. Full list:
 | Variable | What it does |
 |---|---|
 | `RESEND_API_KEY` | Sends transactional emails. Without it, emails are logged to console (fine for family use). |
-| `EMAIL_FROM` | `RetroRide <noreply@yourdomain.com>` |
+| `EMAIL_FROM` | `GameBuddi <noreply@gamebuddi.com>` |
 | `CRON_SECRET` | Protects `/api/cron/*` endpoints |
 
 ### Optional

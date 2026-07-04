@@ -209,7 +209,7 @@ function PricingCard({
         ))}
       </ul>
       <Link
-        href={`/family?plan=${plan}`}
+        href={plan === 'free' ? '/' : `/pricing?plan=${plan}`}
         className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 text-center block ${
           featured
             ? 'bg-gradient-to-r from-[#8b5cf6] to-[#06b6d4] text-white hover:shadow-[0_0_25px_rgba(139,92,246,0.4)] hover:scale-105'
@@ -642,77 +642,73 @@ export default function LandingPage() {
             className="neon-text text-xl sm:text-2xl mb-4"
             style={{ fontFamily: "'Press Start 2P', monospace" }}
           >
-            Upgrade to Family Mode
+            Pick Your Plan
           </h2>
           <p className="text-[#94a3b8] text-lg max-w-lg mx-auto">
-            Solo games are always free. Family Mode unlocks multiplayer, chat, leaderboards, and local play.
+            Solo games are always free. Paid plans unlock multiplayer, chat, leaderboards, and local play for your whole crew.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <PricingCard
-            name="Weekend"
+            name="Free"
+            price="$0"
+            period="forever"
+            plan="free"
+            features={[
+              `All ${totalGames} games solo`,
+              'Offline play (PWA)',
+              'AI opponents',
+              'No account needed',
+            ]}
+          />
+          <PricingCard
+            name="Pro"
             price="$4.99"
-            period="3 days"
-            plan="weekend"
-            features={[
-              `All ${totalGames} games`,
-              'Local hotspot play',
-              'Multiplayer card games',
-              'Family leaderboards',
-              'Family chat',
-              'Perfect for a trip',
-            ]}
-          />
-          <PricingCard
-            name="Weekly"
-            price="$7.99"
-            period="7 days"
-            plan="weekly"
-            features={[
-              `All ${totalGames} games`,
-              'Local hotspot play',
-              'Multiplayer card games',
-              'Family leaderboards',
-              'Family chat',
-              'Live challenges',
-            ]}
-          />
-          <PricingCard
-            name="Monthly"
-            price="$14.99"
             period="per month"
-            plan="monthly"
+            plan="pro_monthly"
             features={[
-              `All ${totalGames} games`,
-              'Local hotspot play',
-              'Multiplayer card games',
-              'Family leaderboards',
-              'Family chat',
-              'Live challenges',
-              'Weekly ranking emails',
-              'Cancel anytime',
+              'Everything in Free',
+              'Online multiplayer',
+              'Tournaments & challenges',
+              'Stats & crown rankings',
+              '$39/yr — save 35%',
             ]}
           />
           <PricingCard
-            name="Annual"
-            price="$49.99"
-            period="per year"
-            plan="annual"
+            name="Family"
+            price="$9.99"
+            period="per month"
+            plan="family_monthly"
             featured
-            badge="BEST VALUE  ·  Save 72%"
+            badge="MOST POPULAR"
             features={[
-              `All ${totalGames} games`,
+              'Everything in Pro',
+              'Up to 6 members',
               'Local hotspot play',
-              'Multiplayer card games',
-              'Family leaderboards',
-              'Family chat',
-              'Live challenges',
+              'Family chat & leaderboards',
               'Weekly ranking emails',
-              'Priority support',
-              'Just $4.17/month',
+              '$79/yr — save 34%',
             ]}
           />
+          <PricingCard
+            name="Squad"
+            price="$19"
+            period="per month"
+            plan="squad_monthly"
+            features={[
+              'Everything in Family',
+              'Up to 20 members',
+              'Dorms, teams & frats',
+              'Group tournaments',
+              '$159/yr — save 30%',
+            ]}
+          />
+        </div>
+        <div className="text-center mt-8">
+          <Link href="/pricing" className="text-[#a78bfa] hover:text-white transition-colors font-semibold">
+            See all plans — including Classroom, Care Center &amp; Enterprise →
+          </Link>
         </div>
       </Section>
 
@@ -784,34 +780,55 @@ export default function LandingPage() {
 
       {/* ─── FOOTER ───────────────────────────────────────────────────── */}
       <footer className="border-t border-white/5 py-10 px-4">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🕹️</span>
-            <span
-              className="neon-text text-sm"
-              style={{ fontFamily: "'Press Start 2P', monospace" }}
-            >
-              GameBuddi
-            </span>
+        <div className="max-w-5xl mx-auto flex flex-col gap-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🕹️</span>
+              <span
+                className="neon-text text-sm"
+                style={{ fontFamily: "'Press Start 2P', monospace" }}
+              >
+                GameBuddi
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[#64748b]">
+              <Link href="/" className="hover:text-white transition-colors">
+                Games
+              </Link>
+              <Link href="/pricing" className="hover:text-white transition-colors">
+                Pricing
+              </Link>
+              <Link href="/family" className="hover:text-white transition-colors">
+                Family Mode
+              </Link>
+              <Link href="/leaderboard" className="hover:text-white transition-colors">
+                Leaderboards
+              </Link>
+              <Link href="/local-play" className="hover:text-white transition-colors">
+                Local Play
+              </Link>
+              <Link href="/travel" className="hover:text-white transition-colors">
+                For Travel
+              </Link>
+              <Link href="/university" className="hover:text-white transition-colors">
+                For Squads
+              </Link>
+              <Link href="/institutions" className="hover:text-white transition-colors">
+                For Institutions
+              </Link>
+              <Link href="/contact" className="hover:text-white transition-colors">
+                Contact
+              </Link>
+            </div>
+            <p className="text-xs text-[#475569]">&copy; {new Date().getFullYear()} GameBuddi. All rights reserved.</p>
           </div>
-          <div className="flex items-center gap-6 text-sm text-[#64748b]">
-            <Link href="/" className="hover:text-white transition-colors">
-              Games
-            </Link>
-            <a href="#pricing" className="hover:text-white transition-colors">
-              Pricing
-            </a>
-            <Link href="/family" className="hover:text-white transition-colors">
-              Family Mode
-            </Link>
-            <Link href="/leaderboard" className="hover:text-white transition-colors">
-              Leaderboards
-            </Link>
-            <Link href="/local-play" className="hover:text-white transition-colors">
-              Local Play
-            </Link>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-x-5 gap-y-2 text-xs text-[#64748b] border-t border-white/5 pt-4">
+            <a href="mailto:hello@gamebuddi.com" className="hover:text-white transition-colors">hello@gamebuddi.com</a>
+            <span className="hidden md:inline text-[#334155]">·</span>
+            <a href="mailto:support@gamebuddi.com" className="hover:text-white transition-colors">support@gamebuddi.com</a>
+            <span className="hidden md:inline text-[#334155]">·</span>
+            <a href="mailto:billing@gamebuddi.com" className="hover:text-white transition-colors">billing@gamebuddi.com</a>
           </div>
-          <p className="text-xs text-[#475569]">&copy; {new Date().getFullYear()} GameBuddi. All rights reserved.</p>
         </div>
       </footer>
     </div>

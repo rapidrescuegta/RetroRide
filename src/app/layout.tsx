@@ -84,6 +84,29 @@ export default function RootLayout({
               logo: 'https://www.gamebuddi.com/icon-512.png',
               description:
                 'Classic arcade and card games with family leaderboards. Offline-first, 35+ games, perfect for road trips and flights.',
+              contactPoint: [
+                {
+                  '@type': 'ContactPoint',
+                  contactType: 'customer support',
+                  email: 'support@gamebuddi.com',
+                  availableLanguage: ['English'],
+                  areaServed: 'Worldwide',
+                },
+                {
+                  '@type': 'ContactPoint',
+                  contactType: 'billing support',
+                  email: 'billing@gamebuddi.com',
+                  availableLanguage: ['English'],
+                  areaServed: 'Worldwide',
+                },
+                {
+                  '@type': 'ContactPoint',
+                  contactType: 'sales',
+                  email: 'hello@gamebuddi.com',
+                  availableLanguage: ['English'],
+                  areaServed: 'Worldwide',
+                },
+              ],
             }),
           }}
         />

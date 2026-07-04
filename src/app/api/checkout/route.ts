@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
-
-function getStripe() {
-  return new Stripe(process.env.STRIPE_SECRET_KEY!)
-}
-
-const PRICES: Record<string, { priceId: string; mode: 'payment' | 'subscription'; days?: number }> = {
-  weekend: { priceId: process.env.STRIPE_PRICE_WEEKEND || '', mode: 'payment', days: 3 },
-  weekly: { priceId: process.env.STRIPE_PRICE_WEEKLY || '', mode: 'payment', days: 7 },
-  monthly: { priceId: process.env.STRIPE_PRICE_MONTHLY || '', mode: 'subscription' },
-  annual: { priceId: process.env.STRIPE_PRICE_ANNUAL || '', mode: 'subscription' },
-}
+import { getPlan, getStripe, isStripeConfigured } from '@/lib/stripe-config'
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,8 +10,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'familyId and plan are required' }, { status: 400 })
     }
 
-    const priceConfig = PRICES[plan]
-    if (!priceConfig) {
+    if (!isStripeConfigured()) {
+      return NextResponse.json(
+        { error: 'Payments are not yet enabled. Please check back soon.' },
+        { status: 503 }
+      )
+    }
+
+    const priceConfig = getPlan(plan)
+    if (!priceConfig || !priceConfig.priceId) {
       return NextResponse.json({ error: `Invalid plan: ${plan}` }, { status: 400 })
     }
 

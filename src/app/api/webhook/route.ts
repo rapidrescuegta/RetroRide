@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
-import { constructWebhookEvent, getPlans } from '@/lib/stripe-config'
+import { constructWebhookEvent, getPlanKey, getStripe } from '@/lib/stripe-config'
 
 export const dynamic = 'force-dynamic'
-
-const PLAN_DAYS: Record<string, number> = {
-  weekend: 3,
-  weekly: 7,
-}
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
@@ -30,53 +25,51 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
-        const { familyId, plan } = session.metadata || {}
-        if (!familyId || !plan) break
+        const { familyId, plan: metadataPlan } = session.metadata || {}
+        if (!familyId) break
 
         const subscription = await prisma.subscription.findUnique({
           where: { stripeSessionId: session.id },
         })
 
-        if (session.mode === 'payment') {
-          // One-time payment (weekend/weekly)
-          const days = PLAN_DAYS[plan] || 7
-          const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+        const stripeSubId = session.subscription as string
 
-          if (subscription) {
-            await prisma.subscription.update({
-              where: { id: subscription.id },
-              data: { status: 'active', expiresAt },
-            })
+        // Defense in depth — if Stripe gives us a subscription, recover the plan
+        // key from its line items rather than trusting metadata alone.
+        let plan = metadataPlan
+        if (stripeSubId) {
+          try {
+            const stripeSub = await getStripe().subscriptions.retrieve(stripeSubId)
+            const priceId = stripeSub.items.data[0]?.price?.id
+            if (priceId) {
+              const recovered = getPlanKey(priceId)
+              if (recovered) plan = recovered
+            }
+          } catch (err) {
+            console.warn('[webhook] Failed to recover plan key from Stripe sub:', err)
           }
+        }
 
-          await prisma.family.update({
-            where: { id: familyId },
-            data: {
-              subscriptionStatus: 'active',
-              planType: plan,
-              planExpiresAt: expiresAt,
-            },
-          })
-        } else {
-          // Subscription (monthly/annual)
-          const stripeSubId = session.subscription as string
+        if (!plan) {
+          console.error('[webhook] checkout.session.completed without resolvable plan key', { sessionId: session.id })
+          break
+        }
 
-          if (subscription) {
-            await prisma.subscription.update({
-              where: { id: subscription.id },
-              data: { status: 'active', stripeSubId },
-            })
-          }
-
-          await prisma.family.update({
-            where: { id: familyId },
-            data: {
-              subscriptionStatus: 'active',
-              planType: plan,
-              planExpiresAt: null,
-            },
+        if (subscription) {
+          await prisma.subscription.update({
+            where: { id: subscription.id },
+            data: { status: 'active', stripeSubId, planType: plan },
           })
         }
+
+        await prisma.family.update({
+          where: { id: familyId },
+          data: {
+            subscriptionStatus: 'active',
+            planType: plan,
+            planExpiresAt: null,
+          },
+        })
         break
       }
 

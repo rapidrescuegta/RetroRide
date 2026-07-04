@@ -29,10 +29,16 @@ export async function GET(request: NextRequest) {
       configured: !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),
       hasPublicKey: !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
       hasPrices: !!(
-        process.env.STRIPE_PRICE_WEEKEND &&
-        process.env.STRIPE_PRICE_WEEKLY &&
-        process.env.STRIPE_PRICE_MONTHLY &&
-        process.env.STRIPE_PRICE_ANNUAL
+        process.env.STRIPE_PRICE_PRO_MONTHLY &&
+        process.env.STRIPE_PRICE_PRO_ANNUAL &&
+        process.env.STRIPE_PRICE_FAMILY_MONTHLY &&
+        process.env.STRIPE_PRICE_FAMILY_ANNUAL &&
+        process.env.STRIPE_PRICE_SQUAD_MONTHLY &&
+        process.env.STRIPE_PRICE_SQUAD_ANNUAL &&
+        process.env.STRIPE_PRICE_CLASSROOM_MONTHLY &&
+        process.env.STRIPE_PRICE_CLASSROOM_ANNUAL &&
+        process.env.STRIPE_PRICE_CARECENTER_MONTHLY &&
+        process.env.STRIPE_PRICE_CARECENTER_ANNUAL
       ),
     },
     email: {

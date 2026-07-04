@@ -30,43 +30,64 @@ export function getWebhookSecret(): string {
 // Plan configuration
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type PlanName = 'weekend' | 'weekly' | 'monthly' | 'annual'
+export type PlanName =
+  | 'pro_monthly'
+  | 'pro_annual'
+  | 'family_monthly'
+  | 'family_annual'
+  | 'squad_monthly'
+  | 'squad_annual'
+  | 'classroom_monthly'
+  | 'classroom_annual'
+  | 'carecenter_monthly'
+  | 'carecenter_annual'
+
+/** Tier a plan belongs to (cadence-agnostic). */
+export type PlanTier = 'pro' | 'family' | 'squad' | 'classroom' | 'carecenter'
+
+/** Billing cadence. */
+export type PlanCadence = 'monthly' | 'annual'
 
 export interface PlanConfig {
   priceId: string
-  mode: 'payment' | 'subscription'
-  /** For one-time passes, how many days of access the plan grants. */
-  days?: number
+  mode: 'subscription'   // All paid plans are recurring; one-time passes retired.
+  tier: PlanTier
+  cadence: PlanCadence
   label: string
+  /** Display price, in USD, for UI surfaces. Authoritative price still lives in Stripe. */
+  displayPrice: string
+}
+
+/** True when Stripe is configured (secret key present). Checkout must guard on this. */
+export function isStripeConfigured(): boolean {
+  return serverEnv().STRIPE_SECRET_KEY !== ''
 }
 
 /** Returns a map of plan names to their Stripe configuration. */
 export function getPlans(): Record<PlanName, PlanConfig> {
   const env = serverEnv()
   return {
-    weekend: {
-      priceId: env.STRIPE_PRICE_WEEKEND,
-      mode: 'payment',
-      days: 3,
-      label: 'Weekend Pass (3 days)',
-    },
-    weekly: {
-      priceId: env.STRIPE_PRICE_WEEKLY,
-      mode: 'payment',
-      days: 7,
-      label: 'Weekly Pass (7 days)',
-    },
-    monthly: {
-      priceId: env.STRIPE_PRICE_MONTHLY,
-      mode: 'subscription',
-      label: 'Monthly Subscription',
-    },
-    annual: {
-      priceId: env.STRIPE_PRICE_ANNUAL,
-      mode: 'subscription',
-      label: 'Annual Subscription',
-    },
+    pro_monthly:        { priceId: env.STRIPE_PRICE_PRO_MONTHLY,        mode: 'subscription', tier: 'pro',        cadence: 'monthly', label: 'Pro (monthly)',         displayPrice: '$4.99/mo' },
+    pro_annual:         { priceId: env.STRIPE_PRICE_PRO_ANNUAL,         mode: 'subscription', tier: 'pro',        cadence: 'annual',  label: 'Pro (annual)',          displayPrice: '$39/yr'   },
+    family_monthly:     { priceId: env.STRIPE_PRICE_FAMILY_MONTHLY,     mode: 'subscription', tier: 'family',     cadence: 'monthly', label: 'Family (monthly)',      displayPrice: '$9.99/mo' },
+    family_annual:      { priceId: env.STRIPE_PRICE_FAMILY_ANNUAL,      mode: 'subscription', tier: 'family',     cadence: 'annual',  label: 'Family (annual)',       displayPrice: '$79/yr'   },
+    squad_monthly:      { priceId: env.STRIPE_PRICE_SQUAD_MONTHLY,      mode: 'subscription', tier: 'squad',      cadence: 'monthly', label: 'Squad (monthly)',       displayPrice: '$19/mo'   },
+    squad_annual:       { priceId: env.STRIPE_PRICE_SQUAD_ANNUAL,       mode: 'subscription', tier: 'squad',      cadence: 'annual',  label: 'Squad (annual)',        displayPrice: '$159/yr'  },
+    classroom_monthly:  { priceId: env.STRIPE_PRICE_CLASSROOM_MONTHLY,  mode: 'subscription', tier: 'classroom',  cadence: 'monthly', label: 'Classroom (monthly)',   displayPrice: '$29/mo'   },
+    classroom_annual:   { priceId: env.STRIPE_PRICE_CLASSROOM_ANNUAL,   mode: 'subscription', tier: 'classroom',  cadence: 'annual',  label: 'Classroom (annual)',    displayPrice: '$249/yr'  },
+    carecenter_monthly: { priceId: env.STRIPE_PRICE_CARECENTER_MONTHLY, mode: 'subscription', tier: 'carecenter', cadence: 'monthly', label: 'Care Center (monthly)', displayPrice: '$49/mo'   },
+    carecenter_annual:  { priceId: env.STRIPE_PRICE_CARECENTER_ANNUAL,  mode: 'subscription', tier: 'carecenter', cadence: 'annual',  label: 'Care Center (annual)',  displayPrice: '$419/yr'  },
   }
+}
+
+/** Reverse-map a Stripe Price ID to its plan key. Used by webhook handler. */
+export function getPlanKey(priceId: string): PlanName | null {
+  if (!priceId) return null
+  const plans = getPlans()
+  for (const [key, cfg] of Object.entries(plans)) {
+    if (cfg.priceId && cfg.priceId === priceId) return key as PlanName
+  }
+  return null
 }
 
 /** Returns the config for a single plan, or null if the plan name is invalid. */
