@@ -551,6 +551,257 @@ href="mailto:hello@gamebuddi.com">hello@gamebuddi.com</a>.</em></p>
     { q: 'Is the GameBuddi review biased because you publish the review?', a: 'Yes — partially. We tried to be honest about where GameBuddi is weaker (AI difficulty capped at intermediate, tournament mode less mature than core multiplayer, $4.99/mo Pro tier), and to fairly recommend competitors when their fit is better (Cribbage With Grandpas wins for one-on-one async, Pogo wins if you\'re already a Club subscriber). The honest version: GameBuddi is the best pick if you want *one app* that covers every "with friends" mode plus offline. If you only need one mode, a single-purpose app may serve you better. ---' },
   ],
 },
+{
+  slug: 'airplane-games-no-wifi-2026',
+  title: 'Airplane Games With No Wi-Fi: What to Actually Install Before Your Flight',
+  excerpt:
+    'Most apps that say \'works offline\' don\'t. This is the pre-flight install list for parents who want games that actually run at 35,000 feet without paying $12 per device for Wi-Fi that drops every 20 minutes.',
+  date: '2026-05-13',
+  author: 'GameBuddi Team',
+  readTime: '8 min read',
+  category: 'guides',
+  content: `
+<p class="text-slate-700 leading-relaxed mb-5">You’re sitting at the gate. Boarding starts in twenty minutes. Your
+kid asks if the new Switch game will work on the plane. You realize you
+have no idea. You open the App Store and type “offline games.”</p>
+<p class="text-slate-700 leading-relaxed mb-5">Two hundred results. All of them say “Works offline!” in the
+description. Half of them open to a “Please connect to the internet”
+screen the second you sit down in seat 22B.</p>
+<p class="text-slate-700 leading-relaxed mb-5">This guide is the one I wish I’d had before the Toronto–Vancouver
+flight last spring. It’s the actual pre-flight install list — what
+works, what doesn’t, and why. Written for parents traveling with
+6–12-year-olds, but most of it applies to adults on a 14-hour Tokyo
+red-eye too.</p>
+<h2 class="text-2xl font-bold text-slate-900 mt-12 mb-4">Why “offline” almost
+never means offline</h2>
+<p class="text-slate-700 leading-relaxed mb-5">Here’s the trap. When an app store listing says “offline mode,” it
+usually means one of three things:</p>
+<ol type="1">
+<li class="leading-relaxed"><strong>You can use the app menu offline, but not actually
+play.</strong> You launch, you see a deck of cards, you tap “Play” — and
+you hit a spinning wheel that says “Connecting…” This is the most common
+bait. The game logic lives on a server. No server, no game.</li>
+<li class="leading-relaxed"><strong>Solo modes work, multiplayer doesn’t.</strong> You can play
+Solitaire alone, but the moment you want to play Hearts with your kid in
+the next seat, you need an internet connection so the app can “match
+you” — even though both phones are right there.</li>
+<li class="leading-relaxed"><strong>It works for the first 5 minutes, then ads break
+it.</strong> The game itself runs locally, but every 30 seconds it tries
+to load an ad. The ad fails. The game freezes waiting for the ad to
+load.</li>
+</ol>
+<p class="text-slate-700 leading-relaxed mb-5">Real offline multiplayer — the kind that works on two phones sitting
+next to each other in seats 22B and 22C — uses peer-to-peer networking
+(P2P). The two devices talk directly via Bluetooth or local Wi-Fi, with
+no server in the middle. That’s a different architecture, and it’s rare.
+Most app companies don’t build it because it’s harder and doesn’t
+generate ad impressions.</p>
+<p class="text-slate-700 leading-relaxed mb-5">So when you’re looking at the App Store, the test is simple:
+<strong>does this app explicitly say it supports P2P, local Wi-Fi, or
+Bluetooth multiplayer?</strong> If it doesn’t say that, assume it needs
+the internet even when the listing claims otherwise.</p>
+<h2 class="text-2xl font-bold text-slate-900 mt-12 mb-4">The 6
+categories worth installing before takeoff</h2>
+<p class="text-slate-700 leading-relaxed mb-5">These are the categories of games that actually deliver in flight
+mode. We’ll go through each with a specific recommendation.</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">1. P2P
+card games (best for 2-4 players in adjacent seats)</h3>
+<p class="text-slate-700 leading-relaxed mb-5">These are apps where two or more phones nearby pair directly and play
+without an internet connection. Hearts, Spades, Euchre, Crazy Eights,
+Cribbage — the classics work great in this format because they were
+designed pre-internet.</p>
+<p class="text-slate-700 leading-relaxed mb-5">The bar for “good” P2P card games in 2026:</p>
+<ul class="list-disc pl-6 space-y-2 text-slate-700 mb-6">
+<li class="leading-relaxed">Pairs in under 30 seconds without prompting for an account</li>
+<li class="leading-relaxed">Survives one phone going to sleep mid-hand</li>
+<li class="leading-relaxed">Lets you switch which side of the dealt hand each player sees</li>
+<li class="leading-relaxed">Doesn’t ding loudly when a turn changes (your seatmate will judge
+you)</li>
+</ul>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>Recommended:</strong> <a
+href="https://gamebuddi.app/?utm_source=blog&amp;utm_medium=content&amp;utm_campaign=airplane-games-no-wifi-2026">GameBuddi</a>
+covers Hearts, Spades, Cribbage, Euchre, and 30+ other card games in
+true P2P mode — no server, no account required. Pairs over local Wi-Fi
+or hotspot. We’re biased, obviously, but the offline-first architecture
+is the whole reason the app exists.</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">2. Single-device
+“pass-and-play” games</h3>
+<p class="text-slate-700 leading-relaxed mb-5">If your kid is the only one on the trip with a phone (or if their
+phone died at the lounge), pass-and-play is the workhorse. Both players
+use the same device, taking turns.</p>
+<p class="text-slate-700 leading-relaxed mb-5">The classic categories that work well in this format:</p>
+<ul class="list-disc pl-6 space-y-2 text-slate-700 mb-6">
+<li class="leading-relaxed"><strong>Word games:</strong> word ladders, hangman, basic crossword
+fill-ins.</li>
+<li class="leading-relaxed"><strong>Drawing games:</strong> modified Pictionary clones where one
+player draws on their lap-out tray table and the other guesses on the
+screen.</li>
+<li class="leading-relaxed"><strong>Quiz games:</strong> trivia decks where you flip the device
+for each question. Works great with kids who like reading.</li>
+</ul>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>Tip:</strong> anything with a “tournament” or “ladder” mode
+tends to require server-side score tracking. Look for “local play only”
+modes if you want guaranteed offline behavior.</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">3. Single-player
+puzzles that don’t phone home</h3>
+<p class="text-slate-700 leading-relaxed mb-5">Solitaire, sudoku, crossword apps, jigsaw puzzles, picross — most of
+these have offline modes that work. The trap is ads. The puzzle itself
+doesn’t need internet, but the ad framework does, and a lot of apps
+refuse to run without “verifying” the ad system on launch.</p>
+<p class="text-slate-700 leading-relaxed mb-5">The fix: download once, play in airplane mode immediately after
+launch to confirm. If the puzzle loads, the ads are decoupled and you’re
+good. If the screen sits on a loading wheel, it’s coupled — delete and
+find another.</p>
+<p class="text-slate-700 leading-relaxed mb-5">A few that consistently behave well in our testing:</p>
+<ul class="list-disc pl-6 space-y-2 text-slate-700 mb-6">
+<li class="leading-relaxed">Microsoft Solitaire Collection (free, ad-free if you have Game
+Pass)</li>
+<li class="leading-relaxed">Sudoku.com by Easybrain (works offline once you’ve played at least
+one daily challenge online)</li>
+<li class="leading-relaxed">Most paid crossword apps (the New York Times Crossword app,
+Crossword Quest, Squardle) — paid usually means no ads, which means no
+ad-network dependency</li>
+</ul>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">4. Audio-only
+games for the youngest passengers</h3>
+<p class="text-slate-700 leading-relaxed mb-5">For kids under 6, screen time on a plane is fine but limited. What
+works really well for the last hour of a long flight: audio games.</p>
+<p class="text-slate-700 leading-relaxed mb-5">Most of these are podcasts, but a few are interactive:</p>
+<ul class="list-disc pl-6 space-y-2 text-slate-700 mb-6">
+<li class="leading-relaxed"><strong>Audible kids stories</strong> (download before leaving) —
+passive but reliable.</li>
+<li class="leading-relaxed"><strong>Yoto player</strong> if you packed one — fully offline by
+design.</li>
+<li class="leading-relaxed"><strong>Spotify Kids</strong> with downloaded playlists — works
+offline if you remembered to hit the download icon at home.</li>
+</ul>
+<p class="text-slate-700 leading-relaxed mb-5">None of these need internet at altitude. The catch is they all need
+to be downloaded before you leave home. Two days before, not two hours
+before — large podcasts can take an hour to download and airport Wi-Fi
+is too slow.</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">5. Console/handheld games</h3>
+<p class="text-slate-700 leading-relaxed mb-5">Switch Lite is still the gold standard for in-flight play for kids 6
+and up. Switch games run fully offline by default; multiplayer over
+local wireless works for 2 Switch devices sitting next to each other on
+the tray tables. No setup. No internet.</p>
+<p class="text-slate-700 leading-relaxed mb-5">Equivalent on the Apple side: any Apple Arcade game runs offline once
+downloaded. Subscription-required to launch the first time, but once
+it’s on the device, it stays playable.</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">6. Board games
+on tray tables (low-tech, high-success)</h3>
+<p class="text-slate-700 leading-relaxed mb-5">The single most underrated airplane game category: actual cards. A $3
+deck of playing cards, $4 for Uno, $6 for a travel-size Catan. Battery
+life: infinite. Wi-Fi requirement: zero. Risk of melting down because
+the screen froze: zero.</p>
+<p class="text-slate-700 leading-relaxed mb-5">If you’re traveling with kids who can read, <strong>also
+pack:</strong> - A travel chess board (magnetic) - A small word-game
+like Bananagrams - A deck of trivia cards (one of the “What Do You Meme
+Family Edition”–style packs)</p>
+<p class="text-slate-700 leading-relaxed mb-5">Mix one analog game per kid into the bag. The tray table is bigger
+than you think and 30 minutes of cards usually buys 30 minutes of peace
+before they go back to the screen.</p>
+<h2 class="text-2xl font-bold text-slate-900 mt-12 mb-4">The 4-step pre-flight test</h2>
+<p class="text-slate-700 leading-relaxed mb-5">The night before your flight, run this 4-step check on every game you
+plan to use on the plane. Takes 5 minutes per app.</p>
+<ol type="1">
+<li class="leading-relaxed"><strong>Open the app while connected to home Wi-Fi.</strong> Let it
+fully load to the menu.</li>
+<li class="leading-relaxed"><strong>Force-quit and turn on airplane mode.</strong> Don’t just
+toggle Wi-Fi off — actually engage airplane mode so the OS doesn’t try
+to reconnect.</li>
+<li class="leading-relaxed"><strong>Re-open the app.</strong> If it shows you the menu, good. If
+it shows a connection error, that app does not work offline regardless
+of what the listing said.</li>
+<li class="leading-relaxed"><strong>Start a game.</strong> Play 2-3 turns. If it stalls or
+freezes, that app does not actually work in flight — find a
+replacement.</li>
+</ol>
+<p class="text-slate-700 leading-relaxed mb-5">Apps that pass all 4 steps go in the “in-flight” folder on the home
+screen. Anything else gets moved off.</p>
+<h2 class="text-2xl font-bold text-slate-900 mt-12 mb-4">What about in-flight Wi-Fi?</h2>
+<p class="text-slate-700 leading-relaxed mb-5">A note on the obvious workaround. Most major airlines now offer
+in-flight Wi-Fi — typically $8-15 per device, sometimes free for
+elite-status passengers. Why not just buy it?</p>
+<p class="text-slate-700 leading-relaxed mb-5">Three reasons:</p>
+<ol type="1">
+<li class="leading-relaxed"><strong>Cost stacks fast.</strong> Family of four × $12 × two
+flights = $96. That’s the price of 8 paid kids games you’d actually own
+afterward.</li>
+<li class="leading-relaxed"><strong>It’s unreliable.</strong> Even on the airlines that have it,
+in-flight Wi-Fi drops constantly. A game that depends on a live server
+connection will freeze every 15 minutes. Offline games don’t care.</li>
+<li class="leading-relaxed"><strong>It doesn’t help during the climbout and descent.</strong>
+Roughly 40 minutes of every flight are exactly the periods kids are most
+restless — and that’s exactly when devices have to be on airplane mode.
+Offline games work during that window. Online ones don’t.</li>
+</ol>
+<p class="text-slate-700 leading-relaxed mb-5">The practical answer: install offline games first, treat in-flight
+Wi-Fi as a backup for the parent’s own laptop work, not the kids’
+games.</p>
+<h2 class="text-2xl font-bold text-slate-900 mt-12 mb-4">The
+download-the-night-before checklist</h2>
+<p class="text-slate-700 leading-relaxed mb-5">If you’re flying tomorrow:</p>
+<ul class="task-list">
+<li class="leading-relaxed"><label><input type="checkbox" />Download GameBuddi or your chosen
+P2P card game on every device</label></li>
+<li class="leading-relaxed"><label><input type="checkbox" />Run the 4-step pre-flight test on
+each</label></li>
+<li class="leading-relaxed"><label><input type="checkbox" />Download Audible/Yoto/Spotify
+content (3 hours of audio per kid)</label></li>
+<li class="leading-relaxed"><label><input type="checkbox" />Move offline-tested games into a
+single “Flight” folder on each home screen</label></li>
+<li class="leading-relaxed"><label><input type="checkbox" />Pack one analog game per kid in the
+carry-on</label></li>
+<li class="leading-relaxed"><label><input type="checkbox" />Charge every device to 100% the
+night before, plus pack a battery pack rated 10,000mAh+</label></li>
+<li class="leading-relaxed"><label><input type="checkbox" />Verify the kids know where airplane
+mode is — they will need to toggle it themselves the next morning when
+you’re not paying attention</label></li>
+</ul>
+<p class="text-slate-700 leading-relaxed mb-5">If you’re flying next week, run the same checklist tonight. The
+mistakes you avoid are the ones you have time to discover.</p>
+<h2 class="text-2xl font-bold text-slate-900 mt-12 mb-4">What to do if
+everything fails at altitude</h2>
+<p class="text-slate-700 leading-relaxed mb-5">Worst case: you forgot the night-before install, the games you do
+have don’t work, the in-flight Wi-Fi was sold out, and the kids are
+about to revolt.</p>
+<p class="text-slate-700 leading-relaxed mb-5">The fallback that actually works:</p>
+<ol type="1">
+<li class="leading-relaxed"><strong>One device, two kids, pass-and-play.</strong> Almost every
+game can be reframed as turn-based if you’re willing to physically pass
+the phone. Use a 1-minute kitchen-timer trick to keep it fair.</li>
+<li class="leading-relaxed"><strong>The parent becomes the game.</strong> Stories from your own
+childhood, “would-you-rather,” 20-questions. Sounds cheesy. Works.</li>
+<li class="leading-relaxed"><strong>Sleep is the goal.</strong> A tired kid asleep at 30,000
+feet is a win. Lower the screen brightness, hand them a blanket, let the
+engine noise do the rest.</li>
+</ol>
+<h2 class="text-2xl font-bold text-slate-900 mt-12 mb-4">Final pre-flight summary</h2>
+<p class="text-slate-700 leading-relaxed mb-5">The shortest version of this entire guide:</p>
+<ul class="list-disc pl-6 space-y-2 text-slate-700 mb-6">
+<li class="leading-relaxed"><strong>Download offline-first P2P apps the night before</strong>
+(GameBuddi, Switch games, downloaded Apple Arcade).</li>
+<li class="leading-relaxed"><strong>Run the 4-step pre-flight test</strong> on every app.</li>
+<li class="leading-relaxed"><strong>Pack one analog game per kid.</strong></li>
+<li class="leading-relaxed"><strong>Charge to 100% + battery pack.</strong></li>
+<li class="leading-relaxed"><strong>Skip in-flight Wi-Fi</strong> unless you specifically need
+it for adult work.</li>
+</ul>
+<p class="text-slate-700 leading-relaxed mb-5">A flight isn’t the time to discover your offline games aren’t
+actually offline. Do the work the night before. The kids will be fine,
+you’ll be fine, and the family in seats 21B and 21C won’t have to hear
+“but it WORKED at home” for six hours.</p>
+<hr />
+<p class="text-slate-700 leading-relaxed mb-5"><strong>Related pillars:</strong> - <a
+href="/blog/best-offline-multiplayer-card-games-2026">The Best Offline
+Multiplayer Card Games for 2026</a> - <a
+href="/blog/cribbage-online-with-friends-2026">Cribbage Online With
+Friends: 6 Apps Compared (Offline Included)</a></p>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>Try GameBuddi free:</strong> <a
+href="https://gamebuddi.app/?utm_source=blog&amp;utm_medium=content&amp;utm_campaign=airplane-games-no-wifi-2026">gamebuddi.app</a>
+— 35+ card and arcade games, offline-first P2P, no account required.</p>
+`,
+},
 ]
 
 export function getAllSlugs(): string[] {
