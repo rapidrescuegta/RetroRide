@@ -38,7 +38,8 @@ ArcadeClash / RetroRide — 30 classic arcade games, group challenges, P2P multi
 
 ### What I learned
 
-_(empty — fill on next self-study tick)_
+- Blog posts live in `src/app/blog/posts.ts` as a `BlogPost[]` array; the slug page `[slug]/page.tsx` ALWAYS renders `BlogPosting` JSON-LD (FAQPage only if `faqs` present). To add a post: paste the `~/growth-engine/ship-kit/snippets/gamebuddi-*.tsx` object (already a complete `{...},`) directly before the closing `]` of the array, then add a `<url>` to `public/sitemap.xml`. Verify with `npx tsc --noEmit`.
+- Deploy is fragile: (1) GitHub auto-deploy webhook has been missing for weeks (`gh api repos/rapidrescuegta/RetroRide/hooks` == `[]`), so `git push` does NOT deploy; (2) Railway CLI token at `~/.config/railway/token` expires and `railway login` needs interactive browser OAuth I can't do — the stored token also fails as RAILWAY_TOKEN/RAILWAY_API_TOKEN env. When both are down, code ships to main but stays undeployed. Only Giuseppe can fix (re-login OR reconnect Railway Source). 2026-07-10: pillar #3 committed (363086b) + pushed but stuck undeployed on both counts.
 
 ### Patterns that worked
 
