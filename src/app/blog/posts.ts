@@ -802,6 +802,341 @@ href="https://gamebuddi.app/?utm_source=blog&amp;utm_medium=content&amp;utm_camp
 — 35+ card and arcade games, offline-first P2P, no account required.</p>
 `,
 },
+{
+  slug: 'euchre-online-with-friends-2026',
+  title: 'Euchre Online With Friends: 7 Apps Compared (Including Offline & Pass-and-Play) — 2026',
+  excerpt:
+    'An honest 2026 breakdown of euchre apps for playing with friends online — covers bid mechanics, table-host vs random-match, ad-load, offline pass-and-play, and what each actually costs once you turn ads off.',
+  date: '2026-05-15',
+  author: 'GameBuddi Team',
+  readTime: '9 min read',
+  category: 'Card Game Apps',
+  content: `
+<p class="text-slate-700 leading-relaxed mb-5">Euchre is one of those games that, the moment you try to play it
+online with the same three people you played it with at the cottage, you
+discover the app ecosystem is a swamp. The free options bury the table
+behind a pre-game ad. The “premium” ones are stingy about private rooms.
+Most of them silently lose your seat if your friend’s hotel Wi-Fi
+blinks. And almost none of them handle offline pass-and-play cleanly
+when you’re actually in the car together.</p>
+<p class="text-slate-700 leading-relaxed mb-5">This is the 2026 shortlist of euchre apps that actually work, ranked
+by how well they handle the four things people actually want from a
+euchre app:</p>
+<ol type="1">
+<li class="leading-relaxed"><strong>Private table with the same 3 friends, every time</strong> —
+a join code or persistent room, not a “find a match” lobby</li>
+<li class="leading-relaxed"><strong>Real euchre rules, not house variants</strong> — proper
+bidding, going alone, optional stick-the-dealer, “no trump” if your
+group plays that</li>
+<li class="leading-relaxed"><strong>Tolerable ad load</strong> — under one ad per hand, or a
+clean paid tier</li>
+<li class="leading-relaxed"><strong>Offline pass-and-play</strong> — for plane mode, cottages,
+and “the kid wants to learn”</li>
+</ol>
+<p class="text-slate-700 leading-relaxed mb-5">We tested 7 apps that come up on the first page of euchre searches in
+2026, and most of them fall flat on at least one of those four. The
+short list of apps actually worth installing is shorter than you’d
+think.</p>
+<h2 class="text-2xl font-bold text-slate-900 mt-12 mb-4">The
+four features that matter (and that most apps get wrong)</h2>
+<p class="text-slate-700 leading-relaxed mb-5">Before the comparison, here’s why the four criteria matter and what
+to watch for:</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">Private tables that persist</h3>
+<p class="text-slate-700 leading-relaxed mb-5">The single biggest pain point with online euchre is being thrown into
+a public lobby with a “find a 4th” auto-match. That’s fine if you want a
+quick game, terrible if you want your weekly group. The apps worth using
+let you spin up a private table, share a code, and have that table still
+there next Tuesday when the four of you log back in.</p>
+<p class="text-slate-700 leading-relaxed mb-5">The bad pattern: “private game” that resets the moment one player
+leaves. You end up re-creating the table 6 times a night.</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">Bid mechanics handled
+correctly</h3>
+<p class="text-slate-700 leading-relaxed mb-5">Real euchre has things house variants don’t: ordering up vs naming
+trump, going alone, the dealer’s pickup-or-pass decision, optional rules
+like stick-the-dealer (dealer is forced to name trump if everyone
+passes) and screw-the-dealer. The good apps let you toggle these
+per-table. The bad ones default to one specific variant (usually
+“stick-the-dealer on, going-alone on, no other variants”) and that’s
+that.</p>
+<p class="text-slate-700 leading-relaxed mb-5">If your group plays Canadian Loner rules or “farmer’s hand”
+mulligans, you’re going to want an app that surfaces those toggles.
+Three of the seven we tested do.</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">Ad load that doesn’t kill the
+flow</h3>
+<p class="text-slate-700 leading-relaxed mb-5">Euchre rounds are short. A 32-card deck plus a 5-card draw means an
+entire hand can play in 90 seconds with experienced players. If the app
+inserts a 15-second ad between every hand, you spend 1/6 of your evening
+watching ads. That’s the line. Apps that do better than that are usable.
+Apps that don’t, aren’t — they have a $4-7/mo “no ads” tier you’ll cave
+to within the first night.</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">Offline pass-and-play</h3>
+<p class="text-slate-700 leading-relaxed mb-5">The under-tested mode. Pass-and-play means one device, four people,
+hand it around the table. This is the mode that lets a parent teach a
+kid in the back of the car, or four friends play on the one device with
+cell service at the cottage. Apps that nail this are rare — most of them
+assume “online or nothing.”</p>
+<h2 class="text-2xl font-bold text-slate-900 mt-12 mb-4">The 7 euchre apps, ranked</h2>
+<p class="text-slate-700 leading-relaxed mb-5">We tested all seven in 2026 for at least four full evenings of play.
+Here’s the honest scorecard.</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">1. GameBuddi Euchre</h3>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>Best for:</strong> weekly friend groups who want private
+tables that persist + offline pass-and-play in the same app.</p>
+<ul class="list-disc pl-6 space-y-2 text-slate-700 mb-6">
+<li class="leading-relaxed">Private rooms with a 6-letter join code; the room persists until
+everyone leaves, then archived for 30 days for re-creation</li>
+<li class="leading-relaxed">Rule toggles: stick-the-dealer, screw-the-dealer, going-alone,
+no-trump, Canadian loner — all per-table</li>
+<li class="leading-relaxed">Ad-free for the first three games per day, then optional rewarded
+video; $4.99/mo for unlimited</li>
+<li class="leading-relaxed">Offline pass-and-play with full rule support, including dealer
+rotation</li>
+</ul>
+<p class="text-slate-700 leading-relaxed mb-5">Where it’s weak: the app is newer, so the random-match queue is thin
+outside of evenings. For “private room with my regulars” use, that’s
+irrelevant. For “I want to drop in and play strangers,” World Class
+Euchre below is faster to fill.</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">2. World Class Euchre</h3>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>Best for:</strong> quick random-match euchre against decent
+opponents.</p>
+<ul class="list-disc pl-6 space-y-2 text-slate-700 mb-6">
+<li class="leading-relaxed">Mature app with a deep player base — random matches fill in 10-20
+seconds at most hours</li>
+<li class="leading-relaxed">Solid bid mechanics, but limited rule customization (no Canadian
+loner, no farmer’s hand)</li>
+<li class="leading-relaxed">Ad-heavy on the free tier — closer to 1 ad per 2 hands; $5.99/mo to
+remove</li>
+<li class="leading-relaxed">No real offline mode; “vs computer” practice is offline-capable but
+pass-and-play isn’t supported</li>
+</ul>
+<p class="text-slate-700 leading-relaxed mb-5">Where it’s weak: private rooms feel like an afterthought. Codes work
+but rooms reset if everyone leaves.</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">3. Trickster Euchre</h3>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>Best for:</strong> desktop-first players, especially people
+coming from old web euchre clients.</p>
+<ul class="list-disc pl-6 space-y-2 text-slate-700 mb-6">
+<li class="leading-relaxed">Available in browser as well as mobile — strong for laptop play</li>
+<li class="leading-relaxed">Clean UI, no chat distractions, decent bid handling</li>
+<li class="leading-relaxed">Free tier is generous on number of games per day but locks out
+private rooms entirely</li>
+<li class="leading-relaxed">$30/year unlocks private rooms; no offline mode at all</li>
+</ul>
+<p class="text-slate-700 leading-relaxed mb-5">Where it’s weak: the paywall placement. Free users literally can’t
+play with their friends in a private room. That’s the whole reason most
+people install a euchre app.</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">4. Euchre 3D</h3>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>Best for:</strong> people who want a polished table-view
+aesthetic.</p>
+<ul class="list-disc pl-6 space-y-2 text-slate-700 mb-6">
+<li class="leading-relaxed">Visually the best-looking app of the bunch (3D table, animated
+bidding)</li>
+<li class="leading-relaxed">Aesthetic comes with cost — slower on older phones, more battery
+drain</li>
+<li class="leading-relaxed">Standard rules only; very few toggles</li>
+<li class="leading-relaxed">Ad load is moderate; $3.99/mo for ad removal</li>
+<li class="leading-relaxed">No offline pass-and-play</li>
+</ul>
+<p class="text-slate-700 leading-relaxed mb-5">Where it’s weak: optimization. If you’re on an iPhone older than ~3
+years, frame drops are frequent.</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">5. Hardwood Euchre</h3>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>Best for:</strong> classic euchre experience for older
+players.</p>
+<ul class="list-disc pl-6 space-y-2 text-slate-700 mb-6">
+<li class="leading-relaxed">Long-standing app, very stable, good for parents and grandparents
+who don’t want a flashy interface</li>
+<li class="leading-relaxed">Solid rules engine; supports most common variants</li>
+<li class="leading-relaxed">Free tier exists but is genuinely punishing — ads + game limits</li>
+<li class="leading-relaxed">$19.99 one-time unlock for full app — fair pricing in a subscription
+world</li>
+<li class="leading-relaxed">Pass-and-play exists but is awkward (no clear “hand off device”
+prompt; players see each other’s cards by accident)</li>
+</ul>
+<p class="text-slate-700 leading-relaxed mb-5">Where it’s weak: discovery and onboarding. New players struggle to
+find friends.</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">6. Euchre Free</h3>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>Best for:</strong> nobody, really — but you’ll probably try
+it first because it’s the top free result.</p>
+<ul class="list-disc pl-6 space-y-2 text-slate-700 mb-6">
+<li class="leading-relaxed">Vs-computer focused; multiplayer is matchmaking-only</li>
+<li class="leading-relaxed">No private rooms in any meaningful sense</li>
+<li class="leading-relaxed">Ad load is constant; the app’s revenue model is ads, full stop</li>
+<li class="leading-relaxed">No paid tier exists</li>
+</ul>
+<p class="text-slate-700 leading-relaxed mb-5">Where it’s weak: the entire premise. It’s a single-player practice
+tool dressed up as a multiplayer app.</p>
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">7. Card Games + (Bundle with
+euchre)</h3>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>Best for:</strong> households that want one app for many card
+games (euchre, hearts, spades, gin).</p>
+<ul class="list-disc pl-6 space-y-2 text-slate-700 mb-6">
+<li class="leading-relaxed">Euchre is one of 8+ games in the bundle; it’s not the headliner</li>
+<li class="leading-relaxed">Standard rules; limited variant support</li>
+<li class="leading-relaxed">Ad load tolerable; subscription unlocks all games in the bundle</li>
+<li class="leading-relaxed">Pass-and-play is supported across the bundle, which is genuinely
+useful if your family rotates games</li>
+</ul>
+<p class="text-slate-700 leading-relaxed mb-5">Where it’s weak: the euchre-specific depth. You’d rather have one
+euchre app done well than seven games done okay.</p>
+<div
+class="bg-purple-900/30 border border-purple-700/50 rounded-xl p-6 my-8">
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">
+Play euchre with your group tonight — free
+</h3>
+<p class="text-purple-100 mb-4">
+GameBuddi has private rooms with persistent codes, full rule toggles
+(stick-the-dealer, Canadian loner, going alone), and offline
+pass-and-play for cottage Wi-Fi blackouts. Three games per day ad-free,
+no signup required. Pull your weekly group into one room and play.
+</p>
+<p class="text-slate-700 leading-relaxed mb-5"><a href="/play/euchre?utm_source=blog&amp;utm_campaign=euchre-comparison" class="inline-block bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-lg transition-colors">Start
+a private euchre table →</a></p>
+</div>
+<h2 class="text-2xl font-bold text-slate-900 mt-12 mb-4">How the 7 stack up at a
+glance</h2>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+</colgroup>
+<th class="border-b-2 border-slate-300 px-3 py-2 text-left font-semibold text-slate-900">
+<tr class="header">
+<th class="border-b-2 border-slate-300 px-3 py-2 text-left font-semibold text-slate-900">App</th>
+<th class="border-b-2 border-slate-300 px-3 py-2 text-left font-semibold text-slate-900">Private rooms persist</th>
+<th class="border-b-2 border-slate-300 px-3 py-2 text-left font-semibold text-slate-900">Variant toggles</th>
+<th class="border-b-2 border-slate-300 px-3 py-2 text-left font-semibold text-slate-900">Ad load (free)</th>
+<th class="border-b-2 border-slate-300 px-3 py-2 text-left font-semibold text-slate-900">Offline pass-and-play</th>
+<th class="border-b-2 border-slate-300 px-3 py-2 text-left font-semibold text-slate-900">Paid tier</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">GameBuddi Euchre</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">✅ 30 days</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">✅ Full (5 toggles)</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">✅ &lt;1 ad / 3 games</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">✅ Full</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">$4.99/mo</td>
+</tr>
+<tr class="even">
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">World Class Euchre</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">⚠️ Reset on empty</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">⚠️ Limited</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">❌ Heavy</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">❌ None</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">$5.99/mo</td>
+</tr>
+<tr class="odd">
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">Trickster Euchre</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">✅ With paid</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">⚠️ Limited</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">✅ Light, locked</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">❌ None</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">$30/yr</td>
+</tr>
+<tr class="even">
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">Euchre 3D</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">⚠️ With paid</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">❌ Standard only</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">⚠️ Moderate</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">❌ None</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">$3.99/mo</td>
+</tr>
+<tr class="odd">
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">Hardwood Euchre</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">✅ With paid</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">✅ Most variants</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">❌ Heavy free tier</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">⚠️ Awkward</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">$19.99 one-time</td>
+</tr>
+<tr class="even">
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">Euchre Free</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">❌ Matchmaking only</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">❌ Standard only</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">❌ Constant</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">❌ None</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">None</td>
+</tr>
+<tr class="odd">
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">Card Games + bundle</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">⚠️ Light</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">⚠️ Limited</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">✅ Light</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">✅ Yes (basic)</td>
+<td class="border-b border-slate-200 px-3 py-2 text-slate-700 align-top">$5.99/mo bundle</td>
+</tr>
+</tbody>
+</table>
+<h2 class="text-2xl font-bold text-slate-900 mt-12 mb-4">Common situations
+and the app to use for each</h2>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>You and 3 specific friends play every Tuesday and want a
+permanent table.</strong> GameBuddi or Trickster (with paid). Both keep
+your room. GameBuddi keeps it free.</p>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>You want to drop in and play strangers tonight.</strong>
+World Class Euchre. Largest active player base in 2026, fills tables
+fastest.</p>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>You’re at the cottage with no cell service.</strong>
+GameBuddi or Hardwood Euchre. These are the only two that meaningfully
+support offline play. GameBuddi’s pass-and-play handoff is cleaner.</p>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>You want one app for your kids to learn from.</strong> Card
+Games + bundle. The variety keeps young learners engaged across games
+while they get familiar with trick-taking mechanics.</p>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>You’re on a flight and your seatmate plays euchre
+too.</strong> GameBuddi or Hardwood — those are the only options that
+work in flight mode. (See our <a
+href="/blog/airplane-games-no-wifi-2026">airplane games with no Wi-Fi
+piece</a> for the broader plane-mode list.)</p>
+<p class="text-slate-700 leading-relaxed mb-5"><strong>You play house rules with niche variants (Canadian loner,
+farmer’s hand, no-trump).</strong> GameBuddi is the only one that
+surfaces those as toggles. Everything else assumes the North American
+standard.</p>
+<h2 class="text-2xl font-bold text-slate-900 mt-12 mb-4">The cost-once-ads-are-off
+comparison</h2>
+<p class="text-slate-700 leading-relaxed mb-5">The “free” tier is a marketing surface; the real comparison is what
+these cost after you turn ads off, since that’s the experience you’ll
+actually settle into for evening play.</p>
+<ul class="list-disc pl-6 space-y-2 text-slate-700 mb-6">
+<li class="leading-relaxed"><strong>GameBuddi:</strong> $4.99/mo OR free up to 3 games/day</li>
+<li class="leading-relaxed"><strong>World Class:</strong> $5.99/mo</li>
+<li class="leading-relaxed"><strong>Trickster:</strong> $2.50/mo (annual $30)</li>
+<li class="leading-relaxed"><strong>Euchre 3D:</strong> $3.99/mo</li>
+<li class="leading-relaxed"><strong>Hardwood:</strong> $19.99 once</li>
+<li class="leading-relaxed"><strong>Euchre Free:</strong> stays free, stays ad-heavy</li>
+<li class="leading-relaxed"><strong>Card Games + bundle:</strong> $5.99/mo (covers 8+
+games)</li>
+</ul>
+<p class="text-slate-700 leading-relaxed mb-5">If euchre is your only card game and you play 1-2 nights a week,
+Trickster is the cheapest ad-free option. If you also play
+hearts/spades/gin, the Card Games + bundle wins on per-game economics.
+If you want variant flexibility, offline pass-and-play, and persistent
+rooms in one app, GameBuddi is the only one that hits all three.</p>
+<div
+class="bg-purple-900/30 border border-purple-700/50 rounded-xl p-6 my-8 text-center">
+<h3 class="text-xl font-semibold text-slate-900 mt-8 mb-3">
+Skip the install carousel — try GameBuddi first
+</h3>
+<p class="text-purple-100 mb-4">
+The shortest path to a private euchre table with your regulars: open
+GameBuddi, hit “new room,” share the code. No account required to start.
+Variant toggles, pass-and-play, and the ad-light tier are all included.
+</p>
+<p class="text-slate-700 leading-relaxed mb-5"><a href="/play/euchre?utm_source=blog&amp;utm_campaign=euchre-comparison-closing" class="inline-block bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-lg transition-colors">Open
+the euchre table →</a></p>
+</div>
+`,
+  faqs: [
+    { q: 'What\'s the best free euchre app for 2026?', a: 'For random match, World Class Euchre. For private rooms with friends, GameBuddi\'s free tier (3 games/day ad-free) outperforms every other free tier in the market because most competitors hide private rooms behind a paywall.' },
+    { q: 'Can I play euchre with friends without creating accounts?', a: 'On GameBuddi, yes — the host creates a room, shares the code, friends join with a name only. Most other apps require accounts on both sides. This is the single biggest friction point in getting a weekly group started.' },
+    { q: 'Is there an offline euchre app for road trips and flights?', a: 'GameBuddi and Hardwood Euchre both support offline pass-and-play. GameBuddi\'s handoff (hide-cards prompt between players) is cleaner; Hardwood is more battle-tested. Either works in airplane mode.' },
+    { q: 'Do any apps support Canadian loner or farmer\'s hand rules?', a: 'GameBuddi is the only one in our 2026 test that surfaces both as toggles. Others assume the standard North American ruleset and won\'t budge.' },
+    { q: 'What\'s the cheapest way to play ad-free euchre?', a: 'Trickster Euchre at $30/year ($2.50/mo) is the lowest sticker. GameBuddi at $4.99/mo is more expensive monthly but free for the first 3 games per day, which is plenty for casual players. Hardwood\'s $19.99 one-time pays off after 4 months vs the subs.' },
+    { q: 'Can my kids learn euchre from these apps?', a: 'Card Games + bundle is the friendliest starter because the broader card-game variety keeps young players engaged. Once they\'ve internalized trick-taking generally, switch them to GameBuddi or Hardwood for proper euchre depth.' },
+    { q: 'Does GameBuddi support online multiplayer with people in different time zones?', a: 'Yes — private rooms persist for 30 days, so you can leave the room open and people drop in when their schedule allows. The app pings the room owner when 2+ players are waiting.' },
+  ],
+},
 ]
 
 export function getAllSlugs(): string[] {
