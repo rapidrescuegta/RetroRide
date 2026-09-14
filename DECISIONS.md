@@ -35,3 +35,11 @@ Decisions made during autonomous development sessions.
 - **Decision**: PWA was already production-ready. Made minor improvements to icon declarations and apple-touch-icon metadata.
 - **What was already in place**: manifest.json with standalone display, theme colors, 10 app shortcuts, screenshots, share target, launch handler. Service worker v17 with multi-strategy caching (cache-first, stale-while-revalidate, network-first), navigation preload, offline fallback page, background sync for tournament scores, periodic sync, push notifications. InstallPrompt component with platform-specific prompts (iOS manual instructions, Android native prompt). OfflineIndicator with sync status. ServiceWorkerRegistration with lifecycle management and hourly update checks.
 - **What was added**: Multi-size icon declarations in manifest for better cross-device support. Added 180x180 apple-touch-icon link tag (the required size for iOS home screen icons).
+
+
+## Auto-captured 2026-09-14 (operator-confirmed)
+- **Fact extraction from conversation:** NONE
+- **Weekly HQ brief (3 bullets):**
+- **Deadline/court:** None identified.
+- **Actions for Giuseppe:** Reconnect Railway auto-deploy Source to GitHub (60-sec fix required to unblock blog posts #3/#4 and Stripe).
+- **FYI:** GitHub webhook severed; manual deploys of older commits still happen; blog pillars `airplane-games-no-wifi-2026` and `euchre-online-with-friends-2026` remain 404 (commits 363086b/4689193 undeployed).
