@@ -43,3 +43,9 @@ Decisions made during autonomous development sessions.
 - **Deadline/court:** None identified.
 - **Actions for Giuseppe:** Reconnect Railway auto-deploy Source to GitHub (60-sec fix required to unblock blog posts #3/#4 and Stripe).
 - **FYI:** GitHub webhook severed; manual deploys of older commits still happen; blog pillars `airplane-games-no-wifi-2026` and `euchre-online-with-friends-2026` remain 404 (commits 363086b/4689193 undeployed).
+
+
+## Auto-captured 2026-09-15 (operator-confirmed)
+- **No court/deadline dates** identified in this week's RetroRide activity.
+- **Giuseppe action required**: Reconnect Railway↔GitHub auto-deploy webhook (root blocker for blog pillars #3/#4 and Stripe setup).
+- **FYI**: www.gamebuddi.com currently shows 404 on two key blog pillars; older `main` commits still deploying one-off.
