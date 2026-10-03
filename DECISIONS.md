@@ -49,3 +49,10 @@ Decisions made during autonomous development sessions.
 - **No court/deadline dates** identified in this week's RetroRide activity.
 - **Giuseppe action required**: Reconnect Railway↔GitHub auto-deploy webhook (root blocker for blog pillars #3/#4 and Stripe setup).
 - **FYI**: www.gamebuddi.com currently shows 404 on two key blog pillars; older `main` commits still deploying one-off.
+
+## Auto-captured 2026-10-02 (cross-project sweep)
+- **Open next-steps (3, all share root blocker):** (1) Blog pillars #3 `#blog/airplane-games-no-wifi-2026` and #4 `#blog/euchre-online-with-friends-2026` undeployed (commits 363086b/4689193, both 404 on www.gamebuddi.com); (2) Stripe setup deferred (cycle-106 pricing-refactor prerequisite); (3) GitHub auto-deploy Source severed (`gh api repos/rapidrescuegta/RetroRide/hooks` → `[]`).
+- **Live-site check (the one check worth re-running):** root 200 (`GameBuddi — Classic Arcade Games`), pillar #3 = 404, pillar #4 = 404, older posts `cribbage-online-with-friends-2026` and `best-offline-multiplayer-card-games-2026` = 200 — same pattern as 09-01. State identical to last 6 weeks.
+- **Deferral reason (one line):** all 3 are blocked by the same single root cause (Railway Source↔GitHub webhook severed) that only Giuseppe can fix (Railway → retroride → Settings → Source → connect rapidrescuegta/RetroRide, ~60s); 58d since 08-05 escalation but no NEW blocked item has appeared, so memory guard does not authorise a re-email — deferring pending Giuseppe's 60-sec fix.
+- **Actions for Giuseppe:** Reconnect Railway auto-deploy Source to GitHub (60-sec fix) — unblocks pillars #3/#4, Stripe setup, and every future blog/content push in one shot.
+- **FYI:** Older one-off `main` deploys are still happening (older blog posts ship fine), so the app is NOT down — only NEW content since the webhook severed is stranded on `main` waiting for a Source reconnect.
