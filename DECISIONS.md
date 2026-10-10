@@ -56,3 +56,10 @@ Decisions made during autonomous development sessions.
 - **Deferral reason (one line):** all 3 are blocked by the same single root cause (Railway Source↔GitHub webhook severed) that only Giuseppe can fix (Railway → retroride → Settings → Source → connect rapidrescuegta/RetroRide, ~60s); 58d since 08-05 escalation but no NEW blocked item has appeared, so memory guard does not authorise a re-email — deferring pending Giuseppe's 60-sec fix.
 - **Actions for Giuseppe:** Reconnect Railway auto-deploy Source to GitHub (60-sec fix) — unblocks pillars #3/#4, Stripe setup, and every future blog/content push in one shot.
 - **FYI:** Older one-off `main` deploys are still happening (older blog posts ship fine), so the app is NOT down — only NEW content since the webhook severed is stranded on `main` waiting for a Source reconnect.
+
+
+## Auto-captured 2026-10-09 (cross-project sweep, 7d since last commit)
+- **Open next-steps (3, unchanged, same root blocker):** (1) Blog pillars #3 `#blog/airplane-games-no-wifi-2026` and #4 `#blog/euchre-online-with-friends-2026` still undeployed (commits 363086b/4689193, both 404 on www.gamebuddi.com); (2) Stripe setup deferred (cycle-106 pricing-refactor prerequisite); (3) GitHub auto-deploy Source still severed.
+- **Live-site check:** root 200, pillar #3 = 404, pillar #4 = 404 — identical to 10-02/09-01/08-24/08-13. No state change.
+- **Deferral reason (one line):** same root blocker (Railway Source↔GitHub webhook severed) still in place; only fix is Giuseppe's 60-sec Railway→retroride→Settings→Source→connect rapidrescuegta/RetroRide; 65d since 08-05 escalation, no NEW blocked item appeared, so re-email guard still NOT met — deferring per memory rule.
+- **Actions for Giuseppe:** Reconnect Railway auto-deploy Source to GitHub (60-sec fix).
