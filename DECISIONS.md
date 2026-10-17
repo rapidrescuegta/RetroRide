@@ -63,3 +63,11 @@ Decisions made during autonomous development sessions.
 - **Live-site check:** root 200, pillar #3 = 404, pillar #4 = 404 — identical to 10-02/09-01/08-24/08-13. No state change.
 - **Deferral reason (one line):** same root blocker (Railway Source↔GitHub webhook severed) still in place; only fix is Giuseppe's 60-sec Railway→retroride→Settings→Source→connect rapidrescuegta/RetroRide; 65d since 08-05 escalation, no NEW blocked item appeared, so re-email guard still NOT met — deferring per memory rule.
 - **Actions for Giuseppe:** Reconnect Railway auto-deploy Source to GitHub (60-sec fix).
+
+
+## Auto-captured 2026-10-16 (cross-project sweep, 7d since last commit)
+- **Open next-steps (3, unchanged, same root blocker):** (1) Blog pillars #3 `#blog/airplane-games-no-wifi-2026` and #4 `#blog/euchre-online-with-friends-2026` still undeployed (commits 363086b/4689193, both 404 on www.gamebuddi.com); (2) Stripe setup deferred (cycle-106 pricing-refactor prerequisite); (3) GitHub auto-deploy Source still severed (`gh api repos/rapidrescuegta/RetroRide/hooks` → `[]`).
+- **Live-site check (www.gamebuddi.com):** root 200, pillar #3 = 404, pillar #4 = 404, older posts (`best-offline-multiplayer-card-games-2026`, `cribbage-online-with-friends-2026`) = 200 — identical to 10-09/10-02/09-01/08-24/08-13. No state change for 7+ weeks.
+- **Deferral reason (one line):** single root blocker (Railway Source↔GitHub webhook severed, only fix is Giuseppe's 60-sec Railway→retroride→Settings→Source→connect rapidrescuegta/RetroRide) gates all 3 next-steps; 72d since 08-05 escalation, no NEW blocked item appeared, so re-email guard still NOT met — deferring per memory rule until Giuseppe reconnects Source.
+- **Actions for Giuseppe:** Reconnect Railway auto-deploy Source to GitHub (60-sec fix) — unblocks pillars #3/#4, Stripe setup, and every future push in one shot.
+- **FYI:** 9 commits are sitting unpushed locally on `main` (working tree clean, but origin is 9 behind) — push will happen the moment Source is reconnected; older one-off deploys continue to ship fine, so the app is not down, only new content since webhook severed is stranded.
