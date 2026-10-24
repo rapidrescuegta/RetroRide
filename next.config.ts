@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
       },
       {
         // Static assets (icons, screenshots) — long cache
-        source: '/:path(icon-.*\\.png|screenshots/.*\\.png|favicon\\.png)',
+        source: '/:path(icon-.*\\.png|screenshots/.*\\.png|favicon\\.png|favicon\\.ico)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
