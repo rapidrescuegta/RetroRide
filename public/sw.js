@@ -4,7 +4,7 @@
 // navigation preload, tournament & multiplayer page caching, app badge.
 // v18: added Snap card game to offline cache + route precache.
 
-const CACHE_VERSION = 'v18'
+const CACHE_VERSION = 'v19'
 const STATIC_CACHE = `gamebuddi-static-${CACHE_VERSION}`
 const GAME_CACHE = `gamebuddi-games-${CACHE_VERSION}`
 const PAGE_CACHE = `gamebuddi-pages-${CACHE_VERSION}`
@@ -129,9 +129,20 @@ async function trimCache(cacheName, maxEntries) {
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
-      // Cache critical pages first
+      // Cache critical pages first.
+      // NOTE: do NOT use cache.addAll() here — it is atomic, so a single 404
+      // (which is what /play used to be) rejects the whole batch and leaves
+      // the offline shell completely empty. Cache each page on its own so one
+      // bad URL can never take the rest down with it.
       const pageCache = await caches.open(PAGE_CACHE)
-      await pageCache.addAll(PRECACHE_PAGES).catch(() => {})
+      await Promise.all(
+        PRECACHE_PAGES.map(async (page) => {
+          try {
+            const response = await fetch(page)
+            if (response.ok) await pageCache.put(page, response)
+          } catch { /* individual page fail is OK */ }
+        })
+      )
 
       // Cache game routes in batches of 5 with delays to avoid bandwidth spikes
       const gameCache = await caches.open(GAME_CACHE)

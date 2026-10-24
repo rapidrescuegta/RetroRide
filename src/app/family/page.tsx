@@ -342,6 +342,15 @@ export default function FamilyPage() {
   const [sendingCode, setSendingCode] = useState(false)
   const [emailConsent, setEmailConsent] = useState(true)
 
+  // A paid tier sends the user here with ?plan=<planKey>. The plan has to
+  // survive the family-creation step, otherwise the purchase funnel dead-ends
+  // here and the tier selection is lost.
+  const [pendingPlan, setPendingPlan] = useState<string | null>(null)
+  useEffect(() => {
+    const plan = new URLSearchParams(window.location.search).get('plan')
+    if (plan) setPendingPlan(plan)
+  }, [])
+
   const formatCode = (raw: string) => {
     const clean = raw.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 8)
     if (clean.length > 4) return clean.slice(0, 4) + '-' + clean.slice(4)
@@ -443,6 +452,14 @@ export default function FamilyPage() {
           </header>
           <div className="max-w-md mx-auto px-4">
             <SuccessCreateScreen familyCode={ctx.family.code} />
+            {pendingPlan && (
+              <Link
+                href={`/pricing?plan=${encodeURIComponent(pendingPlan)}`}
+                className="mt-4 block w-full rounded-xl bg-purple-600 hover:bg-purple-500 transition-colors px-4 py-3 text-center font-semibold text-white"
+              >
+                Continue to checkout →
+              </Link>
+            )}
           </div>
         </div>
       )
@@ -462,6 +479,14 @@ export default function FamilyPage() {
           </header>
           <div className="max-w-md mx-auto px-4">
             <SuccessJoinScreen familyName={ctx.family.name} members={ctx.members} />
+            {pendingPlan && (
+              <Link
+                href={`/pricing?plan=${encodeURIComponent(pendingPlan)}`}
+                className="mt-4 block w-full rounded-xl bg-purple-600 hover:bg-purple-500 transition-colors px-4 py-3 text-center font-semibold text-white"
+              >
+                Continue to checkout →
+              </Link>
+            )}
           </div>
         </div>
       )
