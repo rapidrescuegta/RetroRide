@@ -50,6 +50,11 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/next.config.ts ./next.config.ts
+# prisma.config.ts is required by the Prisma 7 CLI at runtime (it supplies
+# datasource.url). Without it `prisma migrate deploy` aborts with
+# "The datasource.url property is required in your Prisma config file",
+# which is why the production database shipped with no tables at all.
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/src/generated ./src/generated
 

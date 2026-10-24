@@ -4,6 +4,11 @@ dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = "npm start"
+# Apply pending Prisma migrations before each deploy. Without this the schema
+# can silently drift from the code (the production DB had zero tables because
+# nothing ever ran the migrations). `migrate deploy` is idempotent — it is a
+# no-op when there is nothing pending.
+preDeployCommand = "npx prisma migrate deploy"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
