@@ -84,11 +84,18 @@ function loadServerEnv() {
 // Public variables (exposed to the browser via NEXT_PUBLIC_ prefix)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// NOTE: these MUST be read with static member access (`process.env.X`), never
+// through the dynamic `read()` helper. Next.js only inlines NEXT_PUBLIC_*
+// values into the client bundle when it can see the literal member expression
+// at build time — a dynamic `process.env[key]` compiles to an empty string in
+// the browser, which silently disables Stripe.js and the push subscribe flow.
 function loadPublicEnv() {
   return {
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: read('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY') ?? '',
-    NEXT_PUBLIC_APP_URL: read('NEXT_PUBLIC_APP_URL') ?? 'http://localhost:3000',
-    NEXT_PUBLIC_VAPID_PUBLIC_KEY: read('NEXT_PUBLIC_VAPID_PUBLIC_KEY') ?? '',
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
+      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '',
+    NEXT_PUBLIC_APP_URL:
+      process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? '',
   } as const
 }
 

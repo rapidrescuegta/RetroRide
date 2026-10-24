@@ -28,9 +28,19 @@ WORKDIR /app
 COPY --from=deps /tmp/build/node_modules ./node_modules
 COPY . .
 
+# NEXT_PUBLIC_* values are inlined into the client bundle by `next build`, so
+# they must be present *while the build runs*. Railway surfaces service
+# variables to the build (as build args and/or build env); declaring them as
+# ARG makes them visible to the RUN below without ever blanking out a value
+# that Railway already exported.
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
+
 # Generate Prisma client and build Next.js
 RUN npx prisma generate
-RUN npm run build
+RUN echo "[build] NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-MISSING} STRIPE_PK=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:+SET} VAPID_PK=${NEXT_PUBLIC_VAPID_PUBLIC_KEY:+SET}" \
+    && npm run build
 
 # ── Stage 3: Production ──────────────────────────────────────────────────────
 FROM node:22-alpine AS runner

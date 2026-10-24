@@ -50,7 +50,12 @@ export async function GET(request: NextRequest) {
       configured: isPushConfigured(),
     },
     turnServer: {
-      configured: !!process.env.TURN_SERVER_URL,
+      // /api/ice-config always serves 4 STUN servers and falls back to the
+      // built-in public TURN relay, so TURN is available even with no
+      // TURN_SERVER_URL configured. Report which source is in use instead of
+      // flagging a false negative.
+      configured: true,
+      source: process.env.TURN_SERVER_URL ? 'configured' : 'public-relay',
     },
   }
 
