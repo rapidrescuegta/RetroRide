@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useFamily } from '@/lib/family-context'
 import { GAMES } from '@/lib/games'
 import { queueAction } from '@/lib/offline-queue'
+import { useEntitlements } from '@/lib/use-entitlements'
+import UpgradePrompt from '@/components/UpgradePrompt'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -71,11 +73,13 @@ function OnlineBar({
   offline,
   currentMemberId,
   onChallenge,
+  challengesEnabled,
 }: {
   online: ChatMember[]
   offline: ChatMember[]
   currentMemberId: string | undefined
   onChallenge: (toMemberId: string, gameId: string) => void
+  challengesEnabled: boolean
 }) {
   const [challengeTarget, setChallengeTarget] = useState<string | null>(null)
 
@@ -85,12 +89,12 @@ function OnlineBar({
         <div key={m.id} className="relative flex-shrink-0">
           <button
             onClick={() =>
-              m.id !== currentMemberId
+              m.id !== currentMemberId && challengesEnabled
                 ? setChallengeTarget(challengeTarget === m.id ? null : m.id)
                 : undefined
             }
             className="flex flex-col items-center gap-1 group"
-            title={m.name}
+            title={challengesEnabled ? m.name : `${m.name} — challenges need a Squad plan`}
           >
             <span className="text-2xl relative">
               {m.avatar}
@@ -272,6 +276,7 @@ export default function FamilyHub() {
   const family = ctx?.family ?? null
   const member = ctx?.member ?? null
   const setOnlineMembers = ctx?.setOnlineMembers
+  const { entitlements } = useEntitlements()
 
   const [messages, setMessages] = useState<ChatMsg[]>([])
   const [online, setOnline] = useState<ChatMember[]>([])
@@ -488,6 +493,16 @@ export default function FamilyHub() {
     )
   }
 
+  // ---------- Chat is a Family-tier feature ----------
+  if (!entitlements.chat) {
+    return (
+      <UpgradePrompt
+        feature="chat"
+        detail="Chat with your family and send challenges between members."
+      />
+    )
+  }
+
   return (
     <div className="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur flex flex-col overflow-hidden max-h-[520px]">
       {/* Header */}
@@ -506,6 +521,7 @@ export default function FamilyHub() {
         offline={offline}
         currentMemberId={member.id}
         onChallenge={sendChallenge}
+        challengesEnabled={entitlements.pushChallenges}
       />
 
       {/* Chat area */}

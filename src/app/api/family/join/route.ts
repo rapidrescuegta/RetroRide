@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getFamilyEntitlements, lockedResponse } from '@/lib/entitlements'
 
 // POST: Join a family with a code
 export async function POST(req: NextRequest) {
@@ -44,6 +45,20 @@ export async function POST(req: NextRequest) {
     const emailUsed = await prisma.member.findUnique({ where: { email: normalizedEmail } })
     if (emailUsed) {
       return NextResponse.json({ error: 'This email is already registered in another family.' }, { status: 400 })
+    }
+
+    // Member limit — set by the family's plan. Checked AFTER the re-login
+    // shortcut above, so an existing member can always sign back in.
+    const entitlements = await getFamilyEntitlements(family.id)
+    if (family.members.length >= entitlements.maxMembers) {
+      const locked = lockedResponse('maxMembers', entitlements)
+      return NextResponse.json(
+        {
+          ...locked,
+          error: `This family is full — ${entitlements.label} includes ${entitlements.maxMembers} member${entitlements.maxMembers === 1 ? '' : 's'}. Upgrade to add more.`,
+        },
+        { status: 403 }
+      )
     }
 
     const member = await prisma.member.create({

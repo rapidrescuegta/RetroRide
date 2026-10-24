@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { calculatePlacements } from '@/lib/tournament'
 import { generateBracket, nextPowerOf2 } from '@/lib/bracket'
+import { getFamilyEntitlements, lockedResponse } from '@/lib/entitlements'
 
 // GET: List tournaments for a family
 export async function GET(req: NextRequest) {
@@ -61,6 +62,14 @@ export async function POST(req: NextRequest) {
     })
     if (!member) {
       return NextResponse.json({ error: 'Member not found in this family' }, { status: 404 })
+    }
+
+    // Tournaments (score competitions and elimination brackets) are a Squad
+    // feature. Viewing existing tournaments stays free.
+    const entitlements = await getFamilyEntitlements(familyId)
+    if (!entitlements.tournaments) {
+      const locked = lockedResponse('tournaments', entitlements)
+      return NextResponse.json(locked, { status: 403 })
     }
 
     // ── Elimination bracket ─────────────────────────────────────────

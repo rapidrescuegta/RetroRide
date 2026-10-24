@@ -29,11 +29,28 @@ export type SignalingState =
 export type SignalingStateHandler = (state: SignalingState, detail?: string) => void
 
 /**
+ * Thrown when the server refuses the room because the family's tier doesn't
+ * include the requested mode (internet multiplayer → Pro, hotspot → Family).
+ */
+export class FeatureLockedError extends Error {
+  requiredTier: string
+  currentTier: string
+
+  constructor(message: string, requiredTier: string, currentTier: string) {
+    super(message)
+    this.name = 'FeatureLockedError'
+    this.requiredTier = requiredTier
+    this.currentTier = currentTier
+  }
+}
+
+/**
  * High-level signaling orchestrator that coordinates the LocalNetwork WebRTC
  * layer with the REST signaling API.
  */
 export class SignalingClient {
   private network: LocalNetwork
+  private familyId: string | null
   private stateHandlers: SignalingStateHandler[] = []
   private pollTimer: ReturnType<typeof setTimeout> | null = null
   private backgroundPollTimer: ReturnType<typeof setInterval> | null = null
@@ -42,8 +59,28 @@ export class SignalingClient {
   state: SignalingState = 'idle'
   roomCode: string = ''
 
-  constructor(network: LocalNetwork) {
+  constructor(network: LocalNetwork, options?: { familyId?: string | null }) {
     this.network = network
+    this.familyId = options?.familyId ?? null
+  }
+
+  /** Body fields every tier-gated signaling request carries. */
+  private authBody() {
+    return { mode: this.network.mode, familyId: this.familyId }
+  }
+
+  /** Turn a 403 from the signaling API into a FeatureLockedError. */
+  private async throwForResponse(res: Response, fallback: string) {
+    if (res.status === 403) {
+      const data = await res.json().catch(() => ({}))
+      throw new FeatureLockedError(
+        data.error || fallback,
+        data.requiredTier || 'pro',
+        data.currentTier || 'free'
+      )
+    }
+    const err = await res.json().catch(() => ({ error: fallback }))
+    throw new Error(err.error || fallback)
   }
 
   onStateChange(handler: SignalingStateHandler): () => void {
@@ -83,12 +120,12 @@ export class SignalingClient {
           action: 'create',
           roomCode: roomId,
           offer,
+          ...this.authBody(),
         }),
       })
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Failed to create room' }))
-        throw new Error(err.error || 'Failed to create room')
+        await this.throwForResponse(res, 'Failed to create room')
       }
 
       this.setState('waiting-for-join')
@@ -252,10 +289,15 @@ export class SignalingClient {
 
     try {
       // Fetch the host's offer
-      const res = await fetch(`${SIGNAL_BASE}?roomCode=${this.roomCode}&role=joiner`)
+      const params = new URLSearchParams({
+        roomCode: this.roomCode,
+        role: 'joiner',
+        mode: this.network.mode,
+        familyId: this.familyId ?? '',
+      })
+      const res = await fetch(`${SIGNAL_BASE}?${params.toString()}`)
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Room not found' }))
-        throw new Error(err.error || 'Room not found')
+        await this.throwForResponse(res, 'Room not found')
       }
 
       const data = await res.json()
@@ -276,11 +318,12 @@ export class SignalingClient {
           action: 'answer',
           roomCode: this.roomCode,
           answer,
+          ...this.authBody(),
         }),
       })
 
       if (!postRes.ok) {
-        throw new Error('Failed to send answer to signaling server')
+        await this.throwForResponse(postRes, 'Failed to send answer to signaling server')
       }
 
       // Wait for the data channel to actually open

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { TIER_LABELS, TIER_ORDER, type Entitlements, type Tier } from '@/lib/tiers'
 
 /**
  * Shows the family's current plan and, right after a Stripe Checkout return,
@@ -22,31 +23,52 @@ interface SubscriptionState {
   hasAccess: boolean
   plan: string | null
   expiresAt: string | null
+  entitlements?: Entitlements
 }
 
 type PaymentOutcome = 'success' | 'canceled' | null
-
-const TIER_LABELS: Record<string, string> = {
-  pro: 'Pro',
-  family: 'Family',
-  squad: 'Squad',
-  classroom: 'Classroom',
-  carecenter: 'Care Center',
-}
 
 /** Turns a plan key like `family_monthly` into "Family (monthly)". */
 function planLabel(plan: string | null): string | null {
   if (!plan) return null
   const [tier, cadence] = plan.split('_')
-  const label = TIER_LABELS[tier]
+  const label = (TIER_LABELS as Record<string, string>)[tier]
   if (!label) return plan
   return cadence === 'annual' ? `${label} (annual)` : `${label} (monthly)`
+}
+
+// ── What each tier unlocks ──────────────────────────────────────────────────
+// Mirrors src/lib/entitlements.ts. Listed here so the card can tell the
+// player exactly what the next plan adds.
+
+const FEATURE_LIST: { key: keyof Entitlements; label: string; tier: Tier }[] = [
+  { key: 'internetMultiplayer', label: 'Internet multiplayer', tier: 'pro' },
+  { key: 'hotspotMultiplayer', label: 'Hotspot multiplayer', tier: 'family' },
+  { key: 'familyLeaderboard', label: 'Family leaderboard', tier: 'family' },
+  { key: 'chat', label: 'Family chat', tier: 'family' },
+  { key: 'customAvatars', label: 'Photo avatars', tier: 'family' },
+  { key: 'tournaments', label: 'Tournaments', tier: 'squad' },
+  { key: 'pushChallenges', label: 'Challenges', tier: 'squad' },
+]
+
+/** The next tier up from `tier`, or null if it is already the top one. */
+function nextTier(tier: Tier): Tier | null {
+  const idx = TIER_ORDER.indexOf(tier)
+  if (idx < 0 || idx >= TIER_ORDER.length - 1) return null
+  return TIER_ORDER[idx + 1]
 }
 
 const POLL_INTERVAL_MS = 2500
 const POLL_ATTEMPTS = 20 // ~50s
 
-export default function PlanStatusCard({ familyId }: { familyId: string }) {
+export default function PlanStatusCard({
+  familyId,
+  memberCount = 0,
+}: {
+  familyId: string
+  /** How many members the family currently has — shown against the tier limit. */
+  memberCount?: number
+}) {
   const [state, setState] = useState<SubscriptionState | null>(null)
   const [outcome, setOutcome] = useState<PaymentOutcome>(null)
   const [confirming, setConfirming] = useState(false)
@@ -188,6 +210,17 @@ export default function PlanStatusCard({ familyId }: { familyId: string }) {
   }
 
   // ── Normal state: current plan ──────────────────────────────────────────
+  const entitlements = state?.entitlements ?? null
+  const tier: Tier = active && entitlements ? entitlements.tier : 'free'
+  const maxMembers = entitlements?.maxMembers ?? 2
+  const upgradeTier = nextTier(tier)
+  const lockedFeatures = FEATURE_LIST.filter(f => !entitlements?.[f.key])
+  const nextUnlocks = upgradeTier
+    ? lockedFeatures.filter(
+        f => TIER_ORDER.indexOf(f.tier) <= TIER_ORDER.indexOf(upgradeTier)
+      )
+    : []
+
   return (
     <div className="rounded-2xl border border-purple-500/25 bg-slate-800/40 p-5">
       <div className="flex items-center justify-between gap-3">
@@ -209,6 +242,42 @@ export default function PlanStatusCard({ familyId }: { familyId: string }) {
           {active ? 'Active' : 'Free tier'}
         </span>
       </div>
+
+      {/* Member seats */}
+      <div className="mt-4">
+        <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <span>Family members</span>
+          <span className={memberCount >= maxMembers ? 'text-amber-300' : 'text-slate-300'}>
+            {memberCount} / {maxMembers}
+          </span>
+        </div>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-700/60">
+          <div
+            className={`h-full rounded-full transition-all ${
+              memberCount >= maxMembers ? 'bg-amber-500' : 'bg-purple-500'
+            }`}
+            style={{ width: `${Math.min(100, (memberCount / Math.max(1, maxMembers)) * 100)}%` }}
+          />
+        </div>
+      </div>
+
+      {/* What the next plan adds */}
+      {nextUnlocks.length > 0 && (
+        <div className="mt-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+            {TIER_LABELS[upgradeTier!]} adds
+          </p>
+          <ul className="space-y-1">
+            {nextUnlocks.map(f => (
+              <li key={f.key} className="flex items-center gap-2 text-xs text-slate-300">
+                <span className="text-purple-400">🔒</span>
+                <span>{f.label}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {!active && (
         <Link
           href="/pricing"

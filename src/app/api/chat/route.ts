@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getFamilyEntitlements, lockedResponse } from '@/lib/entitlements'
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,6 +10,13 @@ export async function GET(req: NextRequest) {
 
     if (!familyId) {
       return NextResponse.json({ error: 'familyId is required' }, { status: 400 })
+    }
+
+    // Family chat is a Family-tier feature.
+    const entitlements = await getFamilyEntitlements(familyId)
+    if (!entitlements.chat) {
+      const locked = lockedResponse('chat', entitlements)
+      return NextResponse.json(locked, { status: 403 })
     }
 
     const whereClause: Record<string, unknown> = { familyId }
@@ -44,6 +52,13 @@ export async function POST(req: NextRequest) {
         { error: 'familyId, memberId, and text are required' },
         { status: 400 }
       )
+    }
+
+    // Family chat is a Family-tier feature.
+    const entitlements = await getFamilyEntitlements(familyId)
+    if (!entitlements.chat) {
+      const locked = lockedResponse('chat', entitlements)
+      return NextResponse.json(locked, { status: 403 })
     }
 
     const message = await prisma.chatMessage.create({

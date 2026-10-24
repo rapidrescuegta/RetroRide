@@ -11,6 +11,8 @@ import {
   hasActivePushSubscription,
   getNotificationPermission,
 } from '@/lib/push-notifications'
+import { useEntitlements } from '@/lib/use-entitlements'
+import { isSeniorMode, setSeniorMode as persistSeniorMode } from '@/lib/senior-mode'
 
 type RankingFrequency = 'daily' | 'weekly' | 'off'
 
@@ -141,9 +143,33 @@ function formatBytes(bytes: number): string {
 
 export default function SettingsPage() {
   const ctx = useFamily()
+  const { entitlements } = useEntitlements()
   const [prefs, setPrefs] = useState<Preferences>(DEFAULTS)
   const [loading, setLoading] = useState(true)
   const [showSaved, setShowSaved] = useState(false)
+
+  // Senior-friendly display — a local display preference, gated by tier.
+  const [seniorMode, setSeniorModeState] = useState(false)
+  const seniorModeAllowed = entitlements.seniorMode
+
+  useEffect(() => {
+    setSeniorModeState(isSeniorMode())
+  }, [])
+
+  // If the tier drops (or the family signs out), switch it back off so the app
+  // never renders in a mode the plan doesn't include.
+  useEffect(() => {
+    if (!seniorModeAllowed && seniorMode) {
+      persistSeniorMode(false)
+      setSeniorModeState(false)
+    }
+  }, [seniorModeAllowed, seniorMode])
+
+  const toggleSeniorMode = useCallback(() => {
+    const next = !seniorMode
+    persistSeniorMode(next)
+    setSeniorModeState(next)
+  }, [seniorMode])
 
   // PWA state
   const [cacheStatus, setCacheStatus] = useState<CacheStatus | null>(null)
@@ -573,6 +599,41 @@ export default function SettingsPage() {
                 />
               </div>
             </>
+          )}
+        </div>
+
+        {/* ------------------------------------------------------------ */}
+        {/* Display Section */}
+        {/* ------------------------------------------------------------ */}
+        <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl p-5 space-y-5">
+          <SectionHeader
+            icon={
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17a5 5 0 100-10 5 5 0 000 10zM12 14.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
+              </svg>
+            }
+            title="Display"
+            subtitle="How big and readable the app is"
+          />
+
+          {seniorModeAllowed ? (
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-slate-300">Senior-friendly display</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Larger text and higher contrast throughout the app
+                </p>
+              </div>
+              <Toggle enabled={seniorMode} onToggle={toggleSeniorMode} />
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500">
+              Senior-friendly display (large text, high contrast) is included with the Classroom
+              and Care Center plans.{' '}
+              <Link href="/pricing" className="text-purple-400 hover:text-purple-300 underline">
+                See plans
+              </Link>
+            </p>
           )}
         </div>
 

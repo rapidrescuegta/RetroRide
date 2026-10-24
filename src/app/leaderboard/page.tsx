@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useFamily } from '@/lib/family-context'
 import { GAMES } from '@/lib/games'
 import Link from 'next/link'
+import { useEntitlements } from '@/lib/use-entitlements'
+import UpgradePrompt from '@/components/UpgradePrompt'
 
 interface OverviewEntry {
   memberId: string
@@ -274,6 +276,7 @@ function GameTab({ familyId, currentMemberId }: { familyId: string; currentMembe
 
 export default function LeaderboardPage() {
   const ctx = useFamily()
+  const { entitlements } = useEntitlements()
   const [tab, setTab] = useState<'overview' | 'games'>('overview')
   const [overview, setOverview] = useState<OverviewEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -314,40 +317,50 @@ export default function LeaderboardPage() {
       </header>
 
       <div className="max-w-lg mx-auto px-4 space-y-5">
-        {/* Tab toggle */}
-        <div className="flex bg-slate-800/60 rounded-xl p-1 gap-1">
-          <button
-            onClick={() => setTab('overview')}
-            className={`flex-1 touch-btn py-2.5 rounded-lg text-sm font-semibold transition-all ${
-              tab === 'overview'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-                : 'text-slate-400 hover:text-slate-300'
-            }`}
-          >
-            👑 Overview
-          </button>
-          <button
-            onClick={() => setTab('games')}
-            className={`flex-1 touch-btn py-2.5 rounded-lg text-sm font-semibold transition-all ${
-              tab === 'games'
-                ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'
-                : 'text-slate-400 hover:text-slate-300'
-            }`}
-          >
-            🎮 By Game
-          </button>
-        </div>
-
-        {/* Content */}
-        {loading ? (
-          <div className="text-center py-16">
-            <div className="text-4xl animate-spin">🏆</div>
-            <p className="text-slate-500 text-sm mt-3">Loading leaderboard...</p>
-          </div>
-        ) : tab === 'overview' ? (
-          <OverviewTab data={overview} currentMemberId={ctx.member?.id} />
+        {/* The family leaderboard is a Family-tier feature. */}
+        {!entitlements.familyLeaderboard ? (
+          <UpgradePrompt
+            feature="familyLeaderboard"
+            detail="See who is the family champ in every game."
+          />
         ) : (
-          <GameTab familyId={ctx.family!.id} currentMemberId={ctx.member?.id} />
+          <>
+            {/* Tab toggle */}
+            <div className="flex bg-slate-800/60 rounded-xl p-1 gap-1">
+              <button
+                onClick={() => setTab('overview')}
+                className={`flex-1 touch-btn py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                  tab === 'overview'
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                    : 'text-slate-400 hover:text-slate-300'
+                }`}
+              >
+                👑 Overview
+              </button>
+              <button
+                onClick={() => setTab('games')}
+                className={`flex-1 touch-btn py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                  tab === 'games'
+                    ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'
+                    : 'text-slate-400 hover:text-slate-300'
+                }`}
+              >
+                🎮 By Game
+              </button>
+            </div>
+
+            {/* Content */}
+            {loading ? (
+              <div className="text-center py-16">
+                <div className="text-4xl animate-spin">🏆</div>
+                <p className="text-slate-500 text-sm mt-3">Loading leaderboard...</p>
+              </div>
+            ) : tab === 'overview' ? (
+              <OverviewTab data={overview} currentMemberId={ctx.member?.id} />
+            ) : (
+              <GameTab familyId={ctx.family!.id} currentMemberId={ctx.member?.id} />
+            )}
+          </>
         )}
       </div>
     </div>

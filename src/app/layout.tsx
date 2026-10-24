@@ -6,6 +6,7 @@ import InstallPrompt from '@/components/InstallPrompt'
 import UpdateToast from '@/components/UpdateToast'
 import OfflineIndicator from '@/components/OfflineIndicator'
 import { FeedbackButton } from '@/components/feedback/FeedbackButton'
+import { SENIOR_MODE_BOOTSTRAP } from '@/lib/senior-mode'
 
 export const metadata: Metadata = {
   title: 'GameBuddi — Classic Arcade Games',
@@ -73,6 +74,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Apply the senior-friendly display mode before first paint so a
+            returning user never sees the normal-size page flash first. */}
+        <script dangerouslySetInnerHTML={{ __html: SENIOR_MODE_BOOTSTRAP }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

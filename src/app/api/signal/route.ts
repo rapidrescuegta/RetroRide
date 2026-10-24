@@ -14,12 +14,32 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSignalStore, downgradeToMemoryIfDbDead } from '@/lib/signal-store'
+import { getFamilyEntitlements, lockedResponse } from '@/lib/entitlements'
+import { featureForMode } from '@/lib/tiers'
 
 const ROOM_TTL_MS = 2 * 60 * 60 * 1000 // 2 hours
 
 async function store() {
   // Lazy downgrade ensures the first request with a dead DB still succeeds.
   return downgradeToMemoryIfDbDead()
+}
+
+// ─── Tier gate ──────────────────────────────────────────────────────────────
+// The signaling relay is the one server-side component of online multiplayer,
+// so it is where the published ladder is enforced for internet play:
+// internet multiplayer needs Pro, hotspot (LAN) play needs Family.
+//
+// A family that has no subscription — or a missing/lapsed family id — sits on
+// the free tier and is refused here.
+async function gateConnection(mode: unknown, familyId: unknown) {
+  const feature = featureForMode(mode === 'lan' ? 'lan' : 'internet')
+  const entitlements = await getFamilyEntitlements(
+    typeof familyId === 'string' ? familyId : ''
+  )
+  if (entitlements[feature]) return null
+
+  const locked = lockedResponse(feature, entitlements)
+  return NextResponse.json(locked, { status: 403 })
 }
 
 // ─── GET: Fetch room data ────────────────────────────────────────────────────
@@ -29,6 +49,8 @@ async function store() {
 export async function GET(req: NextRequest) {
   const roomCode = req.nextUrl.searchParams.get('roomCode')
   const role = req.nextUrl.searchParams.get('role') || 'joiner'
+  const mode = req.nextUrl.searchParams.get('mode')
+  const familyId = req.nextUrl.searchParams.get('familyId')
 
   if (!roomCode) {
     return NextResponse.json({ error: 'roomCode is required' }, { status: 400 })
@@ -50,6 +72,10 @@ export async function GET(req: NextRequest) {
       backend: s.backend,
     })
   }
+
+  // A joiner needs the tier too — refuse before handing out the host's offer.
+  const locked = await gateConnection(mode, familyId)
+  if (locked) return locked
 
   const offer = await s.getOffer(code)
   return NextResponse.json({ roomCode: code, offer, backend: s.backend })
@@ -75,7 +101,7 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case 'create': {
-        const { offer } = body
+        const { offer, mode, familyId } = body
         if (!offer) {
           return NextResponse.json({ error: 'offer is required' }, { status: 400 })
         }
@@ -88,6 +114,10 @@ export async function POST(req: NextRequest) {
             { status: 400 }
           )
         }
+
+        const locked = await gateConnection(mode, familyId)
+        if (locked) return locked
+
         try {
           await s.createRoom(code, offer, ROOM_TTL_MS)
         } catch (err: unknown) {
@@ -102,7 +132,7 @@ export async function POST(req: NextRequest) {
       }
 
       case 'answer': {
-        const { answer } = body
+        const { answer, mode, familyId } = body
         if (!answer) {
           return NextResponse.json({ error: 'answer is required' }, { status: 400 })
         }
@@ -112,6 +142,12 @@ export async function POST(req: NextRequest) {
             { status: 400 }
           )
         }
+
+        // The joiner needs the tier too — a Pro host cannot admit a free
+        // player into an internet room.
+        const locked = await gateConnection(mode, familyId)
+        if (locked) return locked
+
         try {
           const position = await s.pushAnswer(code, answer)
           return NextResponse.json({ queued: true, position })

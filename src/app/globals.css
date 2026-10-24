@@ -115,3 +115,49 @@ canvas {
   align-items: center;
   justify-content: center;
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Senior-friendly display mode (Classroom / Care Center)
+   Larger type and higher contrast for care centres, classrooms and anyone
+   who needs it. Toggled by the Settings switch; applied to <html>.
+   ─────────────────────────────────────────────────────────────────────────── */
+html.senior-mode {
+  font-size: 118%;
+  --text-primary: #ffffff;
+  --text-secondary: #d8e0ea;
+}
+
+html.senior-mode body {
+  color: var(--text-primary);
+}
+
+/* Lift the muted greys that carry most of the small print. */
+html.senior-mode .text-slate-400,
+html.senior-mode .text-slate-500,
+html.senior-mode .text-slate-600 {
+  color: #cbd5e1;
+}
+
+html.senior-mode .text-slate-300 {
+  color: #e2e8f0;
+}
+
+/* Solid, higher-contrast surfaces for cards and inputs. */
+html.senior-mode .bg-slate-800\/40,
+html.senior-mode .bg-slate-800\/50,
+html.senior-mode .bg-slate-800\/60,
+html.senior-mode .bg-slate-900\/50,
+html.senior-mode .bg-slate-900\/60 {
+  background-color: #16203a;
+}
+
+html.senior-mode .border-slate-700\/50,
+html.senior-mode .border-slate-700\/30,
+html.senior-mode .border-slate-600\/40 {
+  border-color: #64748b;
+}
+
+/* Comfortable tap targets. */
+html.senior-mode .touch-btn {
+  min-height: 58px;
+}

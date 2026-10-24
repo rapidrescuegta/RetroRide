@@ -1,7 +1,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Pricing page data — single source of truth for tier display.
+//
 // Authoritative prices live in Stripe; keep in sync with src/lib/stripe-config.ts
 // (DEC-GAMEBUDDI-PRICING-01: 5 paid tiers × monthly/annual).
+//
+// Every bullet below is enforced by the app. The ladder that decides who gets
+// what lives in src/lib/entitlements.ts (server-side, the real gate) and the
+// feature flags themselves live in src/lib/tiers.ts. If you change a bullet
+// here, change the entitlement that backs it — otherwise the pricing page
+// starts selling something the app doesn't do.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface TierDisplay {
@@ -30,10 +37,11 @@ export const TIERS: TierDisplay[] = [
     annualKey: null,
     tagline: 'Play solo, forever free',
     features: [
-      'Classic games unlocked solo',
-      'Offline play (PWA)',
+      'Every game unlocked for solo play',
+      'Offline play (PWA) — airplane mode ready',
       'AI opponents with difficulty levels',
       'No account needed',
+      'Up to 2 family members',
     ],
     cta: 'Start playing free',
   },
@@ -47,10 +55,10 @@ export const TIERS: TierDisplay[] = [
     annualKey: 'pro_annual',
     tagline: 'For the solo player',
     features: [
-      'All 30+ games',
-      'Internet multiplayer',
-      'Personal stats + score history',
-      'Ad-free',
+      'Everything in Free',
+      'Internet multiplayer — room code or share link',
+      'Play with friends anywhere in the world',
+      'Peer-to-peer connection — no game data on our servers',
     ],
     cta: 'Get Pro',
   },
@@ -68,7 +76,7 @@ export const TIERS: TierDisplay[] = [
       'Up to 6 family members',
       'Local hotspot play — no WiFi needed',
       'Family leaderboard + chat',
-      'Custom avatars',
+      'Photo avatars',
     ],
     cta: 'Get Family',
     featured: true,
@@ -87,8 +95,7 @@ export const TIERS: TierDisplay[] = [
       'Everything in Family',
       'Up to 20 members',
       'Tournament mode (brackets + round-robin)',
-      'Custom squad name',
-      'Push notifications for challenges',
+      'Challenges between members, with push notifications',
     ],
     cta: 'Get Squad',
   },
@@ -104,8 +111,8 @@ export const TIERS: TierDisplay[] = [
     features: [
       'Everything in Squad',
       'Up to 30 students',
-      'Teacher-managed tournaments',
-      'Curriculum-friendly content controls',
+      'Create and manage tournaments for the whole class',
+      'Senior-friendly display mode (large text, high contrast)',
     ],
     cta: 'Get Classroom',
   },
@@ -121,8 +128,8 @@ export const TIERS: TierDisplay[] = [
     features: [
       'Everything in Classroom',
       'Up to 50 residents/clients',
-      'Activity-leader dashboard',
-      'Senior-friendly UI (large fonts, high contrast)',
+      'Group tournament dashboard for activity leaders',
+      'Senior-friendly display mode (large text, high contrast)',
     ],
     cta: 'Get Care Center',
   },
@@ -164,7 +171,7 @@ export const PRICING_FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What's the difference between Squad and Classroom?",
-    a: 'Squad is for casual groups (dorms, friend circles, sports teams) — flat-rate and member-managed. Classroom is built for educators — it adds teacher-managed tournaments, content controls, and supports up to 30 students.',
+    a: 'Squad is for casual groups (dorms, friend circles, sports teams) — flat-rate and member-managed. Classroom is built for educators — it raises the seat count to 30 students and adds the senior-friendly display mode for shared tablets.',
   },
   {
     q: 'What payment methods do you accept?',

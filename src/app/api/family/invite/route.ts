@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getFamilyEntitlements, lockedResponse } from '@/lib/entitlements'
 
 export async function POST(req: NextRequest) {
   const { familyId, email, invitedByMemberId } = await req.json()
@@ -36,6 +37,21 @@ export async function POST(req: NextRequest) {
   )
   if (existingMember) {
     return NextResponse.json({ error: 'This person is already in your family!' }, { status: 400 })
+  }
+
+  // Member limit — set by the family's plan. An invite only becomes a member
+  // when it is accepted, but the limit is checked here so the family is told
+  // before it invites people it cannot seat.
+  const entitlements = await getFamilyEntitlements(familyId)
+  if (family.members.length >= entitlements.maxMembers) {
+    const locked = lockedResponse('maxMembers', entitlements)
+    return NextResponse.json(
+      {
+        ...locked,
+        error: `Your family is full — ${entitlements.label} includes ${entitlements.maxMembers} member${entitlements.maxMembers === 1 ? '' : 's'}. Upgrade to invite more.`,
+      },
+      { status: 403 }
+    )
   }
 
   // Check for existing pending invite to this email for this family

@@ -3,11 +3,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { LocalNetwork, generateId, setTurnConfig } from '@/lib/local-network'
 import type { PeerInfo, ConnectionMode } from '@/lib/local-network'
-import { SignalingClient } from '@/lib/signaling'
+import { SignalingClient, FeatureLockedError } from '@/lib/signaling'
 import type { SignalingState } from '@/lib/signaling'
 import { NetworkAdapter } from '@/lib/network-adapter'
 import { setNetwork } from '@/lib/multiplayer-game'
 import { getMultiplayerConfig, getPlayerCount } from '@/lib/multiplayer-registry'
+import { useFamilyContext } from '@/lib/family-context'
+import { useEntitlements } from '@/lib/use-entitlements'
+import UpgradePrompt from '@/components/UpgradePrompt'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -18,6 +21,7 @@ type LobbyPhase =
   | 'joining'         // Joiner: entering room code
   | 'connecting'      // WebRTC handshake in progress
   | 'ready'           // All connected, host can start
+  | 'locked'          // Family tier doesn't include internet multiplayer
   | 'error'
 
 interface MultiplayerLobbyProps {
@@ -66,6 +70,10 @@ export default function MultiplayerLobby({
 
   const networkRef = useRef<LocalNetwork | null>(null)
   const signalingRef = useRef<SignalingClient | null>(null)
+
+  const { family } = useFamilyContext()
+  const { entitlements, loading: entitlementsLoading } = useEntitlements()
+  const canPlayOnline = entitlements.internetMultiplayer
 
   const playerCount = getPlayerCount(gameId)
   const minPlayers = playerCount?.min ?? 2
@@ -122,7 +130,7 @@ export default function MultiplayerLobby({
         }
       })
 
-      const signaling = new SignalingClient(network)
+      const signaling = new SignalingClient(network, { familyId: family?.id ?? null })
       signalingRef.current = signaling
 
       signaling.onStateChange((state, detail) => {
@@ -145,10 +153,14 @@ export default function MultiplayerLobby({
       setRoomCode(signaling.roomCode)
       setPhase('waiting')
     } catch (err: any) {
+      if (err instanceof FeatureLockedError) {
+        setPhase('locked')
+        return
+      }
       setError(err.message || 'Failed to create room')
       setPhase('error')
     }
-  }, [localPeer, fetchIceConfig])
+  }, [localPeer, fetchIceConfig, family?.id])
 
   // ── Joiner: Join Room ──
   const handleJoin = useCallback(async () => {
@@ -179,7 +191,7 @@ export default function MultiplayerLobby({
         }
       })
 
-      const signaling = new SignalingClient(network)
+      const signaling = new SignalingClient(network, { familyId: family?.id ?? null })
       signalingRef.current = signaling
 
       signaling.onStateChange((state, detail) => {
@@ -197,10 +209,14 @@ export default function MultiplayerLobby({
       await signaling.joinRoom(code, localPeer)
       setRoomCode(code)
     } catch (err: any) {
+      if (err instanceof FeatureLockedError) {
+        setPhase('locked')
+        return
+      }
       setError(err.message || 'Failed to join room')
       setPhase('error')
     }
-  }, [joinCode, localPeer, fetchIceConfig])
+  }, [joinCode, localPeer, fetchIceConfig, family?.id])
 
   // ── Start Game ──
   const handleStartGame = useCallback(() => {
@@ -283,6 +299,9 @@ export default function MultiplayerLobby({
 
         {/* ── Choose Mode ── */}
         {phase === 'choose-mode' && (
+          !entitlementsLoading && !canPlayOnline ? (
+            <UpgradePrompt feature="internetMultiplayer" />
+          ) : (
           <div className="flex flex-col gap-3">
             <button
               onClick={handleHost}
@@ -323,6 +342,20 @@ export default function MultiplayerLobby({
               className="mt-4 w-full py-3 rounded-xl bg-slate-800/50 text-slate-400 text-sm hover:bg-slate-800 transition-all"
             >
               Back
+            </button>
+          </div>
+          )
+        )}
+
+        {/* ── Locked by tier ── */}
+        {phase === 'locked' && (
+          <div className="flex flex-col gap-4">
+            <UpgradePrompt feature="internetMultiplayer" />
+            <button
+              onClick={onCancel}
+              className="w-full py-3 rounded-xl bg-slate-800/50 text-slate-300 text-sm hover:bg-slate-800 transition-all"
+            >
+              Back to Game
             </button>
           </div>
         )}

@@ -7,6 +7,8 @@ import { GAMES } from '@/lib/games'
 import { TOURNAMENT_PRESETS, getPresetById, FORMAT_LABELS, type TournamentPreset } from '@/lib/tournament-presets'
 import { useFamily } from '@/lib/family-context'
 import { isMultiplayerSupported, getPlayerCount } from '@/lib/multiplayer-registry'
+import { useEntitlements } from '@/lib/use-entitlements'
+import UpgradePrompt from '@/components/UpgradePrompt'
 
 // ─── Constants ───────────────────────────────────────────────────────
 
@@ -328,6 +330,7 @@ export default function CreateTournamentClient() {
   const searchParams = useSearchParams()
   const presetParam = searchParams.get('preset')
   const familyCtx = useFamily()
+  const { entitlements } = useEntitlements()
 
   const [step, setStep] = useState(0)
   const [name, setName] = useState('')
@@ -550,6 +553,41 @@ export default function CreateTournamentClient() {
               &larr; Back to Hub
             </Link>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ─── Tournaments are a Squad-tier feature ───────────────────────────
+  if (!entitlements.tournaments) {
+    return (
+      <div className="min-h-screen pb-8 page-enter">
+        <header className="relative px-4 pt-8 pb-4 text-center">
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-900/20 to-transparent" />
+          <div className="relative">
+            <Link href="/tournaments" className="text-slate-400 text-sm hover:text-slate-300 transition-colors">
+              &larr; Back
+            </Link>
+            <h1
+              className="text-xl font-bold neon-text mt-3"
+              style={{ fontFamily: "'Press Start 2P', monospace", fontSize: '14px' }}
+            >
+              Create Tournament
+            </h1>
+          </div>
+        </header>
+
+        <div className="max-w-md mx-auto px-4 space-y-4">
+          <UpgradePrompt
+            feature="tournaments"
+            detail="Run score competitions and playoff brackets for your whole squad."
+          />
+          <Link
+            href="/tournaments"
+            className="block text-center text-sm text-slate-400 hover:text-slate-300 transition-colors"
+          >
+            &larr; Back to the tournament hub
+          </Link>
         </div>
       </div>
     )

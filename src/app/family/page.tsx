@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { useFamily } from '@/lib/family-context'
 import AvatarCreator from '@/components/AvatarCreator'
 import PlanStatusCard from '@/components/PlanStatusCard'
+import { useEntitlements } from '@/lib/use-entitlements'
 import Link from 'next/link'
 
 const AVATARS = [
@@ -257,7 +258,7 @@ function FamilyDashboard() {
       </div>
 
       {/* Plan status / post-checkout confirmation */}
-      <PlanStatusCard familyId={family!.id} />
+      <PlanStatusCard familyId={family!.id} memberCount={members.length} />
 
       {/* Members */}
       <div className="space-y-2">
@@ -328,6 +329,7 @@ function FamilyDashboard() {
 
 export default function FamilyPage() {
   const ctx = useFamily()
+  const { entitlements } = useEntitlements()
   const [mode, setMode] = useState<'create' | 'join'>('create')
   const [familyName, setFamilyName] = useState('')
   const [playerName, setPlayerName] = useState('')
@@ -693,16 +695,34 @@ export default function FamilyPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setAvatarMode('camera')}
+                onClick={() => {
+                  if (!entitlements.customAvatars) return
+                  setAvatarMode('camera')
+                }}
                 className={`flex-1 touch-btn py-2 rounded-lg text-xs font-semibold transition-all ${
                   avatarMode === 'camera'
                     ? 'bg-cyan-600/40 text-cyan-300'
                     : 'text-slate-500 hover:text-slate-400'
-                }`}
+                } ${!entitlements.customAvatars ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title={
+                  entitlements.customAvatars
+                    ? 'Take a photo avatar'
+                    : 'Photo avatars are included with the Family plan'
+                }
               >
                 📸 Take Photo
               </button>
             </div>
+
+            {/* Photo avatars are a Family-tier feature. */}
+            {avatarMode === 'emoji' && !entitlements.customAvatars && (
+              <p className="text-[11px] text-slate-500 mb-4">
+                📸 Photo avatars are included with the Family plan —{' '}
+                <Link href="/pricing" className="text-cyan-400 hover:text-cyan-300 underline">
+                  see plans
+                </Link>
+              </p>
+            )}
 
             {avatarMode === 'emoji' && (
               <AvatarPicker selected={avatar} onSelect={setAvatar} />

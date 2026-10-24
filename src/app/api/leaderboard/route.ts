@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getFamilyEntitlements, lockedResponse } from '@/lib/entitlements'
 
 // GET: Family leaderboard
 export async function GET(req: NextRequest) {
@@ -8,6 +9,13 @@ export async function GET(req: NextRequest) {
 
   if (!familyId) {
     return NextResponse.json({ error: 'familyId required' }, { status: 400 })
+  }
+
+  // The family leaderboard is a Family-tier feature.
+  const entitlements = await getFamilyEntitlements(familyId)
+  if (!entitlements.familyLeaderboard) {
+    const locked = lockedResponse('familyLeaderboard', entitlements)
+    return NextResponse.json(locked, { status: 403 })
   }
 
   // Get all members of the family

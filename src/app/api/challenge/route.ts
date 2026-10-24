@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getFamilyEntitlements, lockedResponse } from '@/lib/entitlements'
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,6 +11,13 @@ export async function POST(req: NextRequest) {
         { error: 'familyId, fromMemberId, toMemberId, and gameId are required' },
         { status: 400 }
       )
+    }
+
+    // Challenges (and the push notifications they fire) are a Squad feature.
+    const entitlements = await getFamilyEntitlements(familyId)
+    if (!entitlements.pushChallenges) {
+      const locked = lockedResponse('pushChallenges', entitlements)
+      return NextResponse.json(locked, { status: 403 })
     }
 
     const challengeData = JSON.stringify({
@@ -67,6 +75,14 @@ export async function PATCH(req: NextRequest) {
         { error: 'Challenge message not found' },
         { status: 404 }
       )
+    }
+
+    // Same tier gate as creating a challenge — the family must still be on a
+    // tier that includes them.
+    const entitlements = await getFamilyEntitlements(existing.familyId)
+    if (!entitlements.pushChallenges) {
+      const locked = lockedResponse('pushChallenges', entitlements)
+      return NextResponse.json(locked, { status: 403 })
     }
 
     let challengeData: Record<string, string>

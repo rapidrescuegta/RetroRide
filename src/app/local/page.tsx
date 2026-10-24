@@ -5,6 +5,8 @@ import { useFamily } from '@/lib/family-context'
 import { LocalNetwork, type PeerInfo } from '@/lib/local-network'
 import { SignalingClient, type SignalingState } from '@/lib/signaling'
 import { NetworkAdapter } from '@/lib/network-adapter'
+import { useEntitlements } from '@/lib/use-entitlements'
+import UpgradePrompt from '@/components/UpgradePrompt'
 import QRCode from '@/components/QRCode'
 import QRScanner from '@/components/QRScanner'
 import LocalRoom from '@/components/LocalRoom'
@@ -74,6 +76,7 @@ function LocalPlayGate() {
 
 export default function LocalPlayPage() {
   const familyCtx = useFamily()
+  const { entitlements, loading: entitlementsLoading } = useEntitlements()
   const [playMode, setPlayMode] = useState<PlayMode>('online')
   const [tab, setTab] = useState<Tab>('create')
   const [playerName, setPlayerName] = useState(familyCtx?.member?.name || '')
@@ -167,7 +170,7 @@ export default function LocalPlayPage() {
       networkRef.current = net
       net.onPeerJoined(() => { setConnectedCount(net.getPeers().length); if (net.getPeers().length > 0) setPhase('connected') })
       net.onPeerLeft(() => setConnectedCount(net.getPeers().length))
-      const signaling = new SignalingClient(net)
+      const signaling = new SignalingClient(net, { familyId: familyCtx?.family?.id ?? null })
       signalingRef.current = signaling
       signaling.onStateChange((state, detail) => {
         setSignalingState(state)
@@ -178,7 +181,7 @@ export default function LocalPlayPage() {
       })
       await signaling.hostRoom(getLocalPeer())
     } catch (err: any) { if (err?.message !== 'Aborted') setError(err?.message || 'Failed to create online room') }
-  }, [playerName, playerAvatar])
+  }, [playerName, playerAvatar, familyCtx?.family?.id])
 
   const handleJoinOnlineRoom = useCallback(async () => {
     if (!joinCode.trim()) { setError('Enter a room code to join'); return }
@@ -188,7 +191,7 @@ export default function LocalPlayPage() {
       networkRef.current = net
       net.onPeerJoined(() => setConnectedCount(net.getPeers().length))
       net.onPeerLeft(() => setConnectedCount(net.getPeers().length))
-      const signaling = new SignalingClient(net)
+      const signaling = new SignalingClient(net, { familyId: familyCtx?.family?.id ?? null })
       signalingRef.current = signaling
       signaling.onStateChange((state, detail) => {
         setSignalingState(state)
@@ -197,7 +200,7 @@ export default function LocalPlayPage() {
       })
       await signaling.joinRoom(joinCode, getLocalPeer())
     } catch (err: any) { if (err?.message !== 'Aborted') { setError(err?.message || 'Failed to join room'); setSignalingState('idle') } }
-  }, [joinCode, playerName, playerAvatar])
+  }, [joinCode, playerName, playerAvatar, familyCtx?.family?.id])
 
   const handleStartGame = useCallback(() => setShowGamePicker(true), [])
   const handleSelectGame = useCallback((config: MultiplayerGameConfig<any>) => { setSelectedGame(config); setShowGamePicker(false); setPhase('playing') }, [])
@@ -247,8 +250,14 @@ export default function LocalPlayPage() {
             </div>
           </div>
 
-          {/* ONLINE MODE */}
-          {playMode === 'online' && (<>
+          {/* ONLINE MODE — internet multiplayer is a Pro feature */}
+          {playMode === 'online' && (
+            entitlementsLoading ? null : !entitlements.internetMultiplayer ? (
+              <UpgradePrompt
+                feature="internetMultiplayer"
+                detail="Play with a room code from anywhere in the world."
+              />
+            ) : (<>
             <div className="flex gap-2 mb-4">
               <button onClick={() => setTab('create')} className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${tab === 'create' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'}`}>Create Room</button>
               <button onClick={() => setTab('join')} className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${tab === 'join' ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'}`}>Join Room</button>
@@ -266,10 +275,17 @@ export default function LocalPlayPage() {
                 <button onClick={handleJoinOnlineRoom} disabled={!playerName.trim() || joinCode.length < 6 || signalingState === 'joining' || signalingState === 'connecting'} className="touch-btn w-full py-4 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 text-white font-bold text-sm hover:from-cyan-500 hover:to-emerald-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed" style={{ boxShadow: '0 0 30px rgba(6, 182, 212, 0.3)' }}>{signalingState === 'joining' ? 'Finding room...' : signalingState === 'connecting' ? 'Connecting...' : 'Join Room'}</button>
               </div>
             )}
-          </>)}
+          </>)
+          )}
 
-          {/* LOCAL MODE */}
-          {playMode === 'local' && (<>
+          {/* LOCAL MODE — hotspot play is a Family feature */}
+          {playMode === 'local' && (
+            entitlementsLoading ? null : !entitlements.hotspotMultiplayer ? (
+              <UpgradePrompt
+                feature="hotspotMultiplayer"
+                detail="Play over a WiFi hotspot with no internet at all — perfect for road trips."
+              />
+            ) : (<>
             <div className="flex gap-2 mb-4">
               <button onClick={() => setTab('create')} className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${tab === 'create' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'}`}>Create Room</button>
               <button onClick={() => setTab('join')} className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${tab === 'join' ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30' : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'}`}>Join Room</button>
@@ -288,7 +304,8 @@ export default function LocalPlayPage() {
                 ) : (<QRScanner onScan={handleHostScanned} onError={(err) => setError(err)} />)}
               </div>
             )}
-          </>)}
+          </>)
+          )}
         </>)}
 
         {/* ONLINE: Waiting */}
