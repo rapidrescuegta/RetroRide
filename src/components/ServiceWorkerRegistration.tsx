@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { subscribeToPush } from '@/lib/push-notifications'
+import { canReloadOnSwUpdate, reloadNow } from '@/lib/sw-reload'
 
 /**
  * Handles service worker registration, lifecycle management, push subscription,
@@ -42,13 +43,19 @@ export default function ServiceWorkerRegistration() {
 
     register()
 
-    // Reload page when a new SW takes control (triggered by SKIP_WAITING)
+    // Reload page when a NEW SW version takes over. The first install also
+    // fires `controllerchange` (the new worker claims the page), and
+    // reloading there wiped whatever the visitor had already typed — it broke
+    // the family sign-up form and the purchase funnel. `canReloadOnSwUpdate`
+    // suppresses the first-install case (and any reload that would interrupt
+    // someone mid-typing); UpdateToast owns the "new version" UX.
     let refreshing = false
+    const hadController = !!navigator.serviceWorker.controller
     const controllerChangeHandler = () => {
-      if (!refreshing) {
-        refreshing = true
-        window.location.reload()
-      }
+      if (refreshing) return
+      if (!canReloadOnSwUpdate(hadController)) return
+      refreshing = true
+      reloadNow()
     }
     navigator.serviceWorker.addEventListener('controllerchange', controllerChangeHandler)
 

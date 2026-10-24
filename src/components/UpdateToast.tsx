@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { canReloadOnSwUpdate, reloadNow, requestSwReload } from '@/lib/sw-reload'
 
 interface VersionInfo {
   version: string
@@ -61,13 +62,16 @@ export default function UpdateToast() {
       })
     })
 
-    // Reload page when the new SW takes over
+    // Reload page when the new SW takes over. Guarded: the first install also
+    // fires `controllerchange`, and reloading there discarded the visitor's
+    // in-progress form input.
     let refreshing = false
+    const hadController = !!navigator.serviceWorker.controller
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
-        refreshing = true
-        window.location.reload()
-      }
+      if (refreshing) return
+      if (!canReloadOnSwUpdate(hadController)) return
+      refreshing = true
+      reloadNow()
     })
 
     return () => {
@@ -88,11 +92,16 @@ export default function UpdateToast() {
   }, [show])
 
   const handleUpdate = useCallback(() => {
+    requestSwReload()
     if (waitingWorker) {
       waitingWorker.postMessage('SKIP_WAITING')
     }
     setVisible(false)
     setTimeout(() => setShow(false), 300)
+    // The worker may already have taken over (sw.js skips waiting on install),
+    // in which case no `controllerchange` is coming — reload explicitly so the
+    // button always does what it says.
+    setTimeout(reloadNow, 800)
   }, [waitingWorker])
 
   const handleDismiss = useCallback(() => {
