@@ -79,11 +79,24 @@ export async function POST(req: NextRequest) {
         if (!offer) {
           return NextResponse.json({ error: 'offer is required' }, { status: 400 })
         }
+        // The offer is stored as a plain SDP string. An object here used to
+        // blow up inside Prisma and surface the raw driver error to the client
+        // (and to the player, via the "Failed to create room" toast).
+        if (typeof offer !== 'string') {
+          return NextResponse.json(
+            { error: 'offer must be an SDP string' },
+            { status: 400 }
+          )
+        }
         try {
           await s.createRoom(code, offer, ROOM_TTL_MS)
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : 'Failed to create room'
-          return NextResponse.json({ error: message }, { status: 409 })
+          if (message.includes('already in use')) {
+            return NextResponse.json({ error: message }, { status: 409 })
+          }
+          console.error('[signal] create failed:', err)
+          return NextResponse.json({ error: 'Failed to create room' }, { status: 500 })
         }
         return NextResponse.json({ roomCode: code, created: true, backend: s.backend })
       }
@@ -92,6 +105,12 @@ export async function POST(req: NextRequest) {
         const { answer } = body
         if (!answer) {
           return NextResponse.json({ error: 'answer is required' }, { status: 400 })
+        }
+        if (typeof answer !== 'string') {
+          return NextResponse.json(
+            { error: 'answer must be an SDP string' },
+            { status: 400 }
+          )
         }
         try {
           const position = await s.pushAnswer(code, answer)
@@ -105,6 +124,12 @@ export async function POST(req: NextRequest) {
         const { offer } = body
         if (!offer) {
           return NextResponse.json({ error: 'offer is required' }, { status: 400 })
+        }
+        if (typeof offer !== 'string') {
+          return NextResponse.json(
+            { error: 'offer must be an SDP string' },
+            { status: 400 }
+          )
         }
         const ok = await s.updateOffer(code, offer)
         if (!ok) return NextResponse.json({ error: 'Room not found' }, { status: 404 })

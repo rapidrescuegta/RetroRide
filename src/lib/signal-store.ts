@@ -98,11 +98,16 @@ class PrismaSignalStore implements SignalStore {
       await prisma.signalingRoom.delete({ where: { code } })
     }
 
-    await prisma.signalingRoom.create({
-      data: { code, hostMemberId: 'host', expiresAt },
-    })
-    await prisma.signalingMessage.create({
-      data: { roomCode: code, fromMemberId: 'host', type: 'offer', payload: offer },
+    // Room + offer must land together. Creating them as two separate writes
+    // left an orphan room behind whenever the message insert failed, and an
+    // orphan room blocks that code for the rest of its TTL ("already in use").
+    await prisma.$transaction(async (tx) => {
+      await tx.signalingRoom.create({
+        data: { code, hostMemberId: 'host', expiresAt },
+      })
+      await tx.signalingMessage.create({
+        data: { roomCode: code, fromMemberId: 'host', type: 'offer', payload: offer },
+      })
     })
   }
 

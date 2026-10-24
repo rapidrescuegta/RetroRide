@@ -40,45 +40,68 @@ export async function GET(req: NextRequest) {
 
 // PATCH: Update notification preferences
 export async function PATCH(req: NextRequest) {
-  const body = await req.json()
-  const { memberId, rankingEmail, challengeEmail, newMemberEmail } = body
+  try {
+    const body = await req.json()
+    const { memberId, rankingEmail, challengeEmail, newMemberEmail } = body
 
-  if (!memberId) {
-    return NextResponse.json({ error: 'memberId required' }, { status: 400 })
+    if (!memberId) {
+      return NextResponse.json({ error: 'memberId required' }, { status: 400 })
+    }
+
+    // Verify member exists
+    const member = await prisma.member.findUnique({ where: { id: memberId } })
+    if (!member) {
+      return NextResponse.json({ error: 'Member not found' }, { status: 404 })
+    }
+
+    // Validate rankingEmail if provided
+    if (rankingEmail !== undefined && !['daily', 'weekly', 'off'].includes(rankingEmail)) {
+      return NextResponse.json({ error: 'rankingEmail must be "daily", "weekly", or "off"' }, { status: 400 })
+    }
+
+    // challengeEmail / newMemberEmail are booleans in the schema. Passing
+    // anything else used to reach Prisma and come back as a 500 with an empty
+    // body — a client-side type slip looked like a server outage.
+    for (const [key, value] of [
+      ['challengeEmail', challengeEmail],
+      ['newMemberEmail', newMemberEmail],
+    ] as const) {
+      if (value !== undefined && typeof value !== 'boolean') {
+        return NextResponse.json(
+          { error: `${key} must be a boolean` },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Build update data — only include fields that were provided
+    const data: Record<string, unknown> = {}
+    if (rankingEmail !== undefined) data.rankingEmail = rankingEmail
+    if (challengeEmail !== undefined) data.challengeEmail = challengeEmail
+    if (newMemberEmail !== undefined) data.newMemberEmail = newMemberEmail
+
+    const pref = await prisma.notificationPreference.upsert({
+      where: { memberId },
+      create: {
+        memberId,
+        rankingEmail: rankingEmail ?? DEFAULTS.rankingEmail,
+        challengeEmail: challengeEmail ?? DEFAULTS.challengeEmail,
+        newMemberEmail: newMemberEmail ?? DEFAULTS.newMemberEmail,
+      },
+      update: data,
+    })
+
+    return NextResponse.json({
+      memberId: pref.memberId,
+      rankingEmail: pref.rankingEmail,
+      challengeEmail: pref.challengeEmail,
+      newMemberEmail: pref.newMemberEmail,
+    })
+  } catch (error) {
+    console.error('[notifications/preferences] PATCH failed:', error)
+    return NextResponse.json(
+      { error: 'Failed to update notification preferences' },
+      { status: 500 }
+    )
   }
-
-  // Verify member exists
-  const member = await prisma.member.findUnique({ where: { id: memberId } })
-  if (!member) {
-    return NextResponse.json({ error: 'Member not found' }, { status: 404 })
-  }
-
-  // Validate rankingEmail if provided
-  if (rankingEmail !== undefined && !['daily', 'weekly', 'off'].includes(rankingEmail)) {
-    return NextResponse.json({ error: 'rankingEmail must be "daily", "weekly", or "off"' }, { status: 400 })
-  }
-
-  // Build update data — only include fields that were provided
-  const data: Record<string, unknown> = {}
-  if (rankingEmail !== undefined) data.rankingEmail = rankingEmail
-  if (challengeEmail !== undefined) data.challengeEmail = challengeEmail
-  if (newMemberEmail !== undefined) data.newMemberEmail = newMemberEmail
-
-  const pref = await prisma.notificationPreference.upsert({
-    where: { memberId },
-    create: {
-      memberId,
-      rankingEmail: rankingEmail ?? DEFAULTS.rankingEmail,
-      challengeEmail: challengeEmail ?? DEFAULTS.challengeEmail,
-      newMemberEmail: newMemberEmail ?? DEFAULTS.newMemberEmail,
-    },
-    update: data,
-  })
-
-  return NextResponse.json({
-    memberId: pref.memberId,
-    rankingEmail: pref.rankingEmail,
-    challengeEmail: pref.challengeEmail,
-    newMemberEmail: pref.newMemberEmail,
-  })
 }
