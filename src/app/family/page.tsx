@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useFamily } from '@/lib/family-context'
 import AvatarCreator from '@/components/AvatarCreator'
+import PlanStatusCard from '@/components/PlanStatusCard'
 import Link from 'next/link'
 
 const AVATARS = [
@@ -254,6 +255,9 @@ function FamilyDashboard() {
           Code: <span className="text-cyan-400 font-mono tracking-wider">{family!.code.slice(0, 4)}-{family!.code.slice(4)}</span>
         </p>
       </div>
+
+      {/* Plan status / post-checkout confirmation */}
+      <PlanStatusCard familyId={family!.id} />
 
       {/* Members */}
       <div className="space-y-2">

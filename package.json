@@ -15,7 +15,9 @@
     "db:studio": "prisma studio",
     "db:seed": "npx prisma db seed",
     "db:setup": "./scripts/db-setup.sh",
-    "db:setup:prod": "./scripts/db-setup.sh --production"
+    "db:setup:prod": "./scripts/db-setup.sh --production",
+    "stripe:bootstrap": "node scripts/stripe-bootstrap.mjs",
+    "stripe:verify": "node scripts/stripe-verify.mjs"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
