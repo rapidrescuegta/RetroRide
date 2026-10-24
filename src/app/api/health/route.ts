@@ -3,6 +3,7 @@ import {
   checkDatabaseHealth,
   checkDatabaseHealthDetailed,
 } from '@/lib/db-health'
+import { isPushConfigured } from '@/lib/push-server'
 
 /**
  * GET /api/health
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
       from: process.env.EMAIL_FROM || 'GameBuddi <noreply@gamebuddi.com>',
     },
     pushNotifications: {
-      configured: !!(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY),
+      configured: isPushConfigured(),
     },
     turnServer: {
       configured: !!process.env.TURN_SERVER_URL,

@@ -66,6 +66,9 @@ function loadServerEnv() {
 
     // Push notifications (VAPID)
     VAPID_PRIVATE_KEY: read('VAPID_PRIVATE_KEY') ?? '',
+    VAPID_PUBLIC_KEY: read('VAPID_PUBLIC_KEY') ?? '',
+    // Contact address the push service uses if a VAPID key is ever abused.
+    VAPID_SUBJECT: read('VAPID_SUBJECT') ?? 'mailto:support@gamebuddi.com',
 
     // WebRTC TURN server
     TURN_SERVER_URL: read('TURN_SERVER_URL') ?? '',
@@ -179,6 +182,7 @@ export function validateEnv(): void {
     ['EMAIL_FROM', 'Using default: GameBuddi <noreply@gamebuddi.com>'],
     ['NEXT_PUBLIC_VAPID_PUBLIC_KEY', 'Push notifications will be unavailable'],
     ['VAPID_PRIVATE_KEY', 'Push notifications will be unavailable'],
+    ['VAPID_PUBLIC_KEY', 'Push notifications will be unavailable'],
     ['TURN_SERVER_URL', 'WebRTC will use public STUN/TURN fallback servers'],
   ]
 

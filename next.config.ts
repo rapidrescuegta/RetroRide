@@ -3,6 +3,10 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
+  // web-push uses Node's crypto/tls — keep it out of the webpack bundle so
+  // the server runtime loads it natively.
+  serverExternalPackages: ['web-push'],
+
   // PWA caching headers for static assets and service worker
   async headers() {
     return [

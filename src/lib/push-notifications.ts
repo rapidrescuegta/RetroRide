@@ -46,6 +46,26 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 /**
+ * Resolve the VAPID public key used to subscribe this device.
+ *
+ * Prefers the build-time inlined NEXT_PUBLIC_ value, then falls back to the
+ * server endpoint so rotating the keypair doesn't require a client rebuild.
+ */
+async function resolveVapidPublicKey(): Promise<string | null> {
+  const inlined = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+  if (inlined) return inlined
+
+  try {
+    const res = await fetch('/api/push/config')
+    if (!res.ok) return null
+    const data = await res.json()
+    return data?.publicKey || null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Subscribe the user to push notifications via the service worker
  * and send the subscription to the backend.
  *
@@ -61,9 +81,9 @@ export async function subscribeToPush(memberId?: string): Promise<PushSubscripti
     let subscription = await registration.pushManager.getSubscription()
 
     if (!subscription) {
-      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      const vapidPublicKey = await resolveVapidPublicKey()
       if (!vapidPublicKey) {
-        console.warn('[Push] NEXT_PUBLIC_VAPID_PUBLIC_KEY is not set — push subscription skipped')
+        console.warn('[Push] No VAPID public key available — push subscription skipped')
         return null
       }
 

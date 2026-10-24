@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getNextMatchPosition } from '@/lib/bracket'
+import { sendPushToMembers } from '@/lib/push-server'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -118,7 +119,17 @@ export async function POST(req: NextRequest, { params }: Params) {
       const totalRounds = Math.log2(tournament.bracketSize ?? 2)
       const isFinal = match.round === totalRounds
 
-      await prisma.$transaction(async (tx) => {
+      // Captured inside the transaction so we can notify the players of a
+      // match that just became ready once the write has committed.
+      type ReadyMatch = {
+        id: string
+        round: number
+        player1Id: string | null
+        player2Id: string | null
+      }
+      let capturedReady: ReadyMatch | null = null
+
+      const readyMatch = await prisma.$transaction(async (tx) => {
         // Update the completed match
         await tx.bracketMatch.update({
           where: { id: matchId },
@@ -174,6 +185,18 @@ export async function POST(req: NextRequest, { params }: Params) {
               where: { id: nextMatch.id },
               data: updateData,
             })
+
+            // Both slots are filled — the match is ready to play.
+            if (updateData.status === 'ready') {
+              capturedReady = {
+                id: nextMatch.id,
+                round: next.round,
+                player1Id:
+                  next.slot === 'player1' ? winnerId : nextMatch.player1Id,
+                player2Id:
+                  next.slot === 'player2' ? winnerId : nextMatch.player2Id,
+              }
+            }
           }
 
           // Update tournament current round
@@ -191,7 +214,47 @@ export async function POST(req: NextRequest, { params }: Params) {
             },
           })
         }
+
+        return capturedReady
       })
+
+      // ── Push notifications ──────────────────────────────────────────
+      // Fire-and-forget: a failed push must never fail the result report.
+      try {
+        const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '')
+        const tournamentUrl = appUrl
+          ? `${appUrl}/tournaments/${tournamentId}`
+          : `/tournaments/${tournamentId}`
+
+        if (readyMatch) {
+          const playerIds = [readyMatch.player1Id, readyMatch.player2Id].filter(
+            (id): id is string => !!id
+          )
+          await sendPushToMembers(playerIds, () => ({
+            title: 'Your match is ready',
+            body: `Round ${readyMatch.round} is set — tap to jump in.`,
+            tag: `match-${readyMatch.id}`,
+            url: tournamentUrl,
+          }))
+        }
+
+        if (isFinal) {
+          await sendPushToMembers([winnerId, loserId], (memberId) => ({
+            title:
+              memberId === winnerId
+                ? 'You won the tournament!'
+                : 'Tournament over',
+            body:
+              memberId === winnerId
+                ? 'Champion. Nicely played.'
+                : 'Thanks for playing — final standings are in.',
+            tag: `tournament-${tournamentId}-final`,
+            url: tournamentUrl,
+          }))
+        }
+      } catch (pushErr) {
+        console.error('[push] notification failed:', pushErr)
+      }
 
       // Return updated bracket
       const matches = await prisma.bracketMatch.findMany({
