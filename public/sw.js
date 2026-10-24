@@ -94,6 +94,7 @@ const PRECACHE_PAGES = [
 
 // What's new in this version — sent to clients on update
 const CHANGELOG = [
+  'Offline play fixed — pages are now precached properly, so games and settings load without wifi',
   'Rummy 500 multiplayer added — play online with 2-4 players!',
   '16 more arcade games now support multiplayer score competitions',
   'New tournament presets: Friends Night In, Sunday Brunch Games',
