@@ -2,6 +2,14 @@
 
 Decisions made during autonomous development sessions.
 
+## Operational quick reference (project facts)
+
+- **Live host is `https://www.gamebuddi.com`** — canonical per `src/app/layout.tsx` `metadataBase`; `gamebuddi.com` → 301 → www. **`retroride.app` is a PARKED LANDER** (every path → `/lander`) — live-checking it checks the wrong host. This is the trap that produced weeks of false "404" readings on the live site.
+- **Railway IDs (retroride):** project `81039564-19be-44ea-9727-91426a441e3d`, env `ae863028-59a8-47f1-a85c-b4cfc7c44aaa`, service `2eae438c-4fd3-4b7c-baab-906a3dc8491c`; Postgres service `postgres-6v0z`.
+- **Blog publishing:** posts live in `src/app/blog/posts.ts` as a `BlogPost[]`; `[slug]/page.tsx` ALWAYS renders `BlogPosting` JSON-LD (FAQPage only if `faqs` present). To add one: paste the `~/growth-engine/ship-kit/snippets/gamebuddi-*.tsx` object (already a complete `{...},`) directly before the array's closing `]`, add a `<url>` to `public/sitemap.xml`, verify with `npx tsc --noEmit`.
+- **The 2026-08-05 deploy-blocker escalation to Giuseppe (Gmail msg 19fcfdf3bbd6d978) is CLOSED** — the Railway Source was reconnected via the Railway GraphQL API by the agent, without him. Do not re-send it: one escalation is enough, re-sending is noise. Send a follow-up only if >7 days pass with a NEW blocked item.
+- **Durable operating rules** — the traps and their fixes (verify against the live artifact, credential stores, Railway triggers, Prisma 7 `prisma.config.ts`, the push sender, `cache.addAll`, SW `controllerchange`, Stripe account identity, Resend + GoDaddy) — live in **AGENT.md ZONE 2**. Read there before acting on production.
+
 ## Item 2: PostgreSQL
 
 - **Decision**: No SQLite fallback for local dev. PostgreSQL is the only supported database.
